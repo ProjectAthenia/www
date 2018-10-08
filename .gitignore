@@ -1,3 +1,5 @@
 .idea
 *.orig
-
+vagrant-credentials.rb
+node_modules
+elm-stuff

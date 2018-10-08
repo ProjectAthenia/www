@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Lingwave Admin">
+    <tstamp>
+        <format property="buildtimestamp" pattern="yyyyMMddHHmmss"/>
+    </tstamp>
+    <target name="full-build"
+            depends="reinstall,build,test"
+            description="Performs the build/install"/>
+    
+    <target name="reinstall">
+        <exec executable="/usr/bin/npm" failonerror="true" dir="${basedir}">
+            <arg value='run-script' />
+            <arg value='reinstall' />
+        </exec>
+    </target>
+
+    <target name="build">
+        <exec executable="/usr/bin/npm" failonerror="true" dir="${basedir}">
+            <arg value='run' />
+            <arg value='build' />
+        </exec>
+    </target>
+
+    <target name="test">
+        <exec executable="/usr/bin/elm" failonerror="true" dir="${basedir}/tests">
+            <arg value="package" />
+            <arg value="install" />
+            <arg value="-y" />
+        </exec>
+        <exec executable="/usr/bin/elm" failonerror="true" dir="${basedir}/tests">
+            <arg value='test' />
+        </exec>
+    </target>
+</project>

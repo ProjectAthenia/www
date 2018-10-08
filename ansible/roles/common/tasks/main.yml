@@ -1,0 +1,94 @@
+---
+- name: Add Vagrant to www-data
+  user:
+    name: vagrant
+    groups: www-data
+    append: yes
+
+- name: Install apt requirement aptitude
+  become: yes
+  apt: pkg=aptitude
+  
+## this makes me kind of nervous but whatever... shouldn't happen that often - and your server should be up to date if you're re-provisioning anyway
+- name: Update Apt Cache and Call safe-upgrade
+  apt: update_cache=yes cache_valid_time=3600 upgrade=safe
+  
+- name: Create redirect for bash login to /vagrant
+  lineinfile: dest=/home/vagrant/.bash_login line="cd /vagrant/code" state=present create=yes
+
+- name: Set login as root to no
+  lineinfile: dest=/etc/ssh/sshd_config regexp=^PermitRootLogin line='PermitRootLogin no'
+  notify:
+    - reload ssh
+
+- name: Add ipv4 only
+  lineinfile: dest=/etc/ssh/sshd_config line="AddressFamily inet"
+  notify:
+    - reload ssh
+
+- name: Set login no password
+  lineinfile: dest=/etc/ssh/sshd_config regexp=^PasswordAuthentication line='PasswordAuthentication no'
+  notify:
+    - reload ssh
+
+- name: Install git
+  apt: name=git state=present
+  when: server_env != "development"
+
+- name: Install unzip
+  apt: name=unzip state=present
+
+- name: Install apticron
+  apt: name=apticron state=present
+  when: server_env == "production"
+
+- name: Only notify of new ones
+  lineinfile: dest=/etc/apticron/apticron.conf regexp="^(# )?DIFF_ONLY" line='DIFF_ONLY="1"'
+  when: server_env == "production"
+
+- name: Install iptables-persistent
+  apt: name=iptables-persistent state=present
+
+- name: Install fail2ban
+  apt: name=fail2ban state=present
+
+- name: Copy over fail2ban config
+  copy: src=fail2ban-jail.conf dest=/etc/fail2ban/jail.local
+  notify:
+    - restart fail2ban
+
+- name: Install unattended upgrades
+  apt: name=unattended-upgrades state=present
+
+- name: Enable unattended upgrades
+  lineinfile: dest=/etc/apt/apt.conf.d/10periodic line='APT::Periodic::Unattended-Upgrade "1";'
+
+- name: Uninstall changelog review
+  apt: name=apt-listchanges state=absent
+
+- name: Write swapfile
+  command: fallocate -l 4G /swapfile creates=/swapfile
+  register: write_swapfile
+
+- name: Set swapfile permissions
+  file: path=/swapfile mode=600
+
+- name: Create swapfile
+  command: mkswap /swapfile
+  register: create_swapfile
+  when: write_swapfile.changed
+
+- name: Enable swapfile
+  command: swapon /swapfile
+  when: create_swapfile.changed
+
+- name: Add swapfile to /etc/fstab
+  lineinfile: dest=/etc/fstab line="/swapfile   none    swap    sw    0   0" state=present
+
+- name: Configure vm.swappiness
+  lineinfile: dest=/etc/sysctl.conf line="vm.swappiness = 10" regexp="^vm.swappiness[\s]?=" state=present
+  notify: Reload sysctl
+
+- name: Configure vm.vfs_cache_pressure
+  lineinfile: dest=/etc/sysctl.conf line="vm.vfs_cache_pressure = 50" regexp="^vm.vfs_cache_pressure[\s]?=" state=present
+  notify: Reload sysctl

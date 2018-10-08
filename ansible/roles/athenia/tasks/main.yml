@@ -1,0 +1,33 @@
+---
+- name: Copy across virtual host for api
+  template:
+    src=www.projectathenia.com.conf.j2
+    dest=/etc/nginx/sites-available/www.projectathenia.com.conf
+
+- name: Enable virtual host for api
+  file:
+    src: /etc/nginx/sites-available/www.projectathenia.com.conf
+    dest: /etc/nginx/sites-enabled/www.projectathenia.com.conf
+    state: link
+
+- name: Install Apache ANT
+  apt: name=ant state=present
+  when: server_env != "development"
+
+- name: Prepare for NodeJS install
+  shell: "curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -"
+
+- name: Install NodeJS
+  apt: name=nodejs state=present
+
+- name: Install Webpack
+  npm: name=webpack state=present global=yes
+
+- name: Install Rimraff
+  npm: name=rimraff state=present global=yes
+
+- name: Install Elm
+  npm: name=elm state=present global=yes
+
+- name: Install Elm GitHub Install
+  npm: name=elm-github-install state=present global=yes

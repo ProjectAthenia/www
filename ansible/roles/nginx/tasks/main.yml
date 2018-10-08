@@ -1,0 +1,7 @@
+---
+- name: Install Nginx
+  apt: name=nginx state=present
+
+- name: Make /vagrant dir
+  file: dest=/vagrant state=directory owner=www-data group=www-data mode="2775"
+  when: server_env != "development"

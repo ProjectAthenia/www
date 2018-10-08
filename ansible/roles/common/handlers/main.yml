@@ -1,0 +1,9 @@
+---
+- name: reload ssh
+  service: name=ssh state=reloaded
+
+- name: Reload sysctl
+  command: sysctl -p
+
+- name: restart fail2ban
+  service: name=fail2ban state=reloaded
