@@ -11,7 +11,7 @@ var data = {
     socket_url: process.env.SOCKET_URL,
 };
 // full screen the app and inject the env flags
-var app = Elm.Main.fullscreen(data);
+var app = Athenia.Main.fullscreen(data);
 
 app.ports.setLocalStorageValue.subscribe(setLocalStorageValue);
 

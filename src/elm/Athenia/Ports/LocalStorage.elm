@@ -1,5 +1,5 @@
 -- Port for dealing with local storage
-port module Ports.LocalStorage exposing (..)
+port module Athenia.Ports.LocalStorage exposing (..)
 
 
 type alias Model =
