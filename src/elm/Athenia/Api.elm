@@ -16,7 +16,7 @@ It exposes an opaque Endpoint type which is guaranteed to point to the correct U
 
 -}
 
-import Athenia.Api.Endpoint as Endpoint exposing (Endpoint)
+import Athenia.Api.Endpoint as Endpoint
 import Browser
 import Browser.Navigation as Nav
 import Http exposing (Body, Expect)
@@ -166,7 +166,7 @@ storageDecoder viewerDecoder =
 -- HTTP
 
 
-get : Endpoint -> Maybe Token -> Decoder a -> Http.Request a
+get : Endpoint.Endpoint -> Maybe Token -> Decoder a -> Http.Request a
 get url maybeToken decoder =
     Endpoint.request
         { method = "GET"
@@ -185,7 +185,7 @@ get url maybeToken decoder =
         }
 
 
-put : Endpoint -> Token -> Body -> Decoder a -> Http.Request a
+put : Endpoint.Endpoint -> Token -> Body -> Decoder a -> Http.Request a
 put url token body decoder =
     Endpoint.request
         { method = "PUT"
@@ -198,7 +198,7 @@ put url token body decoder =
         }
 
 
-post : Endpoint -> Maybe Token -> Body -> Decoder a -> Http.Request a
+post : Endpoint.Endpoint -> Maybe Token -> Body -> Decoder a -> Http.Request a
 post url maybeToken body decoder =
     Endpoint.request
         { method = "POST"
@@ -217,7 +217,7 @@ post url maybeToken body decoder =
         }
 
 
-delete : Endpoint -> Token -> Body -> Decoder a -> Http.Request a
+delete : Endpoint.Endpoint -> Token -> Body -> Decoder a -> Http.Request a
 delete url token body decoder =
     Endpoint.request
         { method = "DELETE"

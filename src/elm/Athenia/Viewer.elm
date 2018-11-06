@@ -6,6 +6,7 @@ impossible to have a Viewer if you aren't logged in.
 -}
 
 import Athenia.Api as Api exposing (Token)
+import Athenia.Avatar exposing (Avatar)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (custom, required)
 import Json.Encode as Encode exposing (Value)
@@ -15,10 +16,15 @@ import Json.Encode as Encode exposing (Value)
 
 
 type Viewer
-    = Viewer Token
+    = Viewer Avatar Token
 
 
 -- INFO
+
+
+avatar : Viewer -> Avatar
+avatar (Viewer val _) =
+    val
 
 
 cred : Viewer -> Token
@@ -38,6 +44,7 @@ minPasswordChars =
 
 
 store : Viewer -> Cmd msg
-store (Viewer credVal) =
+store (Viewer avatarVal tokenVal) =
     Api.storeCredWith
-        credVal
+        tokenVal
+        avatarVal
