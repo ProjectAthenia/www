@@ -87,4 +87,4 @@ signUp =
 
 user : Int -> Endpoint
 user userId =
-    url [ "users", String.fromInt userId ]
+    url [ "users", String.fromInt userId ] []
