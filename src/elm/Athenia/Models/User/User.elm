@@ -46,11 +46,10 @@ toJson model =
             ]
 
 
--- Decodes a status model retrieved through the API
--- TODO fix the decode function
+-- Decodes a user model retrieved through the API
 modelDecoder : Decoder Model
 modelDecoder =
-    decode Model
+    JsonDecode.succeed Model
         |> required "id" (maybe int)
         |> required "name" string
         |> required "email" string
