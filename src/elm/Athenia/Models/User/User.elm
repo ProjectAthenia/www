@@ -46,6 +46,24 @@ toJson model =
             ]
 
 
+cacheEncoder : Model -> Encode.Value
+cacheEncoder model =
+    Encode.object
+        [
+            ( "id" ,
+                case model.id of
+                    Just id ->
+                        Encode.int id
+                    Nothing ->
+                        Encode.null
+            )
+            , ("name", Encode.string model.name)
+            , ("email", Encode.string model.email)
+            , ("password", Encode.string model.password)
+            , ("roles", (Encode.list Encode.int model.roles))
+        ]
+
+
 -- Decodes a user model retrieved through the API
 modelDecoder : Decoder Model
 modelDecoder =

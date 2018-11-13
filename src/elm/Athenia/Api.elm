@@ -98,14 +98,15 @@ decodeFromChange viewerDecoder val =
         |> Result.toMaybe
 
 
-storeCredWith : Token -> Cmd msg
-storeCredWith (Token token) =
+storeCredWith : Token -> User.Model -> Cmd msg
+storeCredWith (Token token) user =
     let
         json =
             Encode.object
                 [ ( "user"
                   , Encode.object
                         [ ( "token", Encode.string token )
+                        , ( "model", User.toJson user )
                         ]
                   )
                 ]

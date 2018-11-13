@@ -1,4 +1,4 @@
-module Athenia.Session exposing (Session, changes, cred, fromViewer, navKey, viewer)
+module Athenia.Session exposing (Session, changes, token, fromViewer, navKey, viewer)
 
 import Athenia.Api as Api
 import Athenia.Viewer as Viewer
@@ -7,8 +7,6 @@ import Browser.Navigation as Nav
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (custom, required)
 import Json.Encode as Encode exposing (Value)
-import Profile exposing (Profile)
-import Time
 
 
 
@@ -38,7 +36,7 @@ token : Session -> Maybe Api.Token
 token session =
     case session of
         LoggedIn _ val ->
-            Just (Viewer.cred val)
+            Just (Viewer.token val)
 
         Guest _ ->
             Nothing

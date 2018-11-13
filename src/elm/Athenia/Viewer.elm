@@ -1,4 +1,4 @@
-module Athenia.Viewer exposing (Viewer, user, token, minPasswordChars, store)
+module Athenia.Viewer exposing (Viewer, user, decoder, token, minPasswordChars, store)
 
 {-| The logged-in user currently viewing this page. It stores enough data to
 be able to render the menu bar (username and avatar), along with Cred so it's
@@ -43,8 +43,14 @@ minPasswordChars =
 
 -- SERIALIZATION
 
+decoder : Decoder (Token -> Viewer)
+decoder =
+    Decode.succeed Viewer
+        |> custom (Decode.field "user" User.modelDecoder)
+
 
 store : Viewer -> Cmd msg
 store (Viewer userVal tokenVal) =
     Api.storeCredWith
         tokenVal
+        userVal
