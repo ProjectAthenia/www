@@ -3,7 +3,7 @@ module Athenia.Components.Loading exposing (error, icon, slowThreshold)
 {-| A loading spinner icon.
 -}
 
-import Asset
+import Athenia.Asset as Asset
 import Html exposing (Attribute, Html)
 import Html.Attributes exposing (alt, height, src, width)
 import Process
