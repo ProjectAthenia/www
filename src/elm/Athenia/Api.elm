@@ -3,7 +3,7 @@ port module Athenia.Api exposing
     , addServerError
     , application
     , decodeErrors
-    , delete, get, post, put, delete
+    , delete, get, post, put
     , login, logout, signUp
     , settings
     , storeCredWith
@@ -17,6 +17,7 @@ It exposes an opaque Endpoint type which is guaranteed to point to the correct U
 -}
 
 import Athenia.Api.Endpoint as Endpoint
+import Athenia.Models.User.User as User
 import Browser
 import Browser.Navigation as Nav
 import Http exposing (Body, Expect)
@@ -230,19 +231,24 @@ delete url token body decoder =
         }
 
 
-login : Http.Body -> Decoder (Token -> a) -> Http.Request a
+login : Http.Body -> Decoder (Token -> User.Model) -> Http.Request User.Model
 login body decoder =
-    post Endpoint.login Nothing body (Decode.field "user" (decoderFromCred decoder))
+    post Endpoint.login Nothing body User.modelDecoder
 
 
-signUp : Http.Body -> Decoder (Token -> a) -> Http.Request a
+signUp : Http.Body -> Decoder (Token -> User.Model) -> Http.Request User.Model
 signUp body decoder =
-    post Endpoint.signUp Nothing body (Decode.field "user" (decoderFromCred decoder))
+    post Endpoint.signUp Nothing body User.modelDecoder
 
 
-settings : Token -> Http.Body -> Decoder (Token -> a) -> Http.Request a
-settings token body decoder =
-    put Endpoint.user token body (Decode.field "user" (decoderFromCred decoder))
+settings : Token -> Int -> Http.Body -> Http.Request User.Model
+settings token userId body =
+    put (Endpoint.user userId) token body User.modelDecoder
+
+
+me : Token -> Http.Request User.Model
+me token =
+    get Endpoint.me (Just token) User.modelDecoder
 
 
 decoderFromCred : Decoder (Token -> a) -> Decoder a

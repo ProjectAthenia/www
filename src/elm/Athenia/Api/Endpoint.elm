@@ -2,7 +2,7 @@ module Athenia.Api.Endpoint exposing
     ( Endpoint, request
     , article, articles
     , login, signUp
-    , user
+    , user, me
     )
 
 import Http
@@ -73,6 +73,11 @@ article articleId =
 articles : List QueryParameter -> Endpoint
 articles params =
     url [ "articles" ] params
+
+
+me : Endpoint
+me =
+    url [ "users", "me" ] []
 
 
 login : Endpoint

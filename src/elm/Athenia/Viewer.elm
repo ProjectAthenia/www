@@ -1,4 +1,4 @@
-module Athenia.Viewer exposing (Viewer, avatar, cred, decoder, minPasswordChars, store, username)
+module Athenia.Viewer exposing (Viewer, user, token, minPasswordChars, store)
 
 {-| The logged-in user currently viewing this page. It stores enough data to
 be able to render the menu bar (username and avatar), along with Cred so it's
@@ -7,6 +7,7 @@ impossible to have a Viewer if you aren't logged in.
 
 import Athenia.Api as Api exposing (Token)
 import Athenia.Avatar exposing (Avatar)
+import Athenia.Models.User.User as User
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (custom, required)
 import Json.Encode as Encode exposing (Value)
@@ -16,19 +17,19 @@ import Json.Encode as Encode exposing (Value)
 
 
 type Viewer
-    = Viewer Avatar Token
+    = Viewer User.Model Token
 
 
 -- INFO
 
 
-avatar : Viewer -> Avatar
-avatar (Viewer val _) =
+user : Viewer -> User.Model
+user (Viewer val _) =
     val
 
 
-cred : Viewer -> Token
-cred (Viewer _ val) =
+token : Viewer -> Token
+token (Viewer _ val) =
     val
 
 
@@ -44,7 +45,6 @@ minPasswordChars =
 
 
 store : Viewer -> Cmd msg
-store (Viewer avatarVal tokenVal) =
+store (Viewer userVal tokenVal) =
     Api.storeCredWith
         tokenVal
-        avatarVal
