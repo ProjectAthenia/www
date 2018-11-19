@@ -5,14 +5,11 @@ module Athenia.Route exposing
     , replaceUrl
     )
 
-import Article.Slug as Slug exposing (Slug)
 import Browser.Navigation as Nav
 import Html exposing (Attribute)
 import Html.Attributes as Attr
-import Profile exposing (Profile)
 import Url exposing (Url)
-import Url.Parser as Parser exposing ((</>), Parser, oneOf, s, string)
-import Username exposing (Username)
+import Url.Parser as Parser exposing ((</>), Parser, oneOf, s, int, string)
 
 
 
@@ -26,10 +23,10 @@ type Route
     | Logout
     | Register
     | Settings
-    | Article Slug
-    | Profile Username
+    | Article Int
+    | Profile Int
     | NewArticle
-    | EditArticle Slug
+    | EditArticle Int
 
 
 parser : Parser (Route -> a) a
@@ -39,11 +36,11 @@ parser =
         , Parser.map Login (s "login")
         , Parser.map Logout (s "logout")
         , Parser.map Settings (s "settings")
-        , Parser.map Profile (s "profile" </> Username.urlParser)
+        , Parser.map Profile (s "profile" </> int)
         , Parser.map Register (s "register")
-        , Parser.map Article (s "article" </> Slug.urlParser)
+        , Parser.map Article (s "article" </> int)
         , Parser.map NewArticle (s "editor")
-        , Parser.map EditArticle (s "editor" </> Slug.urlParser)
+        , Parser.map EditArticle (s "editor" </> int)
         ]
 
 
@@ -97,16 +94,16 @@ routeToString page =
                 Settings ->
                     [ "settings" ]
 
-                Article slug ->
-                    [ "article", Slug.toString slug ]
+                Article articleId ->
+                    [ "article", String.fromInt articleId ]
 
-                Profile username ->
-                    [ "profile", Username.toString username ]
+                Profile userId ->
+                    [ "profile", String.fromInt userId ]
 
                 NewArticle ->
                     [ "editor" ]
 
-                EditArticle slug ->
-                    [ "editor", Slug.toString slug ]
+                EditArticle articleId ->
+                    [ "editor", String.fromInt articleId ]
     in
     "#/" ++ String.join "/" pieces
