@@ -5,7 +5,7 @@ port module Athenia.Api exposing
     , decodeErrors
     , delete, get, post, put
     , login, logout, signUp
-    , settings
+    , settings, me
     , storeCredWith
     , viewerChanges
     )
@@ -232,9 +232,9 @@ delete url token body decoder =
         }
 
 
-login : Http.Body -> Decoder (Token -> User.Model) -> Http.Request User.Model
-login body decoder =
-    post Endpoint.login Nothing body User.modelDecoder
+login : Http.Body -> Http.Request Token
+login body =
+    post Endpoint.login Nothing body credDecoder
 
 
 signUp : Http.Body -> Decoder (Token -> User.Model) -> Http.Request User.Model

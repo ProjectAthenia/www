@@ -3,10 +3,11 @@ module Athenia.Page.Login exposing (Model, Msg, init, subscriptions, toSession, 
 {-| The login page.
 -}
 
-import Athenia.Api exposing (Token)
-import Athenia.Route exposing (Route)
-import Athenia.Session exposing (Session)
-import Athenia.Viewer exposing (Viewer)
+import Athenia.Api as Api exposing (Token)
+import Athenia.Models.User.User as User
+import Athenia.Route as Route exposing (Route)
+import Athenia.Session as Session exposing (Session)
+import Athenia.Viewer as Viewer exposing (Viewer)
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -24,7 +25,7 @@ import Json.Encode as Encode
 type alias Model =
     { session : Session
     , problems : List Problem
-    , form : Form
+    , user : User.Model
     }
 
 
@@ -57,20 +58,12 @@ type Problem
     | ServerError String
 
 
-type alias Form =
-    { email : String
-    , password : String
-    }
-
-
 init : Session -> ( Model, Cmd msg )
 init session =
     ( { session = session
       , problems = []
-      , form =
-            { email = ""
-            , password = ""
-            }
+      , user =
+        User.loginModel "" ""
       }
     , Cmd.none
     )
@@ -95,7 +88,7 @@ view model =
                             ]
                         , ul [ class "error-messages" ]
                             (List.map viewProblem model.problems)
-                        , viewForm model.form
+                        , viewForm model.user
                         ]
                     ]
                 ]
@@ -117,15 +110,15 @@ viewProblem problem =
     li [] [ text errorMessage ]
 
 
-viewForm : Form -> Html Msg
-viewForm form =
+viewForm : User.Model -> Html Msg
+viewForm user =
     Html.form [ onSubmit SubmittedForm ]
         [ fieldset [ class "form-group" ]
             [ input
                 [ class "form-control form-control-lg"
                 , placeholder "Email"
                 , onInput EnteredEmail
-                , value form.email
+                , value user.email
                 ]
                 []
             ]
@@ -135,7 +128,7 @@ viewForm form =
                 , type_ "password"
                 , placeholder "Password"
                 , onInput EnteredPassword
-                , value form.password
+                , value user.password
                 ]
                 []
             ]
@@ -152,7 +145,8 @@ type Msg
     = SubmittedForm
     | EnteredEmail String
     | EnteredPassword String
-    | CompletedLogin (Result Http.Error Viewer)
+    | CompletedLogin (Result Http.Error Api.Token)
+    | RetrieveMe Token (Result Http.Error User.Model)
     | GotSession Session
 
 
@@ -160,7 +154,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SubmittedForm ->
-            case validate model.form of
+            case validate model.user of
                 Ok validForm ->
                     ( { model | problems = [] }
                     , Http.send CompletedLogin (login validForm)
@@ -172,24 +166,17 @@ update msg model =
                     )
 
         EnteredEmail email ->
-            updateForm (\form -> { form | email = email }) model
+            updateForm (\user -> { user | email = email }) model
 
         EnteredPassword password ->
-            updateForm (\form -> { form | password = password }) model
+            updateForm (\user -> { user | password = password }) model
 
         CompletedLogin (Err error) ->
-            let
-                serverErrors =
-                    Api.decodeErrors error
-                        |> List.map ServerError
-            in
-            ( { model | problems = List.append model.problems serverErrors }
-            , Cmd.none
-            )
+            handleErrors error model
 
-        CompletedLogin (Ok viewer) ->
+        CompletedLogin (Ok token) ->
             ( model
-            , Viewer.store viewer
+            , Http.send (RetrieveMe token) (getMe token)
             )
 
         GotSession session ->
@@ -197,15 +184,34 @@ update msg model =
             , Route.replaceUrl (Session.navKey session) Route.Home
             )
 
+        RetrieveMe token (Err error) ->
+            handleErrors error model
+
+        RetrieveMe token (Ok user) ->
+            ( model
+            , Viewer.store
+                <| Viewer.viewer user token
+            )
+
 
 {-| Helper function for `update`. Updates the form and returns Cmd.none.
 Useful for recording form fields!
 -}
-updateForm : (Form -> Form) -> Model -> ( Model, Cmd Msg )
+updateForm : (User.Model -> User.Model) -> Model -> ( Model, Cmd Msg )
 updateForm transform model =
-    ( { model | form = transform model.form }, Cmd.none )
+    ( { model | user = transform model.user }, Cmd.none )
 
 
+handleErrors : Http.Error -> Model -> (Model, Cmd Msg)
+handleErrors errors model =
+    let
+        serverErrors =
+            Api.decodeErrors errors
+                |> List.map ServerError
+    in
+    ( { model | problems = List.append model.problems serverErrors }
+    , Cmd.none
+    )
 
 -- SUBSCRIPTIONS
 
@@ -222,8 +228,8 @@ subscriptions model =
 {-| Marks that we've trimmed the form's fields, so we don't accidentally send
 it to the server without having trimmed it!
 -}
-type TrimmedForm
-    = Trimmed Form
+type TrimmedUser
+    = Trimmed User.Model
 
 
 {-| When adding a variant here, add it to `fieldsToValidate` too!
@@ -242,11 +248,11 @@ fieldsToValidate =
 
 {-| Trim the form and validate its fields. If there are problems, report them!
 -}
-validate : Form -> Result (List Problem) TrimmedForm
-validate form =
+validate : User.Model -> Result (List Problem) TrimmedUser
+validate user =
     let
         trimmedForm =
-            trimFields form
+            trimFields user
     in
     case List.concatMap (validateField trimmedForm) fieldsToValidate of
         [] ->
@@ -256,19 +262,19 @@ validate form =
             Err problems
 
 
-validateField : TrimmedForm -> ValidatedField -> List Problem
-validateField (Trimmed form) field =
+validateField : TrimmedUser -> ValidatedField -> List Problem
+validateField (Trimmed user) field =
     List.map (InvalidEntry field) <|
         case field of
             Email ->
-                if String.isEmpty form.email then
+                if String.isEmpty user.email then
                     [ "email can't be blank." ]
 
                 else
                     []
 
             Password ->
-                if String.isEmpty form.password then
+                if String.isEmpty user.password then
                     [ "password can't be blank." ]
 
                 else
@@ -278,33 +284,30 @@ validateField (Trimmed form) field =
 {-| Don't trim while the user is typing! That would be super annoying.
 Instead, trim only on submit.
 -}
-trimFields : Form -> TrimmedForm
-trimFields form =
+trimFields : User.Model -> TrimmedUser
+trimFields user =
     Trimmed
-        { email = String.trim form.email
-        , password = String.trim form.password
-        }
+        <| User.loginModel
+            (String.trim user.email)
+            (String.trim user.password)
 
 
 
 -- HTTP
 
 
-login : TrimmedForm -> Http.Request Viewer
-login (Trimmed form) =
+login : TrimmedUser -> Http.Request Token
+login (Trimmed user) =
     let
-        user =
-            Encode.object
-                [ ( "email", Encode.string form.email )
-                , ( "password", Encode.string form.password )
-                ]
-
         body =
-            Encode.object [ ( "user", user ) ]
-                |> Http.jsonBody
+            Http.jsonBody (User.toJson user)
     in
-    Api.login body Viewer.decoder
+        Api.login body
 
+
+getMe : Token -> Http.Request User.Model
+getMe token =
+    Api.me token
 
 
 -- EXPORT
