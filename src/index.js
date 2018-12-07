@@ -2,7 +2,7 @@
 require( './scss/main.scss' );
 
 // inject bundled Elm app into div#main
-var Elm = require( './elm/Main' );
+var Elm = require( './elm/Athenia/Main' );
 
 var data = {
     auth_token : window.localStorage.getItem('auth_token'),

@@ -10,7 +10,7 @@ import Html exposing (Attribute)
 import Html.Attributes as Attr
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser, oneOf, s, int, string)
-
+import Athenia.Models.User.User as User
 
 
 -- ROUTING

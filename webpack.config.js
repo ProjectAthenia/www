@@ -79,7 +79,6 @@ if (isDev === true) {
                     options: {
                         cwd: './',
                         verbose: true,
-                        warn: true,
                         debug: true
                     }
                 }]

@@ -7,7 +7,7 @@ import Json.Encode as Encode
 
 
 type alias Model =
-    { id: Maybe Int
+    { id: Int
     , name: String
     , email: String
     , password : String
@@ -18,7 +18,7 @@ type alias Model =
 -- Creates a model object representing a user
 loginModel : String -> String -> Model
 loginModel email password =
-    { id = Nothing
+    { id = -1
     , name = ""
     , email = email
     , password = password
@@ -50,13 +50,7 @@ cacheEncoder : Model -> Encode.Value
 cacheEncoder model =
     Encode.object
         [
-            ( "id" ,
-                case model.id of
-                    Just id ->
-                        Encode.int id
-                    Nothing ->
-                        Encode.null
-            )
+            ( "id" , Encode.int model.id)
             , ("name", Encode.string model.name)
             , ("email", Encode.string model.email)
             , ("password", Encode.string model.password)
@@ -68,7 +62,7 @@ cacheEncoder model =
 modelDecoder : Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
-        |> required "id" (maybe int)
+        |> required "id" int
         |> required "name" string
         |> required "email" string
         |> hardcoded ""

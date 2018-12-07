@@ -2,6 +2,7 @@
 module Athenia.Main exposing (..)
 
 import Athenia.Api as Api exposing (Token)
+import Athenia.Models.User.User as User
 import Athenia.Page.Login as Login
 import Athenia.Page.NotFound as NotFound
 import Athenia.Route exposing (Route)
@@ -15,7 +16,7 @@ type Model
     | Settings Settings.Model
     | Login Login.Model
     | Register Register.Model
-    | Profile Username Profile.Model
+    | Profile User.Model
     | Article Article.Model
     | Editor (Maybe Slug) Editor.Model
 

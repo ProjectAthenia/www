@@ -66,18 +66,16 @@ viewMenu page maybeViewer =
     case maybeViewer of
         Just viewer ->
             let
-                userId =
-                    (Viewer.user viewer).id
+                user =
+                    (Viewer.user viewer)
             in
-            [ linkTo Route.NewArticle [ i [ class "ion-compose" ] [], text "\u{00A0}New Post" ]
-            , linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text "\u{00A0}Settings" ]
-            , linkTo
-                (Route.Profile user.id)
-                [ img [ class "user-pic", Avatar.src avatar ] []
-                , Username.toHtml username
+                [ linkTo Route.NewArticle [ i [ class "ion-compose" ] [], text "\u{00A0}New Article" ]
+                , linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text "\u{00A0}Settings" ]
+                , linkTo
+                    (Route.Profile user.id)
+                    [ i [ class "ion-pic" ] [], text user.name ]
+                , linkTo Route.Logout [ text "Sign out" ]
                 ]
-            , linkTo Route.Logout [ text "Sign out" ]
-            ]
 
         Nothing ->
             [ linkTo Route.Login [ text "Sign in" ]
@@ -120,8 +118,8 @@ isActive page route =
         ( Settings, Route.Settings ) ->
             True
 
-        ( Profile pageUsername, Route.Profile routeUsername ) ->
-            pageUsername == routeUsername
+        ( Profile user, Route.Profile routeUserId ) ->
+            user.id == routeUserId
 
         ( NewArticle, Route.NewArticle ) ->
             True
