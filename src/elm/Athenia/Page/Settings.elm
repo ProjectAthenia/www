@@ -1,10 +1,14 @@
 module Athenia.Page.Settings exposing (Model, Msg, init, subscriptions, toSession, update, view)
 
-import Athenia.Api exposing (Token)
+import Athenia.Api as Api exposing (Token)
 import Athenia.Api.Endpoint as Endpoint
-import Avatar
+import Athenia.Components.Loading as Loading
+import Athenia.Models.User.User as User
+import Athenia.Route as Route
+import Athenia.Session as Session exposing (Session)
+import Athenia.Utilities.Log as Log
+import Athenia.Viewer as Viewer exposing (Viewer)
 import Browser.Navigation as Nav
-import Email exposing (Email)
 import Html exposing (Html, button, div, fieldset, h1, input, li, text, textarea, ul)
 import Html.Attributes exposing (attribute, class, placeholder, type_, value)
 import Html.Events exposing (onInput, onSubmit)
@@ -12,14 +16,7 @@ import Http
 import Json.Decode as Decode exposing (Decoder, decodeString, field, list, string)
 import Json.Decode.Pipeline exposing (hardcoded, required)
 import Json.Encode as Encode
-import Loading
-import Log
-import Profile exposing (Profile)
-import Route
-import Session exposing (Session)
 import Task
-import Username as Username exposing (Username)
-import Viewer exposing (Viewer)
 
 
 
@@ -34,10 +31,9 @@ type alias Model =
 
 
 type alias Form =
-    { avatar : String
-    , bio : String
+    { id : Int
+    , name : String
     , email : String
-    , username : String
     , password : String
     }
 
@@ -61,21 +57,11 @@ init session =
       , status = Loading
       }
     , Cmd.batch
-        [ Api.get Endpoint.user (Session.cred session) (Decode.field "user" formDecoder)
+        [ Api.get Endpoint.me (Session.token session) User.modelDecoder
             |> Http.send CompletedFormLoad
         , Task.perform (\_ -> PassedSlowLoadThreshold) Loading.slowThreshold
         ]
     )
-
-
-formDecoder : Decoder Form
-formDecoder =
-    Decode.succeed Form
-        |> required "image" (Decode.map (Maybe.withDefault "") (Decode.nullable Decode.string))
-        |> required "bio" (Decode.map (Maybe.withDefault "") (Decode.nullable Decode.string))
-        |> required "email" Decode.string
-        |> required "username" Decode.string
-        |> hardcoded ""
 
 
 {-| A form that has been validated. Only the `edit` function uses this. Its
@@ -98,7 +84,7 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Settings"
     , content =
-        case Session.cred model.session of
+        case Session.token model.session of
             Just cred ->
                 div [ class "settings-page" ]
                     [ div [ class "container page" ]
@@ -135,29 +121,10 @@ viewForm token form =
         [ fieldset []
             [ fieldset [ class "form-group" ]
                 [ input
-                    [ class "form-control"
-                    , placeholder "URL of profile picture"
-                    , value form.avatar
-                    , onInput EnteredAvatar
-                    ]
-                    []
-                ]
-            , fieldset [ class "form-group" ]
-                [ input
                     [ class "form-control form-control-lg"
-                    , placeholder "Username"
-                    , value form.username
-                    , onInput EnteredUsername
-                    ]
-                    []
-                ]
-            , fieldset [ class "form-group" ]
-                [ textarea
-                    [ class "form-control form-control-lg"
-                    , placeholder "Short bio about you"
-                    , attribute "rows" "8"
-                    , value form.bio
-                    , onInput EnteredBio
+                    , placeholder "Name"
+                    , value form.name
+                    , onInput EnteredName
                     ]
                     []
                 ]
@@ -207,13 +174,11 @@ viewProblem problem =
 
 type Msg
     = SubmittedForm Token Form
+    | EnteredName String
     | EnteredEmail String
-    | EnteredUsername String
     | EnteredPassword String
-    | EnteredBio String
-    | EnteredAvatar String
-    | CompletedFormLoad (Result Http.Error Form)
-    | CompletedSave (Result Http.Error Viewer)
+    | CompletedFormLoad (Result Http.Error User.Model)
+    | CompletedSave (Result Http.Error User.Model)
     | GotSession Session
     | PassedSlowLoadThreshold
 
@@ -221,8 +186,14 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        CompletedFormLoad (Ok form) ->
-            ( { model | status = Loaded form }
+        CompletedFormLoad (Ok user) ->
+            ( { model | status = Loaded
+                { id = user.id
+                , name = user.name
+                , email = user.email
+                , password = ""
+                }
+            }
             , Cmd.none
             )
 
@@ -247,17 +218,11 @@ update msg model =
         EnteredEmail email ->
             updateForm (\form -> { form | email = email }) model
 
-        EnteredUsername username ->
-            updateForm (\form -> { form | username = username }) model
+        EnteredName name ->
+            updateForm (\form -> { form | name = name }) model
 
         EnteredPassword password ->
             updateForm (\form -> { form | password = password }) model
-
-        EnteredBio bio ->
-            updateForm (\form -> { form | bio = bio }) model
-
-        EnteredAvatar avatar ->
-            updateForm (\form -> { form | avatar = avatar }) model
 
         CompletedSave (Err error) ->
             let
@@ -269,9 +234,14 @@ update msg model =
             , Cmd.none
             )
 
-        CompletedSave (Ok viewer) ->
+        CompletedSave (Ok user) ->
             ( model
-            , Viewer.store viewer
+            ,  case Session.token model.session of
+                Just token ->
+                    Viewer.store
+                        <| Viewer.viewer user token
+                Nothing ->
+                    Cmd.none
             )
 
         GotSession session ->
@@ -372,15 +342,15 @@ validateField (Trimmed form) field =
     List.map (InvalidEntry field) <|
         case field of
             Username ->
-                if String.isEmpty form.username then
-                    [ "username can't be blank." ]
+                if String.isEmpty form.name then
+                    [ "Name can't be blank." ]
 
                 else
                     []
 
             Email ->
                 if String.isEmpty form.email then
-                    [ "email can't be blank." ]
+                    [ "Email can't be blank." ]
 
                 else
                     []
@@ -391,7 +361,7 @@ validateField (Trimmed form) field =
                         String.length form.password
                 in
                 if passwordLength > 0 && passwordLength < Viewer.minPasswordChars then
-                    [ "password must be at least " ++ String.fromInt Viewer.minPasswordChars ++ " characters long." ]
+                    [ "Password must be at least " ++ String.fromInt Viewer.minPasswordChars ++ " characters long." ]
 
                 else
                     []
@@ -403,10 +373,9 @@ Instead, trim only on submit.
 trimFields : Form -> TrimmedForm
 trimFields form =
     Trimmed
-        { avatar = String.trim form.avatar
-        , bio = String.trim form.bio
+        { id = form.id
+        , name = String.trim form.name
         , email = String.trim form.email
-        , username = String.trim form.username
         , password = String.trim form.password
         }
 
@@ -418,22 +387,12 @@ trimFields form =
 {-| This takes a Valid Form as a reminder that it needs to have been validated
 first.
 -}
-edit : Token -> TrimmedForm -> Http.Request Viewer
+edit : Token -> TrimmedForm -> Http.Request User.Model
 edit token (Trimmed form) =
     let
-        encodedAvatar =
-            case form.avatar of
-                "" ->
-                    Encode.null
-
-                avatar ->
-                    Encode.string avatar
-
         updates =
-            [ ( "username", Encode.string form.username )
+            [ ( "name", Encode.string form.name )
             , ( "email", Encode.string form.email )
-            , ( "bio", Encode.string form.bio )
-            , ( "image", encodedAvatar )
             ]
 
         encodedUser =
@@ -449,7 +408,7 @@ edit token (Trimmed form) =
             Encode.object [ ( "user", encodedUser ) ]
                 |> Http.jsonBody
     in
-    Api.settings token body Viewer.decoder
+    Api.settings token form.id body
 
 
 nothingIfEmpty : String -> Maybe String
