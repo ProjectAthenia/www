@@ -62,8 +62,8 @@ ever has access to a `Cred` value, it came from either the login API endpoint
 or was passed in via flags.
 
 -}
-credDecoder : Decoder Token
-credDecoder =
+tokenDecoder : Decoder Token
+tokenDecoder =
     Decode.succeed Token
         |> required "token" Decode.string
 
@@ -234,12 +234,12 @@ delete url token body decoder =
 
 login : Http.Body -> Http.Request Token
 login body =
-    post Endpoint.login Nothing body credDecoder
+    post Endpoint.login Nothing body tokenDecoder
 
 
-signUp : Http.Body -> Decoder (Token -> User.Model) -> Http.Request User.Model
-signUp body decoder =
-    post Endpoint.signUp Nothing body User.modelDecoder
+signUp : Http.Body -> Http.Request Token
+signUp body =
+    post Endpoint.signUp Nothing body tokenDecoder
 
 
 settings : Token -> Int -> Http.Body -> Http.Request User.Model
@@ -256,7 +256,7 @@ decoderFromCred : Decoder (Token -> a) -> Decoder a
 decoderFromCred decoder =
     Decode.map2 (\fromCred cred -> fromCred cred)
         decoder
-        credDecoder
+        tokenDecoder
 
 
 

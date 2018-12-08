@@ -15,17 +15,6 @@ type alias Model =
     }
 
 
--- Creates a model object representing a user
-loginModel : String -> String -> Model
-loginModel email password =
-    { id = -1
-    , name = ""
-    , email = email
-    , password = password
-    , roles = []
-    }
-
-
 -- Converts a user model into a JSON string
 toJson : Model -> Encode.Value
 toJson model =
