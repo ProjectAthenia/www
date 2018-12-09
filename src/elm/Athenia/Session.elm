@@ -1,8 +1,8 @@
-module Athenia.Session exposing (Session, changes, token, fromViewer, navKey, viewer)
+module Athenia.Session exposing (Session, changes, token, user, fromViewer, navKey, viewer)
 
 import Athenia.Api as Api
+import Athenia.Models.User.User as User
 import Athenia.Viewer as Viewer
-import Athenia.Avatar as Avatar
 import Browser.Navigation as Nav
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (custom, required)
@@ -37,6 +37,16 @@ token session =
     case session of
         LoggedIn _ val ->
             Just (Viewer.token val)
+
+        Guest _ ->
+            Nothing
+
+
+user : Session -> Maybe User.Model
+user session =
+    case session of
+        LoggedIn _ val ->
+            Just (Viewer.user val)
 
         Guest _ ->
             Nothing

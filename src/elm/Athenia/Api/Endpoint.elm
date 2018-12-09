@@ -2,11 +2,11 @@ module Athenia.Api.Endpoint exposing
     ( Endpoint, request
     , article, articles
     , login, signUp
-    , user, me
+    , user, userActivity, me
     )
 
 import Http
-import Url.Builder exposing (QueryParameter)
+import Url.Builder as Builder exposing (QueryParameter)
 
 
 {-| Http.request, except it takes an Endpoint instead of a Url.
@@ -55,7 +55,7 @@ url : List String -> List QueryParameter -> Endpoint
 url paths queryParams =
     -- NOTE: Url.Builder takes care of percent-encoding special URL characters.
     -- See https://package.elm-lang.org/packages/elm/url/latest/Url#percentEncode
-    Url.Builder.crossOrigin "http://dev-api.projectathenia.com"
+    Builder.crossOrigin "http://dev-api.projectathenia.com"
         ("v1" :: paths)
         queryParams
         |> Endpoint
@@ -93,3 +93,11 @@ signUp =
 user : Int -> Endpoint
 user userId =
     url [ "users", String.fromInt userId ] []
+
+
+userActivity : Int -> Endpoint
+userActivity userId =
+    url [ "users", String.fromInt userId ]
+        [ (Builder.string "expands[createdArticles]" "*")
+        , (Builder.string "expands[createdIterations]" "*")
+        ]
