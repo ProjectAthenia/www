@@ -7,8 +7,9 @@ import Json.Decode.Pipeline exposing (..)
 
 
 type alias Model =
-    { id: Int
-    , content: String
+    { id : Int
+    , name : String
+    , content : String
     }
 
 
@@ -21,6 +22,7 @@ modelDecoder : Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
         |> required "id" int
+        |> required "name" string
         |> required "content" string
 
 
