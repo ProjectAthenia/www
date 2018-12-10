@@ -70,9 +70,13 @@ article articleId =
     url [ "articles", String.fromInt articleId ] []
 
 
-articles : List QueryParameter -> Endpoint
-articles params =
-    url [ "articles" ] params
+articles : Int -> Endpoint
+articles page =
+    url [ "articles" ]
+        <| if page /= 1 then
+            [(Builder.string "page" (String.fromInt page))]
+        else
+            []
 
 
 me : Endpoint

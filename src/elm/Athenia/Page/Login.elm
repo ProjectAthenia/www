@@ -25,7 +25,7 @@ import Json.Encode as Encode
 type alias Model =
     { session : Session
     , problems : List Problem
-    , user : User.Model
+    , form : Form
     }
 
 
@@ -62,8 +62,10 @@ init : Session -> ( Model, Cmd msg )
 init session =
     ( { session = session
       , problems = []
-      , user =
-        User.loginModel "" ""
+      , form =
+        { email = ""
+        , password = ""
+        }
       }
     , Cmd.none
     )
@@ -88,7 +90,7 @@ view model =
                             ]
                         , ul [ class "error-messages" ]
                             (List.map viewProblem model.problems)
-                        , viewForm model.user
+                        , viewForm model.form
                         ]
                     ]
                 ]
@@ -110,15 +112,15 @@ viewProblem problem =
     li [] [ text errorMessage ]
 
 
-viewForm : User.Model -> Html Msg
-viewForm user =
+viewForm : Form -> Html Msg
+viewForm form =
     Html.form [ onSubmit SubmittedForm ]
         [ fieldset [ class "form-group" ]
             [ input
                 [ class "form-control form-control-lg"
                 , placeholder "Email"
                 , onInput EnteredEmail
-                , value user.email
+                , value form.email
                 ]
                 []
             ]
@@ -128,7 +130,7 @@ viewForm user =
                 , type_ "password"
                 , placeholder "Password"
                 , onInput EnteredPassword
-                , value user.password
+                , value form.password
                 ]
                 []
             ]
@@ -154,7 +156,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SubmittedForm ->
-            case validate model.user of
+            case validate model.form of
                 Ok validForm ->
                     ( { model | problems = [] }
                     , Http.send CompletedLogin (login validForm)
@@ -166,10 +168,10 @@ update msg model =
                     )
 
         EnteredEmail email ->
-            updateForm (\user -> { user | email = email }) model
+            updateForm (\form -> { form | email = email }) model
 
         EnteredPassword password ->
-            updateForm (\user -> { user | password = password }) model
+            updateForm (\form -> { form | password = password }) model
 
         CompletedLogin (Err error) ->
             handleErrors error model
@@ -197,9 +199,9 @@ update msg model =
 {-| Helper function for `update`. Updates the form and returns Cmd.none.
 Useful for recording form fields!
 -}
-updateForm : (User.Model -> User.Model) -> Model -> ( Model, Cmd Msg )
+updateForm : (Form -> Form) -> Model -> ( Model, Cmd Msg )
 updateForm transform model =
-    ( { model | user = transform model.user }, Cmd.none )
+    ( { model | form = transform model.form }, Cmd.none )
 
 
 handleErrors : Http.Error -> Model -> (Model, Cmd Msg)
@@ -224,12 +226,16 @@ subscriptions model =
 
 -- FORM
 
+type alias Form =
+    { email : String
+    , password : String
+    }
 
 {-| Marks that we've trimmed the form's fields, so we don't accidentally send
 it to the server without having trimmed it!
 -}
-type TrimmedUser
-    = Trimmed User.Model
+type TrimmedForm
+    = Trimmed Form
 
 
 {-| When adding a variant here, add it to `fieldsToValidate` too!
@@ -248,11 +254,11 @@ fieldsToValidate =
 
 {-| Trim the form and validate its fields. If there are problems, report them!
 -}
-validate : User.Model -> Result (List Problem) TrimmedUser
-validate user =
+validate : Form -> Result (List Problem) TrimmedForm
+validate form =
     let
         trimmedForm =
-            trimFields user
+            trimFields form
     in
     case List.concatMap (validateField trimmedForm) fieldsToValidate of
         [] ->
@@ -262,43 +268,46 @@ validate user =
             Err problems
 
 
-validateField : TrimmedUser -> ValidatedField -> List Problem
-validateField (Trimmed user) field =
+validateField : TrimmedForm -> ValidatedField -> List Problem
+validateField (Trimmed form) field =
     List.map (InvalidEntry field) <|
         case field of
             Email ->
-                if String.isEmpty user.email then
+                if String.isEmpty form.email then
                     [ "email can't be blank." ]
 
                 else
                     []
 
             Password ->
-                if String.isEmpty user.password then
+                if String.isEmpty form.password then
                     [ "password can't be blank." ]
 
                 else
                     []
 
-
-{-| Don't trim while the user is typing! That would be super annoying.
-Instead, trim only on submit.
--}
-trimFields : User.Model -> TrimmedUser
+trimFields : Form -> TrimmedForm
 trimFields user =
     Trimmed
-        <| User.loginModel
-            (String.trim user.email)
-            (String.trim user.password)
+        { email = (String.trim user.email)
+        , password = (String.trim user.password)
+        }
 
 
 
 -- HTTP
 
 
-login : TrimmedUser -> Http.Request Token
-login (Trimmed user) =
+login : TrimmedForm -> Http.Request Token
+login (Trimmed model) =
     let
+        user =
+            { id = 0
+            , email = model.email
+            , password = model.password
+            , name = ""
+            , roles = []
+            }
         body =
             Http.jsonBody (User.toJson user)
     in

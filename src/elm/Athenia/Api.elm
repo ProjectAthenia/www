@@ -6,6 +6,7 @@ port module Athenia.Api exposing
     , delete, get, post, put
     , login, logout, signUp
     , settings, me
+    , articles
     , storeCredWith
     , viewerChanges
     )
@@ -17,6 +18,7 @@ It exposes an opaque Endpoint type which is guaranteed to point to the correct U
 -}
 
 import Athenia.Api.Endpoint as Endpoint
+import Athenia.Models.Article as Article
 import Athenia.Models.User.User as User
 import Browser
 import Browser.Navigation as Nav
@@ -250,6 +252,11 @@ settings token userId body =
 me : Token -> Http.Request User.Model
 me token =
     get Endpoint.me (Just token) User.modelDecoder
+
+
+articles : Token -> Int -> Http.Request Article.ArticlePage
+articles token page =
+    get (Endpoint.article page) (Just token) Article.pageDecoder
 
 
 decoderFromCred : Decoder (Token -> a) -> Decoder a
