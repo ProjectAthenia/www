@@ -6,7 +6,7 @@ module Athenia.Page.Home exposing (Model, Msg, init, subscriptions, toSession, u
 import Athenia.Api as Api exposing (Token)
 import Athenia.Api.Endpoint as Endpoint
 import Athenia.Components.Loading as Loading
-import Athenia.Models.Article as Article
+import Athenia.Models.Wiki.Article as Article
 import Athenia.Models.Page as PageModel
 import Athenia.Page as Page
 import Athenia.Session as Session exposing (Session)
