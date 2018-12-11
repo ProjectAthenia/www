@@ -67,7 +67,9 @@ url paths queryParams =
 
 article : Int -> Endpoint
 article articleId =
-    url [ "articles", String.fromInt articleId ] []
+    url [ "articles", String.fromInt articleId ]
+        [ (Builder.string "expands[createdBy]" "*")
+        ]
 
 
 articles : Int -> Endpoint
