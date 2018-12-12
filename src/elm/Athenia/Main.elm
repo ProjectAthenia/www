@@ -157,7 +157,6 @@ changeRouteTo maybeRoute model =
                 |> updateWith Register GotRegisterMsg model
 
         Just route ->
-
             case Session.token session of
                 Just token ->
                     changeRouteToAuthenticatedRoute route model session token
@@ -202,22 +201,9 @@ update msg model =
         ( ClickedLink urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
-                    case url.fragment of
-                        Nothing ->
-                            -- If we got a link that didn't include a fragment,
-                            -- it's from one of those (href "") attributes that
-                            -- we have to include to make the RealWorld CSS work.
-                            --
-                            -- In an application doing path routing instead of
-                            -- fragment-based routing, this entire
-                            -- `case url.fragment of` expression this comment
-                            -- is inside would be unnecessary.
-                            ( model, Cmd.none )
-
-                        Just _ ->
-                            ( model
-                            , Nav.pushUrl (Session.navKey (toSession model)) (Url.toString url)
-                            )
+                    ( model
+                    , Nav.pushUrl (Session.navKey (toSession model)) (Url.toString url)
+                    )
 
                 Browser.External href ->
                     ( model
