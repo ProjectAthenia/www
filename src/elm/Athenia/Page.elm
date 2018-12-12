@@ -24,7 +24,7 @@ type Page
     | Login
     | Register
     | Settings
-    | Profile User.Model
+    | Profile Int
     | NewArticle
 
 
@@ -118,8 +118,8 @@ isActive page route =
         ( Settings, Route.Settings ) ->
             True
 
-        ( Profile user, Route.Profile routeUserId ) ->
-            user.id == routeUserId
+        ( Profile userId, Route.Profile routeUserId ) ->
+            userId == routeUserId
 
         ( NewArticle, Route.NewArticle ) ->
             True
