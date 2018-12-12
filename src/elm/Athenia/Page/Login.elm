@@ -190,9 +190,18 @@ update msg model =
             handleErrors error model
 
         RetrieveMe token (Ok user) ->
-            ( model
-            , Viewer.store
-                <| Viewer.viewer user token
+            let
+                viewer =
+                    Viewer.viewer user token
+            in
+            ( {model
+                | session =
+                    Session.fromViewer (Session.navKey model.session) (Just viewer)
+            }
+            , Cmd.batch
+                [ Viewer.store viewer
+                , Route.replaceUrl (Session.navKey model.session) Route.Home
+                ]
             )
 
 

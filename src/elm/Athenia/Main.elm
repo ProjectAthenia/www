@@ -137,6 +137,8 @@ changeRouteTo maybeRoute model =
     let
         session =
             toSession model
+        dummy =
+            Debug.log "session" session
     in
     case maybeRoute of
         Nothing ->
