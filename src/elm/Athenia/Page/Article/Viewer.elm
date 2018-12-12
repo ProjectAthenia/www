@@ -1,4 +1,4 @@
-module Athenia.Page.Article exposing (Model, Msg, init, subscriptions, toSession, update, view)
+module Athenia.Page.Article.Viewer exposing (Model, Msg, init, subscriptions, toSession, update, view)
 
 {-| Viewing an individual article.
 -}
@@ -23,7 +23,6 @@ import Task exposing (Task)
 import Time
 
 
-
 -- MODEL
 
 
@@ -34,14 +33,14 @@ type alias Model =
     , errors : List String
 
     -- Loaded independently from server
-    , article : Status Article.Model
+    , article : Status
     }
 
 
-type Status a
+type Status
     = Loading
     | LoadingSlowly
-    | Loaded a
+    | Loaded Article.Model
     | Failed
 
 
@@ -68,7 +67,6 @@ init session token articleId =
         , Task.perform (\_ -> PassedSlowLoadThreshold) Loading.slowThreshold
         ]
     )
-
 
 
 -- VIEW
@@ -161,14 +159,12 @@ update msg model =
             ( { model | article = LoadingSlowly }, Cmd.none )
 
 
-
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Session.changes GotSession (Session.navKey model.session)
-
 
 
 -- HTTP
@@ -180,14 +176,12 @@ fetchArticle token articleId =
         <| Api.article token articleId
 
 
-
 -- EXPORT
 
 
 toSession : Model -> Session
 toSession model =
     model.session
-
 
 
 -- INTERNAL
