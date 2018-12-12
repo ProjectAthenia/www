@@ -30,8 +30,8 @@ type alias Model =
     , timeZone : Time.Zone
     , errors : List String
     , currentTab : ActiveTab
-    , status : Status
-    , user : User.Model
+    , token : Token
+    , user : Status
     }
 
 
@@ -41,14 +41,14 @@ type ActiveTab
 
 
 type Status
-    = Loading
-    | LoadingSlowly
-    | Loaded
+    = Loading Int
+    | LoadingSlowly Int
+    | Loaded User.Model
     | Failed
 
 
-init : Session -> User.Model -> ( Model, Cmd Msg )
-init session user =
+init : Session -> Token -> Int -> ( Model, Cmd Msg )
+init session token userId =
     let
         maybeToken =
             Session.token session
@@ -57,20 +57,15 @@ init session user =
       , timeZone = Time.utc
       , errors = []
       , currentTab = defaultFeedTab
-      , status = Loading
-      , user = user
+      , token = token
+      , user = Loading userId
       }
     , Cmd.batch
-        [ fetchUser session user
+        [ fetchUser session userId
         , Task.perform GotTimeZone Time.here
         , Task.perform (\_ -> PassedSlowLoadThreshold) Loading.slowThreshold
         ]
     )
-
-
-currentUsername : Model -> String
-currentUsername model =
-    model.user.name
 
 
 defaultFeedTab : ActiveTab
@@ -81,15 +76,15 @@ defaultFeedTab =
 -- HTTP
 
 
-fetchUser : Session -> User.Model -> Cmd Msg
-fetchUser session user =
+fetchUser : Session -> Int -> Cmd Msg
+fetchUser session userId =
     let
         maybeToken =
             Session.token session
 
     in
     Http.send CompletedUserLoad
-        <| Api.get (Endpoint.userActivity user.id) maybeToken User.modelDecoder
+        <| Api.get (Endpoint.userActivity userId) maybeToken User.modelDecoder
 
 
 -- VIEW
@@ -99,20 +94,23 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     let
         title =
-            case Session.user model.session of
-                Just loggedInUser ->
-                    if model.user.id == loggedInUser.id then
+            case (Session.user model.session, model.user) of
+                (Just loggedInUser, Loaded user) ->
+                    if user.id == loggedInUser.id then
                         "My Profile"
                     else
-                        model.user.name
+                        user.name
 
-                Nothing ->
-                    model.user.name
+                (_, Loaded user) ->
+                    user.name
+
+                _ ->
+                    "Loading"
     in
     { title = title
     , content =
-        case model.status of
-            Loaded ->
+        case model.user of
+            Loaded user ->
                 div [ class "profile-page" ]
                     [ Page.viewErrors ClickedDismissErrors model.errors
                     , div [ class "user-info" ]
@@ -134,10 +132,10 @@ view model =
                         ]
                     ]
 
-            Loading ->
+            Loading userId ->
                 text ""
 
-            LoadingSlowly ->
+            LoadingSlowly userId ->
                 Loading.icon
 
             Failed ->
@@ -203,14 +201,13 @@ update msg model =
 
         CompletedUserLoad (Ok user) ->
             ( { model
-                | user = user
-                , status = Loaded
+                | user = Loaded user
             }
             , Cmd.none
             )
 
         CompletedUserLoad (Err err ) ->
-            ( { model | status = Failed }
+            ( { model | user = Failed }
             , Log.error
             )
 
@@ -223,7 +220,13 @@ update msg model =
             )
 
         PassedSlowLoadThreshold ->
-            ( { model | status = LoadingSlowly }, Cmd.none )
+            case model.user of
+                Loading userId ->
+                    ( { model | user = LoadingSlowly userId }, Cmd.none )
+
+                _ ->
+                    (model, Cmd.none)
+
 
 
 
