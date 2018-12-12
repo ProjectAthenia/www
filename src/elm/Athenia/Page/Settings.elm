@@ -25,6 +25,7 @@ import Task
 
 type alias Model =
     { session : Session
+    , token : Token
     , problems : List Problem
     , status : Status
     }
@@ -50,9 +51,10 @@ type Problem
     | ServerError String
 
 
-init : Session -> ( Model, Cmd Msg )
-init session =
+init : Session -> Token -> ( Model, Cmd Msg )
+init session token =
     ( { session = session
+      , token = token
       , problems = []
       , status = Loading
       }
@@ -84,34 +86,29 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Settings"
     , content =
-        case Session.token model.session of
-            Just cred ->
-                div [ class "settings-page" ]
-                    [ div [ class "container page" ]
-                        [ div [ class "row" ]
-                            [ div [ class "col-md-6 offset-md-3 col-xs-12" ] <|
-                                [ h1 [ class "text-xs-center" ] [ text "Your Settings" ]
-                                , ul [ class "error-messages" ]
-                                    (List.map viewProblem model.problems)
-                                , case model.status of
-                                    Loaded form ->
-                                        viewForm cred form
+        div [ class "settings-page" ]
+            [ div [ class "container page" ]
+                [ div [ class "row" ]
+                    [ div [ class "col-md-6 offset-md-3 col-xs-12" ] <|
+                        [ h1 [ class "text-xs-center" ] [ text "Your Settings" ]
+                        , ul [ class "error-messages" ]
+                            (List.map viewProblem model.problems)
+                        , case model.status of
+                            Loaded form ->
+                                viewForm model.token form
 
-                                    Loading ->
-                                        text ""
+                            Loading ->
+                                text ""
 
-                                    LoadingSlowly ->
-                                        Loading.icon
+                            LoadingSlowly ->
+                                Loading.icon
 
-                                    Failed ->
-                                        text "Error loading page."
-                                ]
-                            ]
+                            Failed ->
+                                text "Error loading page."
                         ]
                     ]
-
-            Nothing ->
-                text "Sign in to view your settings."
+                ]
+            ]
     }
 
 
@@ -202,11 +199,11 @@ update msg model =
             , Cmd.none
             )
 
-        SubmittedForm cred form ->
+        SubmittedForm token form ->
             case validate form of
                 Ok validForm ->
                     ( { model | status = Loaded form }
-                    , edit cred validForm
+                    , edit token validForm
                         |> Http.send CompletedSave
                     )
 

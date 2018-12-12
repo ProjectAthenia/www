@@ -25,7 +25,6 @@ type Route
     | Settings
     | Article Int
     | Profile Int
-    | NewArticle
     | EditArticle Int
 
 
@@ -39,7 +38,6 @@ parser =
         , Parser.map Profile (s "profile" </> int)
         , Parser.map Register (s "register")
         , Parser.map Article (s "article" </> int)
-        , Parser.map NewArticle (s "editor")
         , Parser.map EditArticle (s "editor" </> int)
         ]
 
@@ -99,9 +97,6 @@ routeToString page =
 
                 Profile userId ->
                     [ "profile", String.fromInt userId ]
-
-                NewArticle ->
-                    [ "editor" ]
 
                 EditArticle articleId ->
                     [ "editor", String.fromInt articleId ]
