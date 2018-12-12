@@ -14,14 +14,18 @@ var data = {
 // full screen the app and inject the env flags
 var app = Elm.Elm.Athenia.Main.init(data);
 
-app.ports.setLocalStorageValue.subscribe(setLocalStorageValue);
-
-function setLocalStorageValue(data) {
-    window.localStorage.setItem(data[0], data[1]);
-}
-
-app.ports.clearStorage.subscribe(clearStorage);
-
-function clearStorage() {
-    window.localStorage.clear()
-}
+app.ports.storeCache.subscribe(function(val) {
+    if (val === null) {
+        localStorage.removeItem(storageKey);
+    } else {
+        localStorage.setItem(storageKey, JSON.stringify(val));
+    }
+    // Report that the new session was stored succesfully.
+    setTimeout(function() { app.ports.onStoreChange.send(val); }, 0);
+});
+// Whenever localStorage changes in another tab, report it if necessary.
+window.addEventListener("storage", function(event) {
+    if (event.storageArea === localStorage && event.key === storageKey) {
+        app.ports.onStoreChange.send(event.newValue);
+    }
+}, false);
