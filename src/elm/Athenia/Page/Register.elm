@@ -321,15 +321,12 @@ trimFields form =
 register : TrimmedForm -> Http.Request Token
 register (Trimmed form) =
     let
-        user =
+        body =
             Encode.object
                 [ ( "name", Encode.string form.name )
                 , ( "email", Encode.string form.email )
                 , ( "password", Encode.string form.password )
                 ]
-
-        body =
-            Encode.object [ ( "user", user ) ]
                 |> Http.jsonBody
     in
     Api.signUp body

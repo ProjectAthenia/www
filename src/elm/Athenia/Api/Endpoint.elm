@@ -86,14 +86,24 @@ me =
     url [ "users", "me" ] []
 
 
+refresh : Endpoint
+refresh =
+    url [ "auth", "refresh" ] []
+
+
 login : Endpoint
 login =
-    url [ "users", "login" ] []
+    url [ "auth", "login" ] []
+
+
+logout : Endpoint
+logout =
+    url [ "auth", "logout" ] []
 
 
 signUp : Endpoint
 signUp =
-    url [ "sign-up" ] []
+    url [ "auth", "sign-up" ] []
 
 
 user : Int -> Endpoint
