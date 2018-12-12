@@ -25,7 +25,7 @@ type Page
     | Register
     | Settings
     | Profile Int
-    | NewArticle
+    | Article
 
 
 {-| Take a page's Html and frames it with a header and footer.
@@ -69,8 +69,7 @@ viewMenu page maybeViewer =
                 user =
                     (Viewer.user viewer)
             in
-                [ linkTo Route.NewArticle [ i [ class "ion-compose" ] [], text "\u{00A0}New Article" ]
-                , linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text "\u{00A0}Settings" ]
+                [ linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text "\u{00A0}Settings" ]
                 , linkTo
                     (Route.Profile user.id)
                     [ i [ class "ion-pic" ] [], text user.name ]
@@ -120,9 +119,6 @@ isActive page route =
 
         ( Profile userId, Route.Profile routeUserId ) ->
             userId == routeUserId
-
-        ( NewArticle, Route.NewArticle ) ->
-            True
 
         _ ->
             False

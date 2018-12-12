@@ -3,11 +3,26 @@ module Athenia.Main exposing (..)
 
 import Athenia.Api as Api exposing (Token)
 import Athenia.Models.User.User as User
+import Athenia.Page as Page
+import Athenia.Page.Article.Editor as ArticleEditor
+import Athenia.Page.Article.Viewer as ArticleViewer
+import Athenia.Page.Blank as Blank
+import Athenia.Page.Home as Home
 import Athenia.Page.Login as Login
 import Athenia.Page.NotFound as NotFound
-import Athenia.Route exposing (Route)
+import Athenia.Page.Profile as Profile
+import Athenia.Page.Register as Register
+import Athenia.Page.Settings as Settings
+import Athenia.Route as Route exposing (Route)
 import Athenia.Session as Session exposing (Session)
+import Athenia.Viewer as Viewer exposing (Viewer)
 import Browser exposing (Document)
+import Browser.Navigation as Nav
+import Html exposing (..)
+import Json.Decode as Decode exposing (Value)
+import Task
+import Time
+import Url exposing (Url)
 
 type Model
     = Redirect Session
@@ -16,9 +31,9 @@ type Model
     | Settings Settings.Model
     | Login Login.Model
     | Register Register.Model
-    | Profile User.Model
-    | Article Article.Model
-    | Editor (Maybe Slug) Editor.Model
+    | Profile Int Profile.Model
+    | ArticleEditor Int ArticleEditor.Model
+    | ArticleViewer Int ArticleViewer.Model
 
 
 -- MODEL
@@ -61,17 +76,14 @@ view model =
         Register register ->
             viewPage Page.Other GotRegisterMsg (Register.view register)
 
-        Profile username profile ->
-            viewPage (Page.Profile username) GotProfileMsg (Profile.view profile)
+        Profile userId profile ->
+            viewPage (Page.Profile userId) GotProfileMsg (Profile.view profile)
 
-        Article article ->
-            viewPage Page.Other GotArticleMsg (Article.view article)
+        ArticleViewer articleId article ->
+            viewPage Page.Other GotArticleViewerMsg (ArticleViewer.view article)
 
-        Editor Nothing editor ->
-            viewPage Page.NewArticle GotEditorMsg (Editor.view editor)
-
-        Editor (Just _) editor ->
-            viewPage Page.Other GotEditorMsg (Editor.view editor)
+        ArticleEditor articleId article ->
+            viewPage Page.Other GotArticleEditorMsg (ArticleEditor.view article)
 
 
 type Msg
@@ -84,8 +96,8 @@ type Msg
     | GotLoginMsg Login.Msg
     | GotRegisterMsg Register.Msg
     | GotProfileMsg Profile.Msg
-    | GotArticleMsg Article.Msg
-    | GotEditorMsg Editor.Msg
+    | GotArticleViewerMsg ArticleViewer.Msg
+    | GotArticleEditorMsg ArticleEditor.Msg
     | GotSession Session
 
 
@@ -113,11 +125,11 @@ toSession page =
         Profile _ profile ->
             Profile.toSession profile
 
-        Article article ->
-            Article.toSession article
+        ArticleViewer _ article ->
+            ArticleViewer.toSession article
 
-        Editor _ editor ->
-            Editor.toSession editor
+        ArticleEditor _ editor ->
+            ArticleEditor.toSession editor
 
 
 changeRouteTo : Maybe Route -> Model -> ( Model, Cmd Msg )
@@ -136,22 +148,6 @@ changeRouteTo maybeRoute model =
         Just Route.Logout ->
             ( model, Api.logout )
 
-        Just Route.NewArticle ->
-            Editor.initNew session
-                |> updateWith (Editor Nothing) GotEditorMsg model
-
-        Just (Route.EditArticle slug) ->
-            Editor.initEdit session slug
-                |> updateWith (Editor (Just slug)) GotEditorMsg model
-
-        Just Route.Settings ->
-            Settings.init session
-                |> updateWith Settings GotSettingsMsg model
-
-        Just Route.Home ->
-            Home.init session
-                |> updateWith Home GotHomeMsg model
-
         Just Route.Login ->
             Login.init session
                 |> updateWith Login GotLoginMsg model
@@ -160,13 +156,41 @@ changeRouteTo maybeRoute model =
             Register.init session
                 |> updateWith Register GotRegisterMsg model
 
-        Just (Route.Profile username) ->
-            Profile.init session username
-                |> updateWith (Profile username) GotProfileMsg model
+        Just route ->
 
-        Just (Route.Article slug) ->
-            Article.init session slug
-                |> updateWith Article GotArticleMsg model
+            case Session.token session of
+                Just token ->
+                    changeRouteToAuthenticatedRoute route model session token
+
+                Nothing ->
+                    (model, Route.replaceUrl (Session.navKey session) Route.Login )
+
+
+changeRouteToAuthenticatedRoute : Route -> Model -> Session -> Token -> (Model, Cmd Msg)
+changeRouteToAuthenticatedRoute route model session token =
+    case route of
+        Route.EditArticle articleId ->
+            ArticleEditor.init session token articleId
+                |> updateWith (ArticleEditor articleId) GotArticleEditorMsg model
+
+        Route.Settings ->
+            Settings.init session token
+                |> updateWith Settings GotSettingsMsg model
+
+        Route.Home ->
+            Home.init session token
+                |> updateWith Home GotHomeMsg model
+
+        Route.Profile userId ->
+            Profile.init session token userId
+                |> updateWith (Profile userId) GotProfileMsg model
+
+        Route.Article articleId ->
+            ArticleViewer.init session token articleId
+                |> updateWith (ArticleViewer articleId) GotArticleViewerMsg model
+
+        _ ->
+            (model, Cmd.none)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -226,13 +250,13 @@ update msg model =
             Profile.update subMsg profile
                 |> updateWith (Profile username) GotProfileMsg model
 
-        ( GotArticleMsg subMsg, Article article ) ->
-            Article.update subMsg article
-                |> updateWith Article GotArticleMsg model
+        ( GotArticleViewerMsg subMsg, ArticleViewer articleId article ) ->
+            ArticleViewer.update subMsg article
+                |> updateWith (ArticleViewer articleId) GotArticleViewerMsg model
 
-        ( GotEditorMsg subMsg, Editor slug editor ) ->
-            Editor.update subMsg editor
-                |> updateWith (Editor slug) GotEditorMsg model
+        ( GotArticleEditorMsg subMsg, ArticleEditor articleId editor ) ->
+            ArticleEditor.update subMsg editor
+                |> updateWith (ArticleEditor articleId) GotArticleEditorMsg model
 
         ( GotSession session, Redirect _ ) ->
             ( Redirect session
@@ -279,11 +303,11 @@ subscriptions model =
         Profile _ profile ->
             Sub.map GotProfileMsg (Profile.subscriptions profile)
 
-        Article article ->
-            Sub.map GotArticleMsg (Article.subscriptions article)
+        ArticleViewer _ article ->
+            Sub.map GotArticleViewerMsg (ArticleViewer.subscriptions article)
 
-        Editor _ editor ->
-            Sub.map GotEditorMsg (Editor.subscriptions editor)
+        ArticleEditor _ editor ->
+            Sub.map GotArticleEditorMsg (ArticleEditor.subscriptions editor)
 
 
 main : Program Value Model Msg
