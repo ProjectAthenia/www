@@ -2,6 +2,7 @@
 module Athenia.Main exposing (..)
 
 import Athenia.Api as Api exposing (Token)
+import Athenia.Components.NavBar as AppNavBar
 import Athenia.Models.User.User as User
 import Athenia.Page as Page
 import Athenia.Page.Article.Editor as ArticleEditor
@@ -16,6 +17,7 @@ import Athenia.Page.Settings as Settings
 import Athenia.Route as Route exposing (Route)
 import Athenia.Session as Session exposing (Session)
 import Athenia.Viewer as Viewer exposing (Viewer)
+import Bootstrap.Navbar as Navbar
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Html exposing (..)
@@ -24,7 +26,7 @@ import Task
 import Time
 import Url exposing (Url)
 
-type Model
+type CurrentState
     = Redirect Session
     | NotFound Session
     | Home Home.Model
@@ -36,54 +38,86 @@ type Model
     | ArticleViewer Int ArticleViewer.Model
 
 
+type alias Model =
+    { navBarState : Navbar.State
+    , navBarConfig : Navbar.Config Msg
+    , currentState : CurrentState
+    }
+
+
 -- MODEL
 
 
 init : Maybe Viewer -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init maybeViewer url navKey =
-    changeRouteTo (Route.fromUrl url)
-        (Redirect (Session.fromViewer navKey maybeViewer))
+    let
+        (navBarState, navBarCmd) =
+            Navbar.initialState NavBarStateChange
+        initialModel =
+            { navBarState = navBarState
+            , navBarConfig = AppNavBar.config NavBarStateChange (Route.href Route.Home)
+                (getNavItems maybeViewer)
+            , currentState = (Redirect (Session.fromViewer navKey maybeViewer))
+            }
+        (readyModel, initialCmd) =
+            changeRouteTo (Route.fromUrl url)
+                initialModel
+    in
+        ( readyModel
+        , Cmd.batch
+            [ initialCmd
+            , navBarCmd
+            ]
+        )
+
+
+getNavItems : Maybe Viewer.Viewer -> List (AppNavBar.NavLink Msg)
+getNavItems maybeViewer =
+    case maybeViewer of
+        Just viewer ->
+            [ ("Settings", Route.href Route.Settings)
+            , ("Log Out", Route.href Route.Logout)
+            ]
+        Nothing ->
+            [ ("Sign In", Route.href  Route.Login)
+            , ("Sign Up", Route.href  Route.Register)
+            ]
+
 
 
 view : Model -> Document Msg
 view model =
     let
-        viewPage page toMsg config =
-            let
-                { title, body } =
-                    Page.view (Session.viewer (toSession model)) page config
-            in
-            { title = title
-            , body = List.map (Html.map toMsg) body
-            }
+        viewPage viewData parentMsg =
+            Page.view model.navBarState model.navBarConfig viewData parentMsg
     in
-    case model of
+    case model.currentState of
         Redirect _ ->
-            viewPage Page.Other (\_ -> Ignored) Blank.view
+            viewPage Blank.view (\_ -> Ignored)
 
         NotFound _ ->
-            viewPage Page.Other (\_ -> Ignored) NotFound.view
+            viewPage NotFound.view (\_ -> Ignored)
 
         Settings settings ->
-            viewPage Page.Other GotSettingsMsg (Settings.view settings)
+            viewPage (Settings.view settings) GotSettingsMsg
 
         Home home ->
-            viewPage Page.Home GotHomeMsg (Home.view home)
+            viewPage (Home.view home) GotHomeMsg
 
         Login login ->
-            viewPage Page.Other GotLoginMsg (Login.view login)
+            viewPage (Login.view login) GotLoginMsg
 
         Register register ->
-            viewPage Page.Other GotRegisterMsg (Register.view register)
+            viewPage (Register.view register) GotRegisterMsg
 
         Profile userId profile ->
-            viewPage (Page.Profile userId) GotProfileMsg (Profile.view profile)
+            viewPage (Profile.view profile) GotProfileMsg
 
         ArticleViewer articleId article ->
-            viewPage Page.Other GotArticleViewerMsg (ArticleViewer.view article)
+            viewPage (ArticleViewer.view article) GotArticleViewerMsg
 
         ArticleEditor articleId article ->
-            viewPage Page.Other GotArticleEditorMsg (ArticleEditor.view article)
+            viewPage (ArticleEditor.view article) GotArticleEditorMsg
 
 
 type Msg
@@ -98,12 +132,13 @@ type Msg
     | GotProfileMsg Profile.Msg
     | GotArticleViewerMsg ArticleViewer.Msg
     | GotArticleEditorMsg ArticleEditor.Msg
+    | NavBarStateChange Navbar.State
     | GotSession Session
 
 
 toSession : Model -> Session
 toSession page =
-    case page of
+    case page.currentState of
         Redirect session ->
             session
 
@@ -140,7 +175,9 @@ changeRouteTo maybeRoute model =
     in
     case maybeRoute of
         Nothing ->
-            ( NotFound session, Cmd.none )
+            ( { model | currentState = NotFound session }
+            , Cmd.none
+            )
 
         Just Route.Root ->
             ( model, Route.replaceUrl (Session.navKey session) Route.Home )
@@ -194,7 +231,7 @@ changeRouteToAuthenticatedRoute route model session token =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model ) of
+    case ( msg, model.currentState ) of
         ( Ignored, _ ) ->
             ( model, Cmd.none )
 
@@ -245,7 +282,7 @@ update msg model =
                 |> updateWith (ArticleEditor articleId) GotArticleEditorMsg model
 
         ( GotSession session, Redirect _ ) ->
-            ( Redirect session
+            ( { model | currentState = Redirect session }
             , Route.replaceUrl (Session.navKey session) Route.Home
             )
 
@@ -254,9 +291,9 @@ update msg model =
             ( model, Cmd.none )
 
 
-updateWith : (subModel -> Model) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg ) -> ( Model, Cmd Msg )
+updateWith : (subModel -> CurrentState) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg ) -> ( Model, Cmd Msg )
 updateWith toModel toMsg model ( subModel, subCmd ) =
-    ( toModel subModel
+    ( {model | currentState = toModel subModel }
     , Cmd.map toMsg subCmd
     )
 
@@ -267,33 +304,36 @@ updateWith toModel toMsg model ( subModel, subCmd ) =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model of
-        NotFound _ ->
-            Sub.none
+    Sub.batch
+        [ case model.currentState of
+            NotFound _ ->
+                Sub.none
 
-        Redirect _ ->
-            Session.changes GotSession (Session.navKey (toSession model))
+            Redirect _ ->
+                Session.changes GotSession (Session.navKey (toSession model))
 
-        Settings settings ->
-            Sub.map GotSettingsMsg (Settings.subscriptions settings)
+            Settings settings ->
+                Sub.map GotSettingsMsg (Settings.subscriptions settings)
 
-        Home home ->
-            Sub.map GotHomeMsg (Home.subscriptions home)
+            Home home ->
+                Sub.map GotHomeMsg (Home.subscriptions home)
 
-        Login login ->
-            Sub.map GotLoginMsg (Login.subscriptions login)
+            Login login ->
+                Sub.map GotLoginMsg (Login.subscriptions login)
 
-        Register register ->
-            Sub.map GotRegisterMsg (Register.subscriptions register)
+            Register register ->
+                Sub.map GotRegisterMsg (Register.subscriptions register)
 
-        Profile _ profile ->
-            Sub.map GotProfileMsg (Profile.subscriptions profile)
+            Profile _ profile ->
+                Sub.map GotProfileMsg (Profile.subscriptions profile)
 
-        ArticleViewer _ article ->
-            Sub.map GotArticleViewerMsg (ArticleViewer.subscriptions article)
+            ArticleViewer _ article ->
+                Sub.map GotArticleViewerMsg (ArticleViewer.subscriptions article)
 
-        ArticleEditor _ editor ->
-            Sub.map GotArticleEditorMsg (ArticleEditor.subscriptions editor)
+            ArticleEditor _ editor ->
+                Sub.map GotArticleEditorMsg (ArticleEditor.subscriptions editor)
+        , Navbar.subscriptions model.navBarState NavBarStateChange
+        ]
 
 
 main : Program Value Model Msg

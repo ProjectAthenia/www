@@ -5,6 +5,8 @@ import Athenia.Models.User.User as User
 import Athenia.Route as Route exposing (Route)
 import Athenia.Session as Session exposing (Session)
 import Athenia.Viewer as Viewer exposing (Viewer)
+import Bootstrap.CDN as CDN
+import Bootstrap.Navbar as Navbar
 import Browser exposing (Document)
 import Html exposing (Html, a, button, div, footer, i, img, li, nav, p, span, text, ul)
 import Html.Attributes exposing (class, classList, href, style)
@@ -37,49 +39,16 @@ isLoading is for determining whether we should show a loading spinner
 in the header. (This comes up during slow page transitions.)
 
 -}
-view : Maybe Viewer -> Page -> { title : String, content : Html msg } -> Document msg
-view maybeViewer page { title, content } =
-    { title = title ++ " - Conduit"
-    , body = viewHeader page maybeViewer :: content :: [ viewFooter ]
+view : Navbar.State -> Navbar.Config msg -> { title : String, content : Html subMsg } -> (subMsg -> msg) -> Document msg
+view navBarState navBarConfig { title, content } parentMsg =
+    { title = title ++ " - Project Athenia"
+    , body = CDN.stylesheet :: viewHeader navBarState navBarConfig :: Html.map parentMsg content :: [ viewFooter ]
     }
 
 
-viewHeader : Page -> Maybe Viewer -> Html msg
-viewHeader page maybeViewer =
-    nav [ class "navbar navbar-light" ]
-        [ div [ class "container" ]
-            [ a [ class "navbar-brand", Route.href Route.Home ]
-                [ text "Project Athenia" ]
-            , ul [ class "nav navbar-nav pull-xs-right" ] <|
-                navbarLink page Route.Home [ text "Home" ]
-                    :: viewMenu page maybeViewer
-            ]
-        ]
-
-
-viewMenu : Page -> Maybe Viewer -> List (Html msg)
-viewMenu page maybeViewer =
-    let
-        linkTo =
-            navbarLink page
-    in
-    case maybeViewer of
-        Just viewer ->
-            let
-                user =
-                    (Viewer.user viewer)
-            in
-                [ linkTo Route.Settings [ i [ class "ion-gear-a" ] [], text "\u{00A0}Settings" ]
-                , linkTo
-                    (Route.Profile user.id)
-                    [ i [ class "ion-pic" ] [], text user.name ]
-                , linkTo Route.Logout [ text "Sign out" ]
-                ]
-
-        Nothing ->
-            [ linkTo Route.Login [ text "Sign in" ]
-            , linkTo Route.Register [ text "Sign up" ]
-            ]
+viewHeader : Navbar.State -> Navbar.Config msg ->  Html msg
+viewHeader navBarState navBarConfig =
+    Navbar.view navBarState navBarConfig
 
 
 viewFooter : Html msg
@@ -94,34 +63,6 @@ viewFooter =
                 ]
             ]
         ]
-
-
-navbarLink : Page -> Route -> List (Html msg) -> Html msg
-navbarLink page route linkContent =
-    li [ classList [ ( "nav-item", True ), ( "active", isActive page route ) ] ]
-        [ a [ class "nav-link", Route.href route ] linkContent ]
-
-
-isActive : Page -> Route -> Bool
-isActive page route =
-    case ( page, route ) of
-        ( Home, Route.Home ) ->
-            True
-
-        ( Login, Route.Login ) ->
-            True
-
-        ( Register, Route.Register ) ->
-            True
-
-        ( Settings, Route.Settings ) ->
-            True
-
-        ( Profile userId, Route.Profile routeUserId ) ->
-            userId == routeUserId
-
-        _ ->
-            False
 
 
 {-| Render dismissable errors. We use this all over the place!
