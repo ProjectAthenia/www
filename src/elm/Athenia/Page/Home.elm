@@ -11,6 +11,7 @@ import Athenia.Models.Page as PageModel
 import Athenia.Page as Page
 import Athenia.Session as Session exposing (Session)
 import Athenia.Utilities.Log as Log
+import Bootstrap.Grid as Grid
 import Browser.Dom as Dom
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder)
@@ -66,11 +67,11 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Project Athenia"
     , content =
-        div [ class "home-page" ]
+        div [ id "home" ]
             [ viewBanner
-            , div [ class "container page" ]
-                [ div [ class "row" ]
-                    [ div [ class "col-md-9" ] <|
+            , Grid.container []
+                [ Grid.row []
+                    [ Grid.col [] <|
                         case model.status of
                             Loaded ->
                                 [ div [ class "feed-toggle" ] <|
@@ -93,18 +94,14 @@ view model =
 
 viewArticle : Article.Model -> Html Msg
 viewArticle article =
-    div [ class "container article" ]
-        [ h2 [ onClick (ClickedArticle article.id) ] [text article.name]
-        ]
+    h2 [ onClick (ClickedArticle article.id) ] [text article.name]
 
 
 viewBanner : Html Msg
 viewBanner =
-    div [ class "banner" ]
-        [ div [ class "container" ]
-            [ h1 [ class "logo-font" ] [ text "Project Athenia" ]
-            , p [] [ text "All available articles" ]
-            ]
+    div [ id "banner" ]
+        [ h1 [ class "logo-font" ] [ text "Welcome" ]
+        , p [] [ text "All available articles listed below" ]
         ]
 
 
