@@ -11,6 +11,8 @@ import Athenia.Viewer as Viewer exposing (Viewer)
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -82,10 +84,10 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Login"
     , content =
-        div [ id "login" ]
-            [ div [ class "container page" ]
-                [ div [ class "row" ]
-                    [ div [ class "col-md-6 offset-md-3 col-xs-12" ]
+        div [ id "login", class "page" ]
+            [ Grid.container []
+                [ Grid.row []
+                    [ Grid.col [Col.md6, Col.offsetMd3]
                         [ h1 [ class "text-xs-center" ] [ text "Sign in" ]
                         , p [ class "text-xs-center" ]
                             [ a [ Route.href Route.SignUp ]

@@ -8,6 +8,8 @@ import Athenia.Viewer as Viewer exposing (Viewer)
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -16,7 +18,6 @@ import Http
 import Json.Decode as Decode exposing (Decoder, decodeString, field, string)
 import Json.Decode.Pipeline exposing (optional)
 import Json.Encode as Encode
-
 
 
 -- MODEL
@@ -63,10 +64,10 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Register"
     , content =
-        div [ id "sign-up" ]
-            [ div [ class "container page" ]
-                [ div [ class "row" ]
-                    [ div [ class "col-md-6 offset-md-3 col-xs-12" ]
+        div [ id "sign-up", class "page" ]
+            [ Grid.container []
+                [ Grid.row []
+                    [ Grid.col [Col.md6, Col.offsetMd3]
                         [ h1 [ class "text-xs-center" ] [ text "Sign up" ]
                         , p [ class "text-xs-center" ]
                             [ a [ Route.href Route.Login ]

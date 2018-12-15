@@ -8,13 +8,16 @@ import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
 import Athenia.Utilities.Log as Log
 import Athenia.Viewer as Viewer exposing (Viewer)
+import Bootstrap.Button as Button
+import Bootstrap.Form as Form
+import Bootstrap.Form.Input as Input
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Browser.Navigation as Nav
 import Html exposing (Html, button, div, fieldset, h1, input, li, text, textarea, ul)
-import Html.Attributes exposing (attribute, class, placeholder, type_, value)
+import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit)
 import Http
-import Json.Decode as Decode exposing (Decoder, decodeString, field, list, string)
-import Json.Decode.Pipeline exposing (hardcoded, required)
 import Json.Encode as Encode
 import Task
 
@@ -86,10 +89,10 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Settings"
     , content =
-        div [ class "settings-page" ]
-            [ div [ class "container page" ]
-                [ div [ class "row" ]
-                    [ div [ class "col-md-6 offset-md-3 col-xs-12" ] <|
+        div [ id "settings", class "page" ]
+            [ Grid.container []
+                [ Grid.row []
+                    [ Grid.col [Col.md6, Col.offsetMd3]
                         [ h1 [ class "text-xs-center" ] [ text "Your Settings" ]
                         , ul [ class "error-messages" ]
                             (List.map viewProblem model.problems)
@@ -114,40 +117,36 @@ view model =
 
 viewForm : Token -> Form -> Html Msg
 viewForm token form =
-    Html.form [ onSubmit (SubmittedForm token form) ]
-        [ fieldset []
-            [ fieldset [ class "form-group" ]
-                [ input
-                    [ class "form-control form-control-lg"
-                    , placeholder "Name"
-                    , value form.name
-                    , onInput EnteredName
-                    ]
-                    []
+    Form.form [ onSubmit (SubmittedForm token form) ]
+        [ fieldset [ class "form-group" ]
+            [ Input.text
+                [ Input.large
+                , Input.placeholder "Name"
+                , Input.onInput EnteredName
+                , Input.value form.name
+                , Input.attrs [required True]
                 ]
-            , fieldset [ class "form-group" ]
-                [ input
-                    [ class "form-control form-control-lg"
-                    , placeholder "Email"
-                    , value form.email
-                    , onInput EnteredEmail
-                    ]
-                    []
-                ]
-            , fieldset [ class "form-group" ]
-                [ input
-                    [ class "form-control form-control-lg"
-                    , type_ "password"
-                    , placeholder "Password"
-                    , value form.password
-                    , onInput EnteredPassword
-                    ]
-                    []
-                ]
-            , button
-                [ class "btn btn-lg btn-primary pull-xs-right" ]
-                [ text "Update Settings" ]
             ]
+        , fieldset [ class "form-group" ]
+            [ Input.email
+                [ Input.large
+                , Input.placeholder "Email"
+                , Input.onInput EnteredEmail
+                , Input.value form.email
+                , Input.attrs [required True]
+                ]
+            ]
+        , fieldset [ class "form-group" ]
+            [ Input.password
+                [ Input.placeholder "New Password"
+                , Input.onInput EnteredPassword
+                , Input.value form.password
+                ]
+            ]
+        , Button.button
+            [ Button.primary
+            , Button.large
+            ] [ text "Update Settings" ]
         ]
 
 
@@ -387,23 +386,25 @@ first.
 edit : Token -> TrimmedForm -> Http.Request User.Model
 edit token (Trimmed form) =
     let
-        updates =
-            [ ( "name", Encode.string form.name )
-            , ( "email", Encode.string form.email )
-            ]
-
         encodedUser =
-            Encode.object <|
-                case form.password of
-                    "" ->
-                        updates
-
-                    password ->
-                        ( "password", Encode.string password ) :: updates
+            Encode.object
+                <| List.concat
+                    [ if String.length form.email > 0 then
+                        [ ("email", Encode.string form.email) ]
+                    else
+                        []
+                    , if String.length form.password > 0 then
+                        [ ("password", Encode.string form.password) ]
+                    else
+                        []
+                    , if String.length form.name > 0 then
+                        [ ("name", Encode.string form.name) ]
+                    else
+                        []
+                    ]
 
         body =
-            Encode.object [ ( "user", encodedUser ) ]
-                |> Http.jsonBody
+            Http.jsonBody encodedUser
     in
     Api.settings token form.id body
 

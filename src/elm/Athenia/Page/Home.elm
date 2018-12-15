@@ -67,7 +67,7 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Project Athenia"
     , content =
-        div [ id "home" ]
+        div [ id "home", class "page" ]
             [ viewBanner
             , Grid.container []
                 [ Grid.row []
