@@ -255,13 +255,13 @@ me token =
 
 
 article : Token -> Int -> Http.Request Article.Model
-article token page =
-    get (Endpoint.article page) (Just token) Article.modelDecoder
+article token articleId =
+    get (Endpoint.article articleId) (Just token) Article.modelDecoder
 
 
 articles : Token -> Int -> Http.Request Article.ArticlePage
 articles token page =
-    get (Endpoint.article page) (Just token) Article.pageDecoder
+    get (Endpoint.articles page) (Just token) Article.pageDecoder
 
 
 decoderFromCred : Decoder (Token -> a) -> Decoder a

@@ -27,7 +27,7 @@ modelDecoder =
     JsonDecode.succeed Model
         |> required "id" int
         |> required "title" string
-        |> required "content" string
+        |> optional "content" string ""
         |> optional "created_by" (maybe User.modelDecoder) Nothing
         |> optional "iterations" Iteration.listDecoder []
 

@@ -9,6 +9,7 @@ import Athenia.Components.Loading as Loading
 import Athenia.Models.Wiki.Article as Article
 import Athenia.Models.Page as PageModel
 import Athenia.Page as Page
+import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
 import Athenia.Utilities.Log as Log
 import Bootstrap.Grid as Grid
@@ -74,7 +75,7 @@ view model =
                     [ Grid.col [] <|
                         case model.status of
                             Loaded ->
-                                [ div [ class "feed-toggle" ] <|
+                                [ div [ class "available-articles" ] <|
                                     List.map viewArticle model.articles
                                 ]
 
@@ -94,7 +95,10 @@ view model =
 
 viewArticle : Article.Model -> Html Msg
 viewArticle article =
-    h2 [ onClick (ClickedArticle article.id) ] [text article.title]
+    div [ class "article" ]
+        [ h2 [] [text article.title]
+        , a [ Route.href (Route.Article article.id) ] [text "View"]
+        ]
 
 
 viewBanner : Html Msg
@@ -109,8 +113,7 @@ viewBanner =
 
 
 type Msg
-    = ClickedArticle Int
-    | CompletedArticlesLoad (Result Http.Error Article.ArticlePage)
+    = CompletedArticlesLoad (Result Http.Error Article.ArticlePage)
     | GotTimeZone Time.Zone
     | GotSession Session
     | PassedSlowLoadThreshold
@@ -119,9 +122,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ClickedArticle articleId ->
-            ( model, Cmd.none ) -- @todo take user to article
-
         CompletedArticlesLoad (Ok articlePage) ->
             ( { model
                 | status = Loaded
@@ -135,7 +135,7 @@ update msg model =
             )
 
         CompletedArticlesLoad (Err error) ->
-            ( { model | status = Failed }, Cmd.none )
+            ( { model | status = Failed }, Log.error )
 
         GotTimeZone tz ->
             ( { model | timeZone = tz }, Cmd.none )

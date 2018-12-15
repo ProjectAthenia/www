@@ -76,9 +76,11 @@ articles : Int -> Endpoint
 articles page =
     url [ "articles" ]
         <| if page /= 1 then
-            [(Builder.string "page" (String.fromInt page))]
+            [ (Builder.string "page" (String.fromInt page))
+            , (Builder.string "expand[createdBy]" "*")
+            ]
         else
-            []
+            [ (Builder.string "expand[createdBy]" "*") ]
 
 
 me : Endpoint

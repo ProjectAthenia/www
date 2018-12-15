@@ -6,4 +6,18 @@
     color: var(--gray);
     padding: 20px 20px 0;
   }
+
+  .available-articles {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    padding: 20px;
+    .article {
+      border: 1px var(--gray) solid;
+      border-radius: 5px;
+      min-width: 200px;
+      max-width: 300px;
+      padding: 5px;
+    }
+  }
 }
