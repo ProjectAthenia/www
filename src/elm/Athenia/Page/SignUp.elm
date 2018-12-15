@@ -5,6 +5,9 @@ import Athenia.Models.User.User as User
 import Athenia.Route as Route exposing (Route)
 import Athenia.Session as Session exposing (Session)
 import Athenia.Viewer as Viewer exposing (Viewer)
+import Bootstrap.Button as Button
+import Bootstrap.Form as Form
+import Bootstrap.Form.Input as Input
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -60,7 +63,7 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Register"
     , content =
-        div [ class "cred-page" ]
+        div [ id "sign-up" ]
             [ div [ class "container page" ]
                 [ div [ class "row" ]
                     [ div [ class "col-md-6 offset-md-3 col-xs-12" ]
@@ -81,37 +84,37 @@ view model =
 
 viewForm : Form -> Html Msg
 viewForm form =
-    Html.form [ onSubmit SubmittedForm ]
+    Form.form [ onSubmit SubmittedForm ]
         [ fieldset [ class "form-group" ]
-            [ input
-                [ class "form-control form-control-lg"
-                , placeholder "Name"
-                , onInput EnteredName
-                , value form.name
+            [ Input.text
+                [ Input.large
+                , Input.placeholder "Name"
+                , Input.onInput EnteredName
+                , Input.value form.name
+                , Input.attrs [required True]
                 ]
-                []
             ]
         , fieldset [ class "form-group" ]
-            [ input
-                [ class "form-control form-control-lg"
-                , placeholder "Email"
-                , onInput EnteredEmail
-                , value form.email
+            [ Input.email
+                [ Input.large
+                , Input.placeholder "Email"
+                , Input.onInput EnteredEmail
+                , Input.value form.email
+                , Input.attrs [required True]
                 ]
-                []
             ]
         , fieldset [ class "form-group" ]
-            [ input
-                [ class "form-control form-control-lg"
-                , type_ "password"
-                , placeholder "Password"
-                , onInput EnteredPassword
-                , value form.password
+            [ Input.password
+                [ Input.placeholder "Password"
+                , Input.onInput EnteredPassword
+                , Input.value form.password
+                , Input.attrs [required True]
                 ]
-                []
             ]
-        , button [ class "btn btn-lg btn-primary pull-xs-right" ]
-            [ text "Sign up" ]
+        , Button.button
+            [ Button.primary
+            , Button.large
+            ] [ text "Sign Up" ]
         ]
 
 

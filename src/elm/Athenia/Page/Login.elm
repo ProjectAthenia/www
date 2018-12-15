@@ -138,8 +138,7 @@ viewForm form =
         , Button.button
             [ Button.primary
             , Button.large
-            ]
-            [ text "Sign in" ]
+            ] [ text "Sign In" ]
         ]
 
 
