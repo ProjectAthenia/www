@@ -10,7 +10,7 @@ import Json.Decode.Pipeline exposing (..)
 
 type alias Model =
     { id : Int
-    , name : String
+    , title : String
     , content : String
     , created_by : Maybe User.Model
     , iterations : List Iteration.Model
@@ -26,7 +26,7 @@ modelDecoder : Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
         |> required "id" int
-        |> required "name" string
+        |> required "title" string
         |> required "content" string
         |> optional "created_by" (maybe User.modelDecoder) Nothing
         |> optional "iterations" Iteration.listDecoder []

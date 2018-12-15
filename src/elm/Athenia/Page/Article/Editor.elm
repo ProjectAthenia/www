@@ -68,7 +68,7 @@ view model =
     { title =
         case model.article of
             Editing article _ _ ->
-                "Edit Article - " ++ article.name
+                "Edit Article - " ++ article.title
 
             _ ->
                 "Loading"
@@ -110,7 +110,7 @@ viewContent model =
 
 viewTitle : Article.Model -> Html msg
 viewTitle article =
-    h1 [ id "title" ] [ text article.name ]
+    h1 [ id "title" ] [ text article.title ]
 
 
 viewProblems : List Problem -> Html msg

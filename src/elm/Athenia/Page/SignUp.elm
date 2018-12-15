@@ -64,7 +64,7 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Register"
     , content =
-        div [ id "sign-up", class "page" ]
+        div [ id "sign-up", class "page center-content" ]
             [ Grid.container []
                 [ Grid.row []
                     [ Grid.col [Col.md6, Col.offsetMd3]

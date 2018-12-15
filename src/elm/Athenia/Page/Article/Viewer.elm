@@ -12,6 +12,8 @@ import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
 import Athenia.Utilities.Log as Log
 import Athenia.Viewer as Viewer exposing (Viewer)
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, disabled, href, id, placeholder, value)
@@ -76,20 +78,20 @@ view : Model -> { title : String, content : Html Msg }
 view model =
     case model.article of
         Loaded article ->
-            { title = article.name
+            { title = article.title
             , content =
-                div [ class "article-page" ]
+                div [ id "article-viewer", class "page" ]
                     [ div [ class "banner" ]
-                        [ div [ class "container" ]
-                            [ h1 [] [ text article.name ]
+                        [ Grid.container []
+                            [ h1 [] [ text article.title ]
                             , div [ class "article-meta" ]
                                 <| viewArticleMeta article
                             , Page.viewErrors ClickedDismissErrors model.errors
                             ]
                         ]
-                    , div [ class "container page" ]
-                        [ div [ class "row article-content" ]
-                            [ div [ class "col-md-12" ]
+                    , Grid.container []
+                        [ Grid.row []
+                            [ Grid.col [Col.md12]
                                 [ Markdown.toHtml [] article.content ]
                             ]
                         ]

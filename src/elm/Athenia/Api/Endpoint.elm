@@ -68,7 +68,7 @@ url paths queryParams =
 article : Int -> Endpoint
 article articleId =
     url [ "articles", String.fromInt articleId ]
-        [ (Builder.string "expands[createdBy]" "*")
+        [ (Builder.string "expand[createdBy]" "*")
         ]
 
 
@@ -114,6 +114,6 @@ user userId =
 userActivity : Int -> Endpoint
 userActivity userId =
     url [ "users", String.fromInt userId ]
-        [ (Builder.string "expands[createdArticles]" "*")
-        , (Builder.string "expands[createdIterations]" "*")
+        [ (Builder.string "expand[createdArticles]" "*")
+        , (Builder.string "expand[createdIterations]" "*")
         ]

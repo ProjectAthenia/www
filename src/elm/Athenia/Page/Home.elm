@@ -94,7 +94,7 @@ view model =
 
 viewArticle : Article.Model -> Html Msg
 viewArticle article =
-    h2 [ onClick (ClickedArticle article.id) ] [text article.name]
+    h2 [ onClick (ClickedArticle article.id) ] [text article.title]
 
 
 viewBanner : Html Msg

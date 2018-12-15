@@ -16,6 +16,11 @@ body {
 
 .page {
   padding: 20px 0;
+  flex-grow: 1;
+
+  &.center-content {
+    flex-grow: 0;
+  }
 }
 
 footer {
