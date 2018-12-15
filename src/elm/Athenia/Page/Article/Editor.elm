@@ -7,6 +7,10 @@ import Athenia.Models.Wiki.Article as Article
 import Athenia.Page as Page
 import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
+import Bootstrap.Form as Form
+import Bootstrap.Form.Textarea as Textarea
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, disabled, href, id, placeholder, type_, value)
@@ -98,10 +102,10 @@ viewContent model =
                 LoadingFailed ->
                     [ text "Article failed to load." ]
     in
-    div [ class "editor-page" ]
-        [ div [ class "container page" ]
-            [ div [ class "row" ]
-                [ div [ class "col-md-10 offset-md-1 col-xs-12" ]
+    div [ id "article-editor", class "page" ]
+        [ Grid.container []
+            [ Grid.row []
+                [ Grid.col [Col.md12]
                     formHtml
                 ]
             ]
@@ -132,18 +136,12 @@ viewProblem problem =
 
 viewForm : Token -> Form -> Html Msg
 viewForm token fields =
-    Html.form [ onSubmit (NoAction) ]
-        [ fieldset []
-            [ fieldset [ class "form-group" ]
-                [ textarea
-                    [ class "form-control"
-                    , placeholder "Write your article (in markdown)"
-                    , attribute "rows" "8"
-                    , onInput EnteredBody
-                    , value fields.body
-                    ]
-                    []
-                ]
+    Form.form [ onSubmit (NoAction) ]
+        [ h2 [] [ text "Enter the article contents below." ]
+        , Textarea.textarea
+            [ Textarea.rows 20
+            , Textarea.onInput EnteredBody
+            , Textarea.value fields.body
             ]
         ]
 
