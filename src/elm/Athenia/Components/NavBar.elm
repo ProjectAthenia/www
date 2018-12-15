@@ -1,4 +1,4 @@
-module Athenia.Components.NavBar exposing (NavLink, config)
+module Athenia.Components.NavBar exposing (NavLink, config, updateItems)
 
 import Bootstrap.Navbar as Navbar
 import Html exposing (..)
@@ -15,6 +15,11 @@ config msg brand navLinks =
     Navbar.config msg
         |> Navbar.brand [ brand ] [ text "Project Athenia"]
         |> Navbar.items (List.map createNavItem navLinks)
+
+
+updateItems : List (NavLink msg) -> Navbar.Config msg -> Navbar.Config msg
+updateItems navLinks navBarConfig =
+    Navbar.items (List.map createNavItem navLinks) navBarConfig
 
 
 createNavItem : NavLink msg -> Navbar.Item msg

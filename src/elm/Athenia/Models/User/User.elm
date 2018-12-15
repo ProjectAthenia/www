@@ -42,7 +42,6 @@ cacheEncoder model =
             ( "id" , Encode.int model.id)
             , ("name", Encode.string model.name)
             , ("email", Encode.string model.email)
-            , ("password", Encode.string model.password)
             , ("roles", (Encode.list Encode.int model.roles))
         ]
 

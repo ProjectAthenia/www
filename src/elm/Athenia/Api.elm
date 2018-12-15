@@ -108,7 +108,7 @@ storeCredWith (Token token) user =
                 [ ( "user"
                   , Encode.object
                         [ ( "token", Encode.string token )
-                        , ( "model", User.toJson user )
+                        , ( "model", User.cacheEncoder user )
                         ]
                   )
                 ]

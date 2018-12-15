@@ -56,7 +56,7 @@ init maybeViewer url navKey =
         initialModel =
             { navBarState = navBarState
             , navBarConfig = AppNavBar.config NavBarStateChange (Route.href Route.Home)
-                (getNavItems maybeViewer)
+                (getNavItems (Viewer.maybeToken maybeViewer))
             , currentState = (Redirect (Session.fromViewer navKey maybeViewer))
             }
         (readyModel, initialCmd) =
@@ -71,10 +71,10 @@ init maybeViewer url navKey =
         )
 
 
-getNavItems : Maybe Viewer.Viewer -> List (AppNavBar.NavLink Msg)
-getNavItems maybeViewer =
-    case maybeViewer of
-        Just viewer ->
+getNavItems : Maybe token -> List (AppNavBar.NavLink Msg)
+getNavItems maybeToken =
+    case maybeToken of
+        Just token ->
             [ ("Settings", Route.href Route.Settings)
             , ("Log Out", Route.href Route.Logout)
             ]
@@ -196,7 +196,7 @@ changeRouteTo maybeRoute model =
         Just route ->
             case Session.token session of
                 Just token ->
-                    changeRouteToAuthenticatedRoute route model session token
+                    changeRouteToAuthenticatedRoute route {model | navBarConfig = AppNavBar.updateItems (getNavItems (Just token)) model.navBarConfig} session token
 
                 Nothing ->
                     (model, Route.replaceUrl (Session.navKey session) Route.Login )

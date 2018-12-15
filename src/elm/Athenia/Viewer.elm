@@ -1,4 +1,4 @@
-module Athenia.Viewer exposing (Viewer, viewer, user, decoder, token, minPasswordChars, store)
+module Athenia.Viewer exposing (Viewer, viewer, user, decoder, token, maybeToken, minPasswordChars, store)
 
 {-| The logged-in user currently viewing this page. It stores enough data to
 be able to render the menu bar (username and avatar), along with Cred so it's
@@ -28,6 +28,14 @@ user (Viewer val _) =
     val
 
 
+maybeToken : Maybe Viewer -> Maybe Token
+maybeToken maybeViewer =
+    case maybeViewer of
+        Just viewerInstance ->
+            Just (token viewerInstance)
+        Nothing ->
+            Nothing
+
 token : Viewer -> Token
 token (Viewer _ val) =
     val
@@ -50,7 +58,7 @@ viewer userVal tokenVal =
 decoder : Decoder (Token -> Viewer)
 decoder =
     Decode.succeed Viewer
-        |> custom (Decode.field "user" User.modelDecoder)
+        |> custom (Decode.field "model" User.modelDecoder)
 
 
 store : Viewer -> Cmd msg
