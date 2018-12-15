@@ -24,7 +24,7 @@ type Page
     = Other
     | Home
     | Login
-    | Register
+    | SignUp
     | Settings
     | Profile Int
     | Article

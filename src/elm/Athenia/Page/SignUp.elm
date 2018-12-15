@@ -1,4 +1,4 @@
-module Athenia.Page.Register exposing (Model, Msg, init, subscriptions, toSession, update, view)
+module Athenia.Page.SignUp exposing (Model, Msg, init, subscriptions, toSession, update, view)
 
 import Athenia.Api as Api exposing (Token)
 import Athenia.Models.User.User as User

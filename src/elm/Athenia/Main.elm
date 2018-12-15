@@ -12,8 +12,8 @@ import Athenia.Page.Home as Home
 import Athenia.Page.Login as Login
 import Athenia.Page.NotFound as NotFound
 import Athenia.Page.Profile as Profile
-import Athenia.Page.Register as Register
 import Athenia.Page.Settings as Settings
+import Athenia.Page.SignUp as SignUp
 import Athenia.Route as Route exposing (Route)
 import Athenia.Session as Session exposing (Session)
 import Athenia.Viewer as Viewer exposing (Viewer)
@@ -32,7 +32,7 @@ type CurrentState
     | Home Home.Model
     | Settings Settings.Model
     | Login Login.Model
-    | Register Register.Model
+    | SignUp SignUp.Model
     | Profile Int Profile.Model
     | ArticleEditor Int ArticleEditor.Model
     | ArticleViewer Int ArticleViewer.Model
@@ -80,7 +80,7 @@ getNavItems maybeViewer =
             ]
         Nothing ->
             [ ("Sign In", Route.href  Route.Login)
-            , ("Sign Up", Route.href  Route.Register)
+            , ("Sign Up", Route.href  Route.SignUp)
             ]
 
 
@@ -107,8 +107,8 @@ view model =
         Login login ->
             viewPage (Login.view login) GotLoginMsg
 
-        Register register ->
-            viewPage (Register.view register) GotRegisterMsg
+        SignUp signUp ->
+            viewPage (SignUp.view signUp) GotSignUpMsg
 
         Profile userId profile ->
             viewPage (Profile.view profile) GotProfileMsg
@@ -128,8 +128,8 @@ type Msg
     | GotHomeMsg Home.Msg
     | GotSettingsMsg Settings.Msg
     | GotLoginMsg Login.Msg
-    | GotRegisterMsg Register.Msg
     | GotProfileMsg Profile.Msg
+    | GotSignUpMsg SignUp.Msg
     | GotArticleViewerMsg ArticleViewer.Msg
     | GotArticleEditorMsg ArticleEditor.Msg
     | NavBarStateChange Navbar.State
@@ -154,8 +154,8 @@ toSession page =
         Login login ->
             Login.toSession login
 
-        Register register ->
-            Register.toSession register
+        SignUp signUp ->
+            SignUp.toSession signUp
 
         Profile _ profile ->
             Profile.toSession profile
@@ -189,9 +189,9 @@ changeRouteTo maybeRoute model =
             Login.init session
                 |> updateWith Login GotLoginMsg model
 
-        Just Route.Register ->
-            Register.init session
-                |> updateWith Register GotRegisterMsg model
+        Just Route.SignUp ->
+            SignUp.init session
+                |> updateWith SignUp GotSignUpMsg model
 
         Just route ->
             case Session.token session of
@@ -261,9 +261,9 @@ update msg model =
             Login.update subMsg login
                 |> updateWith Login GotLoginMsg model
 
-        ( GotRegisterMsg subMsg, Register register ) ->
-            Register.update subMsg register
-                |> updateWith Register GotRegisterMsg model
+        ( GotSignUpMsg subMsg, SignUp signUp ) ->
+            SignUp.update subMsg signUp
+                |> updateWith SignUp GotSignUpMsg model
 
         ( GotHomeMsg subMsg, Home home ) ->
             Home.update subMsg home
@@ -321,8 +321,8 @@ subscriptions model =
             Login login ->
                 Sub.map GotLoginMsg (Login.subscriptions login)
 
-            Register register ->
-                Sub.map GotRegisterMsg (Register.subscriptions register)
+            SignUp signUp ->
+                Sub.map GotSignUpMsg (SignUp.subscriptions signUp)
 
             Profile _ profile ->
                 Sub.map GotProfileMsg (Profile.subscriptions profile)

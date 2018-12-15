@@ -21,8 +21,8 @@ type Route
     | Root
     | Login
     | Logout
-    | Register
     | Settings
+    | SignUp
     | Article Int
     | Profile Int
     | EditArticle Int
@@ -36,7 +36,7 @@ parser =
         , Parser.map Logout (s "logout")
         , Parser.map Settings (s "settings")
         , Parser.map Profile (s "profile" </> int)
-        , Parser.map Register (s "register")
+        , Parser.map SignUp (s "sign-up")
         , Parser.map Article (s "article" </> int)
         , Parser.map EditArticle (s "editor" </> int)
         ]
@@ -82,8 +82,8 @@ routeToString page =
                 Logout ->
                     [ "logout" ]
 
-                Register ->
-                    [ "register" ]
+                SignUp ->
+                    [ "sign-up" ]
 
                 Settings ->
                     [ "settings" ]
