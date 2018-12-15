@@ -153,7 +153,11 @@ update msg model =
                     (model, Cmd.none)
 
         PassedSlowLoadThreshold ->
-            ( { model | status = LoadingSlowly }, Cmd.none )
+            case model.status of
+                Loading ->
+                    ( { model | status = LoadingSlowly }, Cmd.none )
+                _ ->
+                    (model, Cmd.none)
 
 
 

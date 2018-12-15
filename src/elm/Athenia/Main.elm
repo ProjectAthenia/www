@@ -235,6 +235,11 @@ update msg model =
         ( Ignored, _ ) ->
             ( model, Cmd.none )
 
+        ( NavBarStateChange navBarState, _ ) ->
+            ( { model | navBarState = navBarState }
+            , Cmd.none
+            )
+
         ( ClickedLink urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->

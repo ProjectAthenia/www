@@ -158,7 +158,11 @@ update msg model =
             )
 
         PassedSlowLoadThreshold ->
-            ( { model | article = LoadingSlowly }, Cmd.none )
+            case model.article of
+                Loading ->
+                    ( { model | article = LoadingSlowly }, Cmd.none )
+                _ ->
+                    (model, Cmd.none)
 
 
 -- SUBSCRIPTIONS
