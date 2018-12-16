@@ -12,6 +12,8 @@ import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
 import Athenia.Utilities.Log as Log
 import Athenia.Viewer as Viewer exposing (Viewer)
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -19,7 +21,6 @@ import Http
 import Task exposing (Task)
 import Time
 import Url.Builder
-
 
 
 -- MODEL
@@ -111,23 +112,21 @@ view model =
     , content =
         case model.user of
             Loaded user ->
-                div [ class "profile-page" ]
+                div [ id "profile", class "page" ]
                     [ Page.viewErrors ClickedDismissErrors model.errors
                     , div [ class "user-info" ]
-                        [ div [ class "container" ]
-                            [ div [ class "row" ]
-                                [ div [ class "col-xs-12 col-md-10 offset-md-1" ]
+                        [ Grid.container []
+                            [ Grid.row []
+                                [ Grid.col [ Col.xs12, Col.md10 ]
                                     [ h4 [] [ text title ]
                                     ]
                                 ]
                             ]
                         ]
-                    , div [ class "container" ]
-                        [ div [ class "row" ]
-                            [ div [ class "col-xs-12 col-md-10 offset-md-1" ]
-                                [ div [ class "articles-toggle" ] <|
-                                    [ viewTabs model.currentTab ]
-                                ]
+                    , Grid.container []
+                        [ Grid.row []
+                            [ Grid.col [ Col.xs12, Col.md10 ]
+                                [viewTabs model.currentTab]
                             ]
                         ]
                     ]
@@ -149,7 +148,7 @@ view model =
 
 viewTabs : ActiveTab -> Html Msg
 viewTabs tab =
-    ul [ class "nav nav-pills outline-active" ]
+    div [ id "activity-toggle" ]
         <| List.map (viewTab tab)
             [ ("Activity", Activity)
             , ("Created Articles", CreatedArticles)
@@ -161,18 +160,15 @@ viewTab activeTab (tabName, tab) =
     let
         activeClass =
             if activeTab == tab then
-                " active"
+                " btn-primary"
             else
                 ""
     in
-    li [ class "nav-item" ]
-        [ -- Note: The RealWorld CSS requires an href to work properly.
-          a [ class ("nav-link" ++ activeClass)
-            , onClick (ClickedTab tab)
-            , href ""
-            ]
-            [ text tabName ]
+    button
+        [ class ("btn" ++ activeClass)
+        , onClick (ClickedTab tab)
         ]
+        [ text tabName ]
 
 
 

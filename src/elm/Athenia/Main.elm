@@ -183,7 +183,13 @@ changeRouteTo maybeRoute model =
             ( model, Route.replaceUrl (Session.navKey session) Route.Home )
 
         Just Route.Logout ->
-            ( model, Api.logout )
+            ( {model
+                | navBarConfig = AppNavBar.updateItems (getNavItems Nothing) model.navBarConfig
+            }, Cmd.batch
+                [ Api.logout
+                , Route.replaceUrl (Session.navKey session) Route.Login
+                ]
+            )
 
         Just Route.Login ->
             Login.init session
