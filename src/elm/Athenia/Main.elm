@@ -42,6 +42,7 @@ type alias Model =
     { navBarState : Navbar.State
     , navBarConfig : Navbar.Config Msg
     , currentState : CurrentState
+    , currentTime : Time.Posix
     }
 
 
@@ -58,6 +59,7 @@ init maybeViewer url navKey =
             , navBarConfig = AppNavBar.config NavBarStateChange (Route.href Route.Home)
                 (getNavItems (Viewer.maybeToken maybeViewer))
             , currentState = (Redirect (Session.fromViewer navKey maybeViewer))
+            , currentTime = Time.millisToPosix 0
             }
         (readyModel, initialCmd) =
             changeRouteTo (Route.fromUrl url)
@@ -67,6 +69,7 @@ init maybeViewer url navKey =
         , Cmd.batch
             [ initialCmd
             , navBarCmd
+            , Task.perform Tick Time.now
             ]
         )
 
@@ -134,6 +137,7 @@ type Msg
     | GotArticleEditorMsg ArticleEditor.Msg
     | NavBarStateChange Navbar.State
     | GotSession Session
+    | Tick Time.Posix
 
 
 toSession : Model -> Session
@@ -241,6 +245,11 @@ update msg model =
         ( Ignored, _ ) ->
             ( model, Cmd.none )
 
+        ( Tick currentTime, _ ) ->
+            ( { model | currentTime = currentTime }
+            , Cmd.none
+            )
+
         ( NavBarStateChange navBarState, _ ) ->
             ( { model | navBarState = navBarState }
             , Cmd.none
@@ -344,6 +353,7 @@ subscriptions model =
             ArticleEditor _ editor ->
                 Sub.map GotArticleEditorMsg (ArticleEditor.subscriptions editor)
         , Navbar.subscriptions model.navBarState NavBarStateChange
+        , Time.every 1000 Tick
         ]
 
 
