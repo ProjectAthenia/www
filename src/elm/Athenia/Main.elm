@@ -245,8 +245,23 @@ update msg model =
         ( Ignored, _ ) ->
             ( model, Cmd.none )
 
-        ( Tick currentTime, _ ) ->
-            ( { model | currentTime = currentTime }
+        ( Tick currentTime, pageState ) ->
+            let
+                newPageState =
+                    case pageState of
+                        Login loginModel ->
+                            Login {loginModel | currentTime = currentTime}
+
+                        SignUp signUpModel ->
+                            SignUp {signUpModel | currentTime = currentTime}
+
+                        _ ->
+                            pageState
+            in
+            ( { model
+                | currentTime = currentTime
+                , currentState = newPageState
+            }
             , Cmd.none
             )
 
