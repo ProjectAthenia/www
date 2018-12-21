@@ -18,6 +18,7 @@ import Http
 import Json.Decode as Decode exposing (Decoder, decodeString, field, string)
 import Json.Decode.Pipeline exposing (optional)
 import Json.Encode as Encode
+import Time
 
 
 -- MODEL
@@ -25,6 +26,7 @@ import Json.Encode as Encode
 
 type alias Model =
     { session : Session
+    , currentTime : Time.Posix
     , problems : List Problem
     , form : Form
     }
@@ -42,9 +44,10 @@ type Problem
     | ServerError String
 
 
-init : Session -> ( Model, Cmd msg )
-init session =
+init : Time.Posix -> Session -> ( Model, Cmd msg )
+init currentTime session =
     ( { session = session
+      , currentTime = currentTime
       , problems = []
       , form =
             { name = ""
@@ -199,7 +202,7 @@ update msg model =
         LoadedMe token (Ok user) ->
             ( model
             , Viewer.store
-                <| Viewer.viewer user token
+                <| Viewer.viewer user token (Time.posixToMillis model.currentTime)
             )
 
         GotSession session ->

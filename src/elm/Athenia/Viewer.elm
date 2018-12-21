@@ -1,4 +1,4 @@
-module Athenia.Viewer exposing (Viewer, viewer, user, decoder, token, maybeToken, minPasswordChars, store)
+module Athenia.Viewer exposing (Viewer, viewer, user, decoder, token, lastRefresh, maybeToken, minPasswordChars, store)
 
 {-| The logged-in user currently viewing this page. It stores enough data to
 be able to render the menu bar (username and avatar), along with Cred so it's
@@ -17,14 +17,14 @@ import Json.Encode as Encode exposing (Value)
 
 
 type Viewer
-    = Viewer User.Model Token
+    = Viewer User.Model Token Int
 
 
 -- INFO
 
 
 user : Viewer -> User.Model
-user (Viewer val _) =
+user (Viewer val _ _) =
     val
 
 
@@ -37,7 +37,12 @@ maybeToken maybeViewer =
             Nothing
 
 token : Viewer -> Token
-token (Viewer _ val) =
+token (Viewer _ val _) =
+    val
+
+
+lastRefresh : Viewer -> Int
+lastRefresh (Viewer _ _ val) =
     val
 
 
@@ -48,21 +53,22 @@ minPasswordChars =
     6
 
 
-viewer : User.Model -> Token -> Viewer
-viewer userVal tokenVal =
-    Viewer userVal tokenVal
+viewer : User.Model -> Token -> Int -> Viewer
+viewer userVal tokenVal lastRefreshVal =
+    Viewer userVal tokenVal lastRefreshVal
 
 
 -- SERIALIZATION
 
-decoder : Decoder (Token -> Viewer)
+decoder : Decoder (Token -> Int -> Viewer)
 decoder =
     Decode.succeed Viewer
         |> custom (Decode.field "model" User.modelDecoder)
 
 
 store : Viewer -> Cmd msg
-store (Viewer userVal tokenVal) =
+store (Viewer userVal tokenVal millisVal) =
     Api.storeCredWith
         tokenVal
+        millisVal
         userVal

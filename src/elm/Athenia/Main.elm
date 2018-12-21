@@ -196,11 +196,11 @@ changeRouteTo maybeRoute model =
             )
 
         Just Route.Login ->
-            Login.init session
+            Login.init model.currentTime session
                 |> updateWith Login GotLoginMsg model
 
         Just Route.SignUp ->
-            SignUp.init session
+            SignUp.init model.currentTime session
                 |> updateWith SignUp GotSignUpMsg model
 
         Just route ->

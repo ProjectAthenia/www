@@ -232,11 +232,11 @@ update msg model =
 
         CompletedSave (Ok user) ->
             ( model
-            ,  case Session.token model.session of
-                Just token ->
+            ,  case (Session.token model.session, Session.lastRefresh model.session) of
+                (Just token, Just lastRefresh) ->
                     Viewer.store
-                        <| Viewer.viewer user token
-                Nothing ->
+                        <| Viewer.viewer user token lastRefresh
+                _ ->
                     Cmd.none
             )
 

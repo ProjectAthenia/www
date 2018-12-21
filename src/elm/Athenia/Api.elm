@@ -70,11 +70,16 @@ tokenDecoder =
         |> required "token" Decode.string
 
 
+lastRefreshDecoder : Decoder Int
+lastRefreshDecoder =
+    field "last_refresh" Decode.int
+
+
 
 -- PERSISTENCE
 
 
-decode : Decoder (Token -> viewer) -> Value -> Result Decode.Error viewer
+decode : Decoder (Token -> Int -> viewer) -> Value -> Result Decode.Error viewer
 decode decoder value =
     -- It's stored in localStorage as a JSON String;
     -- first decode the Value as a String, then
@@ -86,12 +91,12 @@ decode decoder value =
 port onStoreChange : (Value -> msg) -> Sub msg
 
 
-viewerChanges : (Maybe viewer -> msg) -> Decoder (Token -> viewer) -> Sub msg
+viewerChanges : (Maybe viewer -> msg) -> Decoder (Token -> Int -> viewer) -> Sub msg
 viewerChanges toMsg decoder =
     onStoreChange (\value -> toMsg (decodeFromChange decoder value))
 
 
-decodeFromChange : Decoder (Token -> viewer) -> Value -> Maybe viewer
+decodeFromChange : Decoder (Token -> Int -> viewer) -> Value -> Maybe viewer
 decodeFromChange viewerDecoder val =
     -- It's stored in localStorage as a JSON String;
     -- first decode the Value as a String, then
@@ -100,14 +105,15 @@ decodeFromChange viewerDecoder val =
         |> Result.toMaybe
 
 
-storeCredWith : Token -> User.Model -> Cmd msg
-storeCredWith (Token token) user =
+storeCredWith : Token -> Int -> User.Model -> Cmd msg
+storeCredWith (Token token) lastRefresh user =
     let
         json =
             Encode.object
                 [ ( "user"
                   , Encode.object
                         [ ( "token", Encode.string token )
+                        , ( "last_refresh", Encode.int lastRefresh )
                         , ( "model", User.cacheEncoder user )
                         ]
                   )
@@ -130,7 +136,7 @@ port storeCache : Maybe Value -> Cmd msg
 
 
 application :
-    Decoder (Token -> viewer)
+    Decoder (Token -> Int -> viewer)
     ->
         { init : Maybe viewer -> Url -> Nav.Key -> ( model, Cmd msg )
         , onUrlChange : Url -> msg
@@ -161,7 +167,7 @@ application viewerDecoder config =
         }
 
 
-storageDecoder : Decoder (Token -> viewer) -> Decoder viewer
+storageDecoder : Decoder (Token -> Int -> viewer) -> Decoder viewer
 storageDecoder viewerDecoder =
     Decode.field "user" (decoderFromCred viewerDecoder)
 
@@ -264,11 +270,12 @@ articles token page =
     get (Endpoint.articles page) (Just token) Article.pageDecoder
 
 
-decoderFromCred : Decoder (Token -> a) -> Decoder a
+decoderFromCred : Decoder (Token -> Int -> a) -> Decoder a
 decoderFromCred decoder =
-    Decode.map2 (\fromCred cred -> fromCred cred)
+    Decode.map3 (\fromCred cred -> fromCred cred)
         decoder
         tokenDecoder
+        lastRefreshDecoder
 
 
 
