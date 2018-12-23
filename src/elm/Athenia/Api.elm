@@ -4,7 +4,7 @@ port module Athenia.Api exposing
     , application
     , decodeErrors
     , delete, get, post, put
-    , login, logout, signUp
+    , login, logout, signUp, refresh
     , settings, me
     , article, articles
     , storeCredWith
@@ -248,6 +248,11 @@ login body =
 signUp : Http.Body -> Http.Request Token
 signUp body =
     post Endpoint.signUp Nothing body tokenDecoder
+
+
+refresh : Token -> Http.Request Token
+refresh token =
+    post Endpoint.refresh (Just token) Http.emptyBody tokenDecoder
 
 
 settings : Token -> Int -> Http.Body -> Http.Request User.Model

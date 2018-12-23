@@ -1,7 +1,7 @@
 module Athenia.Api.Endpoint exposing
     ( Endpoint, request
     , article, articles
-    , login, signUp
+    , login, signUp, refresh
     , user, userActivity, me
     )
 
