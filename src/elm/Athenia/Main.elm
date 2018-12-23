@@ -9,6 +9,7 @@ import Athenia.Page.Article.Editor as ArticleEditor
 import Athenia.Page.Article.Viewer as ArticleViewer
 import Athenia.Page.Blank as Blank
 import Athenia.Page.Home as Home
+import Athenia.Page.Loading as Loading
 import Athenia.Page.Login as Login
 import Athenia.Page.NotFound as NotFound
 import Athenia.Page.Profile as Profile
@@ -29,6 +30,7 @@ import Url exposing (Url)
 type CurrentState
     = Redirect Session
     | NotFound Session
+    | Loading Session
     | Home Home.Model
     | Settings Settings.Model
     | Login Login.Model
@@ -54,16 +56,27 @@ init maybeViewer url navKey =
     let
         (navBarState, navBarCmd) =
             Navbar.initialState NavBarStateChange
+        maybeToken =
+            Viewer.maybeToken maybeViewer
         initialModel =
             { navBarState = navBarState
             , navBarConfig = AppNavBar.config NavBarStateChange (Route.href Route.Home)
-                (getNavItems (Viewer.maybeToken maybeViewer))
-            , currentState = (Redirect (Session.fromViewer navKey maybeViewer))
+                (getNavItems maybeToken)
+            , currentState = case maybeToken of
+                Just token ->
+                    (Loading (Session.fromViewer navKey maybeViewer))
+                Nothing ->
+                    (Redirect (Session.fromViewer navKey maybeViewer))
+
             , currentTime = Time.millisToPosix 0
             }
         (readyModel, initialCmd) =
-            changeRouteTo (Route.fromUrl url)
-                initialModel
+            case maybeToken of
+                Just token ->
+                    (initialModel, Cmd.none)
+                Nothing ->
+                    changeRouteTo (Route.fromUrl url)
+                        initialModel
     in
         ( readyModel
         , Cmd.batch
@@ -97,6 +110,9 @@ view model =
     case model.currentState of
         Redirect _ ->
             viewPage Blank.view (\_ -> Ignored)
+
+        Loading _ ->
+            viewPage Loading.view (\_ -> Ignored)
 
         NotFound _ ->
             viewPage NotFound.view (\_ -> Ignored)
@@ -143,6 +159,9 @@ type Msg
 toSession : Model -> Session
 toSession page =
     case page.currentState of
+        Loading session ->
+            session
+
         Redirect session ->
             session
 
@@ -246,7 +265,7 @@ update msg model =
             ( model, Cmd.none )
 
         ( Tick currentTime, pageState ) ->
-            let
+            let -- @todo check for if the token needs to be refreshed if the app is loading
                 newPageState =
                     case pageState of
                         Login loginModel ->
@@ -341,6 +360,9 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ case model.currentState of
+            Loading _ ->
+                Sub.none
+
             NotFound _ ->
                 Sub.none
 
