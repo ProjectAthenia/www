@@ -4,6 +4,7 @@ module Athenia.Page.Login exposing (Model, Msg, init, subscriptions, toSession, 
 -}
 
 import Athenia.Api as Api exposing (Token)
+import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.User.User as User
 import Athenia.Route as Route exposing (Route)
 import Athenia.Session as Session exposing (Session)
@@ -30,6 +31,7 @@ import Time
 
 type alias Model =
     { session : Session
+    , showLoading : Bool
     , currentTime : Time.Posix
     , problems : List Problem
     , form : Form
@@ -68,6 +70,7 @@ type Problem
 init : Time.Posix -> Session -> ( Model, Cmd msg )
 init currentTime session =
     ( { session = session
+      , showLoading = False
       , currentTime = currentTime
       , problems = []
       , form =
@@ -102,6 +105,7 @@ view model =
                         ]
                     ]
                 ]
+            , LoadingIndicator.view model.showLoading
             ]
     }
 
@@ -166,7 +170,7 @@ update msg model =
         SubmittedForm ->
             case validate model.form of
                 Ok validForm ->
-                    ( { model | problems = [] }
+                    ( { model | problems = [], showLoading = True }
                     , Http.send CompletedLogin (login validForm)
                     )
 
@@ -205,6 +209,7 @@ update msg model =
             ( {model
                 | session =
                     Session.fromViewer (Session.navKey model.session) (Just viewer)
+                , showLoading = False
             }
             , Cmd.batch
                 [ Viewer.store viewer
@@ -228,7 +233,7 @@ handleErrors errors model =
             Api.decodeErrors errors
                 |> List.map ServerError
     in
-    ( { model | problems = List.append model.problems serverErrors }
+    ( { model | problems = List.append model.problems serverErrors, showLoading = False }
     , Cmd.none
     )
 

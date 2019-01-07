@@ -1,6 +1,8 @@
 // Standard entry point for styles
 @import "elements";
 
+@import "components/loading_indicator";
+
 @import "pages/home";
 @import "pages/login";
 @import "pages/sign-up";
