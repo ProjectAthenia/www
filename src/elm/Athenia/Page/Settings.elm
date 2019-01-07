@@ -241,9 +241,18 @@ update msg model =
             )
 
         GotSession session ->
-            ( { model | session = session }
-            , Route.replaceUrl (Session.navKey session) Route.Home
-            )
+            case Viewer.maybeToken (Session.viewer session) of
+                Just token ->
+                    ( { model
+                        | session = session
+                        , token = token
+                    }
+                    , Cmd.none
+                    )
+                Nothing ->
+                    ( model
+                    , Route.replaceUrl (Session.navKey session) Route.Login
+                    )
 
         PassedSlowLoadThreshold ->
             case model.status of

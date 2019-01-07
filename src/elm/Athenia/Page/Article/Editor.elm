@@ -7,6 +7,7 @@ import Athenia.Models.Wiki.Article as Article
 import Athenia.Page as Page
 import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
+import Athenia.Viewer as Viewer
 import Bootstrap.Form as Form
 import Bootstrap.Form.Textarea as Textarea
 import Bootstrap.Grid as Grid
@@ -182,9 +183,18 @@ update msg model =
             )
 
         GotSession session ->
-            ( { model | session = session }
-            , Route.replaceUrl (Session.navKey session) Route.Home
-            )
+            case Viewer.maybeToken (Session.viewer session) of
+                Just token ->
+                    ( { model
+                        | session = session
+                        , token = token
+                    }
+                    , Cmd.none
+                    )
+                Nothing ->
+                    ( model
+                    , Route.replaceUrl (Session.navKey session) Route.Login
+                    )
 
         PassedSlowLoadThreshold ->
             let

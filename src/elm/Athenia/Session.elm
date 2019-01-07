@@ -1,7 +1,14 @@
-module Athenia.Session exposing (Session, changes, token, lastRefresh, user, fromViewer, navKey, viewer)
+module Athenia.Session exposing
+    ( Session
+    , changes
+    , token, lastRefresh, user
+    , needsAuthRefresh
+    , fromViewer, navKey, viewer
+    )
 
 import Athenia.Api as Api
 import Athenia.Models.User.User as User
+import Athenia.Utilities.AuthManager as AuthManager
 import Athenia.Viewer as Viewer
 import Browser.Navigation as Nav
 import Json.Decode as Decode exposing (Decoder)
@@ -71,6 +78,14 @@ navKey session =
         Guest key ->
             key
 
+
+needsAuthRefresh : Time.Posix -> Session -> Bool
+needsAuthRefresh currentTime session =
+    case viewer session of
+        Just sessionViewer ->
+            AuthManager.needsRefresh currentTime (Viewer.lastRefresh sessionViewer)
+        Nothing ->
+            False
 
 
 -- CHANGES

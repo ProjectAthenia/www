@@ -12,6 +12,7 @@ import Athenia.Page as Page
 import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
 import Athenia.Utilities.Log as Log
+import Athenia.Viewer as Viewer
 import Bootstrap.Grid as Grid
 import Browser.Dom as Dom
 import Html exposing (..)
@@ -141,16 +142,18 @@ update msg model =
             ( { model | timeZone = tz }, Cmd.none )
 
         GotSession session ->
-            case Session.token session of
+            case Viewer.maybeToken (Session.viewer session) of
                 Just token ->
                     ( { model
-                        | token = token
-                        , session = session
-                      }
+                        | session = session
+                        , token = token
+                    }
                     , Cmd.none
                     )
-                Nothing -> -- @todo Redirect user to login
-                    (model, Cmd.none)
+                Nothing ->
+                    ( model
+                    , Route.replaceUrl (Session.navKey session) Route.Login
+                    )
 
         PassedSlowLoadThreshold ->
             case model.status of

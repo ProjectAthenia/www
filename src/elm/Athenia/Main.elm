@@ -17,11 +17,13 @@ import Athenia.Page.Settings as Settings
 import Athenia.Page.SignUp as SignUp
 import Athenia.Route as Route exposing (Route)
 import Athenia.Session as Session exposing (Session)
+import Athenia.Utilities.AuthManager as AuthManager
 import Athenia.Viewer as Viewer exposing (Viewer)
 import Bootstrap.Navbar as Navbar
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Html exposing (..)
+import Http exposing (..)
 import Json.Decode as Decode exposing (Value)
 import Task
 import Time
@@ -30,7 +32,7 @@ import Url exposing (Url)
 type CurrentState
     = Redirect Session
     | NotFound Session
-    | Loading Session
+    | Loading Url Session
     | Home Home.Model
     | Settings Settings.Model
     | Login Login.Model
@@ -45,6 +47,7 @@ type alias Model =
     , navBarConfig : Navbar.Config Msg
     , currentState : CurrentState
     , currentTime : Time.Posix
+    , refreshingToken : Bool
     }
 
 
@@ -62,13 +65,15 @@ init maybeViewer url navKey =
             { navBarState = navBarState
             , navBarConfig = AppNavBar.config NavBarStateChange (Route.href Route.Home)
                 (getNavItems maybeToken)
-            , currentState = case maybeToken of
-                Just token ->
-                    (Loading (Session.fromViewer navKey maybeViewer))
-                Nothing ->
-                    (Redirect (Session.fromViewer navKey maybeViewer))
+            , currentState
+                = case maybeToken of
+                    Just token ->
+                        (Loading url (Session.fromViewer navKey maybeViewer))
+                    Nothing ->
+                        (Redirect (Session.fromViewer navKey maybeViewer))
 
             , currentTime = Time.millisToPosix 0
+            , refreshingToken = False
             }
         (readyModel, initialCmd) =
             case maybeToken of
@@ -111,7 +116,7 @@ view model =
         Redirect _ ->
             viewPage Blank.view (\_ -> Ignored)
 
-        Loading _ ->
+        Loading _ _ ->
             viewPage Loading.view (\_ -> Ignored)
 
         NotFound _ ->
@@ -153,13 +158,14 @@ type Msg
     | GotArticleEditorMsg ArticleEditor.Msg
     | NavBarStateChange Navbar.State
     | GotSession Session
+    | CompletedTokenRefresh (Result Http.Error Api.Token)
     | Tick Time.Posix
 
 
 toSession : Model -> Session
 toSession page =
     case page.currentState of
-        Loading session ->
+        Loading _ session ->
             session
 
         Redirect session ->
@@ -265,23 +271,54 @@ update msg model =
             ( model, Cmd.none )
 
         ( Tick currentTime, pageState ) ->
-            let -- @todo check for if the token needs to be refreshed if the app is loading
-                newPageState =
+            let
+                needsRefresh =
+                    Session.needsAuthRefresh currentTime
+                        <| toSession model
+
+                (updatedModel, cmd) =
                     case pageState of
                         Login loginModel ->
-                            Login {loginModel | currentTime = currentTime}
+                            ( { model | currentState = Login {loginModel | currentTime = currentTime } }
+                            , Cmd.none
+                            )
 
                         SignUp signUpModel ->
-                            SignUp {signUpModel | currentTime = currentTime}
+                            ( { model | currentState = SignUp {signUpModel | currentTime = currentTime } }
+                            , Cmd.none
+                            )
+
+                        Loading url _ ->
+                            if needsRefresh == False then
+                                changeRouteTo (Route.fromUrl url) model
+                            else
+                                (model, Cmd.none)
 
                         _ ->
-                            pageState
+                            (model, Cmd.none)
+
+                session =
+                    (toSession model)
+
+                maybeToken =
+                    Viewer.maybeToken
+                        <| Session.viewer session
             in
-            ( { model
+            ( { updatedModel
                 | currentTime = currentTime
-                , currentState = newPageState
+                , refreshingToken = needsRefresh
             }
-            , Cmd.none
+            , Cmd.batch
+                [ cmd
+                , case (needsRefresh, maybeToken) of
+                    (True, Just token) ->
+                        Http.send CompletedTokenRefresh (Api.refresh token)
+                    (True, Nothing) ->
+                        Route.replaceUrl (Session.navKey session) Route.Login
+                    _ ->
+                        Cmd.none
+
+                ]
             )
 
         ( NavBarStateChange navBarState, _ ) ->
@@ -300,6 +337,34 @@ update msg model =
                     ( model
                     , Nav.load href
                     )
+
+        ( CompletedTokenRefresh (Ok token), _ ) ->
+            case Session.user (toSession model) of
+                Just user ->
+                    let
+                        viewer =
+                            Viewer.viewer user token (Time.posixToMillis model.currentTime)
+                        (updatedModel, cmd) =
+                            case model.currentState of
+                                Loading url session ->
+                                    changeRouteTo (Route.fromUrl url)
+                                        {model | currentState = Loading url (Session.fromViewer (Session.navKey session) (Just viewer))}
+                                _ ->
+                                    (model, Cmd.none)
+                    in
+                    ( { updatedModel
+                        | refreshingToken = False
+                    }
+                    , Cmd.batch
+                        [ cmd
+                        , Viewer.store viewer
+                        ]
+                    )
+                Nothing ->
+                    changeRouteTo (Just Route.Login) model
+
+        ( CompletedTokenRefresh (Err _), _ ) ->
+            changeRouteTo (Just Route.Login) model
 
         ( ChangedUrl url, _ ) ->
             changeRouteTo (Route.fromUrl url) model
@@ -360,7 +425,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ case model.currentState of
-            Loading _ ->
+            Loading _ _ ->
                 Sub.none
 
             NotFound _ ->
