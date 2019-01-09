@@ -1,6 +1,7 @@
 module Athenia.Page.SignUp exposing (Model, Msg, init, subscriptions, toSession, update, view)
 
 import Athenia.Api as Api exposing (Token)
+import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.User.User as User
 import Athenia.Route as Route exposing (Route)
 import Athenia.Session as Session exposing (Session)
@@ -26,6 +27,7 @@ import Time
 
 type alias Model =
     { session : Session
+    , showLoading : Bool
     , currentTime : Time.Posix
     , problems : List Problem
     , form : Form
@@ -47,6 +49,7 @@ type Problem
 init : Time.Posix -> Session -> ( Model, Cmd msg )
 init currentTime session =
     ( { session = session
+      , showLoading = False
       , currentTime = currentTime
       , problems = []
       , form =
@@ -82,6 +85,7 @@ view model =
                         ]
                     ]
                 ]
+            , LoadingIndicator.view model.showLoading
             ]
     }
 
@@ -156,7 +160,7 @@ update msg model =
         SubmittedForm ->
             case validate model.form of
                 Ok validForm ->
-                    ( { model | problems = [] }
+                    ( { model | showLoading = True, problems = [] }
                     , Http.send CompletedRegister (register validForm)
                     )
 
@@ -180,7 +184,7 @@ update msg model =
                     Api.decodeErrors error
                         |> List.map ServerError
             in
-            ( { model | problems = List.append model.problems serverErrors }
+            ( { model | showLoading = False, problems = List.append model.problems serverErrors }
             , Cmd.none
             )
 
@@ -195,12 +199,12 @@ update msg model =
                     Api.decodeErrors error
                         |> List.map ServerError
             in
-            ( { model | problems = List.append model.problems serverErrors }
+            ( { model | showLoading = False, problems = List.append model.problems serverErrors }
             , Cmd.none
             )
 
         LoadedMe token (Ok user) ->
-            ( model
+            ( { model | showLoading = False }
             , Viewer.store
                 <| Viewer.viewer user token (Time.posixToMillis model.currentTime)
             )

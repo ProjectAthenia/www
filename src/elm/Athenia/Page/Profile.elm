@@ -6,6 +6,7 @@ module Athenia.Page.Profile exposing (Model, Msg, init, subscriptions, toSession
 import Athenia.Api as Api exposing (Token)
 import Athenia.Api.Endpoint as Endpoint
 import Athenia.Components.Loading as Loading
+import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.User.User as User
 import Athenia.Page as Page
 import Athenia.Route as Route
@@ -43,7 +44,6 @@ type ActiveTab
 
 type Status
     = Loading Int
-    | LoadingSlowly Int
     | Loaded User.Model
     | Failed
 
@@ -64,7 +64,6 @@ init session token userId =
     , Cmd.batch
         [ fetchUser session userId
         , Task.perform GotTimeZone Time.here
-        , Task.perform (\_ -> PassedSlowLoadThreshold) Loading.slowThreshold
         ]
     )
 
@@ -132,10 +131,7 @@ view model =
                     ]
 
             Loading userId ->
-                text ""
-
-            LoadingSlowly userId ->
-                Loading.icon
+                LoadingIndicator.view True
 
             Failed ->
                 Loading.error "profile"
@@ -181,7 +177,6 @@ type Msg
     | CompletedUserLoad (Result Http.Error User.Model)
     | GotTimeZone Time.Zone
     | GotSession Session
-    | PassedSlowLoadThreshold
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -223,15 +218,6 @@ update msg model =
                     ( model
                     , Route.replaceUrl (Session.navKey session) Route.Login
                     )
-
-        PassedSlowLoadThreshold ->
-            case model.user of
-                Loading userId ->
-                    ( { model | user = LoadingSlowly userId }, Cmd.none )
-
-                _ ->
-                    (model, Cmd.none)
-
 
 
 

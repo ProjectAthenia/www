@@ -6,6 +6,7 @@ module Athenia.Page.Home exposing (Model, Msg, init, subscriptions, toSession, u
 import Athenia.Api as Api exposing (Token)
 import Athenia.Api.Endpoint as Endpoint
 import Athenia.Components.Loading as Loading
+import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.Wiki.Article as Article
 import Athenia.Models.Page as PageModel
 import Athenia.Page as Page
@@ -30,6 +31,7 @@ import Url.Builder
 
 type alias Model =
     { token : Token
+    , showLoading : Bool
     , session : Session
     , timeZone : Time.Zone
     , status : Status
@@ -48,6 +50,7 @@ type Status
 init : Session -> Token -> ( Model, Cmd Msg )
 init session token =
     ( { token = token
+      , showLoading = True
       , session = session
       , timeZone = Time.utc
       , status = Loading
@@ -56,7 +59,6 @@ init session token =
     , Cmd.batch
         [ fetchArticles token 1
         , Task.perform GotTimeZone Time.here
-        , Task.perform (\_ -> PassedSlowLoadThreshold) Loading.slowThreshold
         ]
     )
 
@@ -90,6 +92,7 @@ view model =
                                 [ Loading.error "Articles" ]
                     ]
                 ]
+            , LoadingIndicator.view model.showLoading
             ]
     }
 
@@ -117,7 +120,6 @@ type Msg
     = CompletedArticlesLoad (Result Http.Error Article.ArticlePage)
     | GotTimeZone Time.Zone
     | GotSession Session
-    | PassedSlowLoadThreshold
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -126,6 +128,7 @@ update msg model =
         CompletedArticlesLoad (Ok articlePage) ->
             ( { model
                 | status = Loaded
+                , showLoading = (PageModel.nextPageNumber articlePage) /= Nothing
                 , articles = List.concat [model.articles, articlePage.data]
             }
             , case PageModel.nextPageNumber articlePage of
@@ -136,7 +139,7 @@ update msg model =
             )
 
         CompletedArticlesLoad (Err error) ->
-            ( { model | status = Failed }, Log.error )
+            ( { model | status = Failed, showLoading = False }, Log.error )
 
         GotTimeZone tz ->
             ( { model | timeZone = tz }, Cmd.none )
@@ -154,13 +157,6 @@ update msg model =
                     ( model
                     , Route.replaceUrl (Session.navKey session) Route.Login
                     )
-
-        PassedSlowLoadThreshold ->
-            case model.status of
-                Loading ->
-                    ( { model | status = LoadingSlowly }, Cmd.none )
-                _ ->
-                    (model, Cmd.none)
 
 
 

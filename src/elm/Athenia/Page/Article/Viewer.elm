@@ -6,6 +6,7 @@ module Athenia.Page.Article.Viewer exposing (Model, Msg, init, subscriptions, to
 import Athenia.Api as Api exposing (Token)
 import Athenia.Api.Endpoint as Endpoint
 import Athenia.Components.Loading as Loading
+import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.Wiki.Article as Article
 import Athenia.Page as Page
 import Athenia.Route as Route
@@ -41,7 +42,6 @@ type alias Model =
 
 type Status
     = Loading
-    | LoadingSlowly
     | Loaded Article.Model
     | Failed
 
@@ -66,7 +66,6 @@ init session token articleId =
     , Cmd.batch
         [ fetchArticle token articleId
         , Task.perform GotTimeZone Time.here
-        , Task.perform (\_ -> PassedSlowLoadThreshold) Loading.slowThreshold
         ]
     )
 
@@ -99,10 +98,7 @@ view model =
             }
 
         Loading ->
-            { title = "Article", content = text "" }
-
-        LoadingSlowly ->
-            { title = "Article", content = Loading.icon }
+            { title = "Article", content = LoadingIndicator.view True }
 
         Failed ->
             { title = "Article", content = Loading.error "article" }
@@ -132,7 +128,6 @@ type Msg
     | CompletedLoadArticle (Result Http.Error Article.Model)
     | GotTimeZone Time.Zone
     | GotSession Session
-    | PassedSlowLoadThreshold
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -165,13 +160,6 @@ update msg model =
                     ( model
                     , Route.replaceUrl (Session.navKey session) Route.Login
                     )
-
-        PassedSlowLoadThreshold ->
-            case model.article of
-                Loading ->
-                    ( { model | article = LoadingSlowly }, Cmd.none )
-                _ ->
-                    (model, Cmd.none)
 
 
 -- SUBSCRIPTIONS

@@ -3,6 +3,7 @@ module Athenia.Page.Article.Editor exposing (Model, Msg, init, subscriptions, to
 import Athenia.Api as Api exposing (Token)
 import Athenia.Api.Endpoint as Endpoint
 import Athenia.Components.Loading as Loading
+import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.Wiki.Article as Article
 import Athenia.Page as Page
 import Athenia.Route as Route
@@ -29,6 +30,7 @@ import Time
 
 type alias Model =
     { session : Session
+    , showLoading : Bool
     , token : Token
     , article : Status
     }
@@ -38,7 +40,6 @@ type
     Status
     -- Edit Article
     = Loading Int
-    | LoadingSlowly Int
     | LoadingFailed
     | Editing Article.Model (List Problem) Form
 
@@ -55,12 +56,12 @@ type alias Form =
 init : Session -> Token -> Int -> ( Model, Cmd Msg )
 init session token articleId =
     ( { session = session
+      , showLoading = True
       , token = token
       , article = Loading articleId
       }
     , Cmd.batch
         [ fetchArticle token articleId
-        , Task.perform (\_ -> PassedSlowLoadThreshold) Loading.slowThreshold
         ]
     )
 
@@ -91,9 +92,6 @@ viewContent model =
                 Loading _ ->
                     []
 
-                LoadingSlowly _ ->
-                    [ Loading.icon ]
-
                 Editing article problems form ->
                     [ viewTitle article
                     , viewProblems problems
@@ -110,6 +108,7 @@ viewContent model =
                     formHtml
                 ]
             ]
+        , LoadingIndicator.view model.showLoading
         ]
 
 
@@ -155,7 +154,6 @@ type Msg
     | EnteredBody String
     | CompletedLoadArticle (Result Http.Error Article.Model)
     | GotSession Session
-    | PassedSlowLoadThreshold
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -168,7 +166,7 @@ update msg model =
             updateForm (\form -> { form | body = body }) model
 
         CompletedLoadArticle (Err err) ->
-            ( { model | article = LoadingFailed }
+            ( { model | showLoading = False, article = LoadingFailed }
             , Cmd.none
             )
 
@@ -178,7 +176,7 @@ update msg model =
                     { body = article.content
                     }
             in
-            ( { model | article = Editing article [] form }
+            ( { model | showLoading = False, article = Editing article [] form }
             , Cmd.none
             )
 
@@ -195,20 +193,6 @@ update msg model =
                     ( model
                     , Route.replaceUrl (Session.navKey session) Route.Login
                     )
-
-        PassedSlowLoadThreshold ->
-            let
-                -- If any data is still Loading, change it to LoadingSlowly
-                -- so `view` knows to render a spinner.
-                status =
-                    case model.article of
-                        Loading articleId ->
-                            LoadingSlowly articleId
-
-                        other ->
-                            other
-            in
-            ( { model | article = status }, Cmd.none )
 
 
 {-| Helper function for `update`. Updates the form, if there is one,

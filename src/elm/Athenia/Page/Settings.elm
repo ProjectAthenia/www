@@ -3,6 +3,7 @@ module Athenia.Page.Settings exposing (Model, Msg, init, subscriptions, toSessio
 import Athenia.Api as Api exposing (Token)
 import Athenia.Api.Endpoint as Endpoint
 import Athenia.Components.Loading as Loading
+import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.User.User as User
 import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
@@ -28,6 +29,7 @@ import Task
 
 type alias Model =
     { session : Session
+    , showLoading : Bool
     , token : Token
     , problems : List Problem
     , status : Status
@@ -44,7 +46,6 @@ type alias Form =
 
 type Status
     = Loading
-    | LoadingSlowly
     | Loaded Form
     | Failed
 
@@ -57,6 +58,7 @@ type Problem
 init : Session -> Token -> ( Model, Cmd Msg )
 init session token =
     ( { session = session
+      , showLoading = True
       , token = token
       , problems = []
       , status = Loading
@@ -64,7 +66,6 @@ init session token =
     , Cmd.batch
         [ Api.get Endpoint.me (Session.token session) User.modelDecoder
             |> Http.send CompletedFormLoad
-        , Task.perform (\_ -> PassedSlowLoadThreshold) Loading.slowThreshold
         ]
     )
 
@@ -103,14 +104,12 @@ view model =
                             Loading ->
                                 text ""
 
-                            LoadingSlowly ->
-                                Loading.icon
-
                             Failed ->
                                 text "Error loading page."
                         ]
                     ]
                 ]
+            , LoadingIndicator.view model.showLoading
             ]
     }
 
@@ -176,14 +175,13 @@ type Msg
     | CompletedFormLoad (Result Http.Error User.Model)
     | CompletedSave (Result Http.Error User.Model)
     | GotSession Session
-    | PassedSlowLoadThreshold
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CompletedFormLoad (Ok user) ->
-            ( { model | status = Loaded
+            ( { model | showLoading = False, status = Loaded
                 { id = user.id
                 , name = user.name
                 , email = user.email
@@ -194,14 +192,14 @@ update msg model =
             )
 
         CompletedFormLoad (Err _) ->
-            ( { model | status = Failed }
+            ( { model | showLoading = True, status = Failed }
             , Cmd.none
             )
 
         SubmittedForm token form ->
             case validate form of
                 Ok validForm ->
-                    ( { model | status = Loaded form }
+                    ( { model | showLoading = True, status = Loaded form }
                     , edit token validForm
                         |> Http.send CompletedSave
                     )
@@ -226,12 +224,12 @@ update msg model =
                     Api.decodeErrors error
                         |> List.map ServerError
             in
-            ( { model | problems = List.append model.problems serverErrors }
+            ( { model | showLoading = False, problems = List.append model.problems serverErrors }
             , Cmd.none
             )
 
         CompletedSave (Ok user) ->
-            ( model
+            ( { model | showLoading = False }
             ,  case (Session.token model.session, Session.lastRefresh model.session) of
                 (Just token, Just lastRefresh) ->
                     Viewer.store
@@ -253,16 +251,6 @@ update msg model =
                     ( model
                     , Route.replaceUrl (Session.navKey session) Route.Login
                     )
-
-        PassedSlowLoadThreshold ->
-            case model.status of
-                Loading ->
-                    ( { model | status = LoadingSlowly }
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
 
 
 {-| Helper function for `update`. Updates the form and returns Cmd.none.
