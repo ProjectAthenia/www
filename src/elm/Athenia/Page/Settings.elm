@@ -2,8 +2,8 @@ module Athenia.Page.Settings exposing (Model, Msg, init, subscriptions, toSessio
 
 import Athenia.Api as Api exposing (Token)
 import Athenia.Api.Endpoint as Endpoint
-import Athenia.Components.Loading as Loading
 import Athenia.Components.LoadingIndicator as LoadingIndicator
+import Athenia.Models.Error as Error
 import Athenia.Models.User.User as User
 import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
@@ -14,13 +14,11 @@ import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
-import Browser.Navigation as Nav
 import Html exposing (Html, button, div, fieldset, h1, input, li, text, textarea, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit)
 import Http
 import Json.Encode as Encode
-import Task
 
 
 
@@ -52,7 +50,7 @@ type Status
 
 type Problem
     = InvalidEntry ValidatedField String
-    | ServerError String
+    | ServerError Error.Model
 
 
 init : Session -> Token -> ( Model, Cmd Msg )
@@ -95,7 +93,7 @@ view model =
                 [ Grid.row []
                     [ Grid.col [Col.md6, Col.offsetMd3]
                         [ h1 [ class "text-xs-center" ] [ text "Your Settings" ]
-                        , ul [ class "error-messages" ]
+                        , div [ ]
                             (List.map viewProblem model.problems)
                         , case model.status of
                             Loaded form ->
@@ -149,18 +147,15 @@ viewForm token form =
         ]
 
 
+
 viewProblem : Problem -> Html msg
 viewProblem problem =
-    let
-        errorMessage =
-            case problem of
-                InvalidEntry _ message ->
-                    message
+    case problem of
+        InvalidEntry _ str ->
+            div [class "error"] [text str]
 
-                ServerError message ->
-                    message
-    in
-    li [] [ text errorMessage ]
+        ServerError error ->
+            Error.view error
 
 
 
@@ -220,11 +215,11 @@ update msg model =
 
         CompletedSave (Err error) ->
             let
-                serverErrors =
-                    Api.decodeErrors error
-                        |> List.map ServerError
+                serverError =
+                    ServerError
+                        <| Api.decodeErrors error
             in
-            ( { model | showLoading = False, problems = List.append model.problems serverErrors }
+            ( { model | showLoading = False, problems = List.append model.problems [serverError] }
             , Cmd.none
             )
 

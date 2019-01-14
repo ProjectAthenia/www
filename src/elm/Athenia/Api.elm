@@ -1,6 +1,5 @@
 port module Athenia.Api exposing
     (Token
-    , addServerError
     , application
     , decodeErrors
     , delete, get, post, put
@@ -18,8 +17,9 @@ It exposes an opaque Endpoint type which is guaranteed to point to the correct U
 -}
 
 import Athenia.Api.Endpoint as Endpoint
-import Athenia.Models.Wiki.Article as Article
+import Athenia.Models.Error as Error
 import Athenia.Models.User.User as User
+import Athenia.Models.Wiki.Article as Article
 import Browser
 import Browser.Navigation as Nav
 import Http exposing (Body, Expect)
@@ -284,32 +284,19 @@ decoderFromCred decoder =
 
 
 
--- ERRORS
-
-
-addServerError : List String -> List String
-addServerError list =
-    "Server error" :: list
-
 
 {-| Many API endpoints include an "errors" field in their BadStatus responses.
 -}
-decodeErrors : Http.Error -> List String
+decodeErrors : Http.Error -> Error.Model
 decodeErrors error =
     case error of
         Http.BadStatus response ->
             response.body
-                |> decodeString (field "errors" errorsDecoder)
-                |> Result.withDefault [ "Server error" ]
+                |> decodeString Error.decoder
+                |> Result.withDefault Error.unknownErrorResponse
 
         err ->
-            [ "Server error" ]
-
-
-errorsDecoder : Decoder (List String)
-errorsDecoder =
-    Decode.keyValuePairs (Decode.list Decode.string)
-        |> Decode.map (List.concatMap fromPair)
+            Error.unknownErrorResponse
 
 
 fromPair : ( String, List String ) -> List String
