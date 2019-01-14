@@ -2,7 +2,7 @@
 module Athenia.Models.Page exposing (..)
 
 import Json.Decode as JsonDecode exposing (..)
-import Json.Decode.Pipeline exposing ( required)
+import Json.Decode.Pipeline exposing (required)
 
 
 type alias Model a =
