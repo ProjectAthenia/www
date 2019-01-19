@@ -4,25 +4,22 @@ module Athenia.Page.Home exposing (Model, Msg, init, subscriptions, toSession, u
 -}
 
 import Athenia.Api as Api exposing (Token)
-import Athenia.Api.Endpoint as Endpoint
 import Athenia.Components.Loading as Loading
 import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.Wiki.Article as Article
 import Athenia.Models.Page as PageModel
-import Athenia.Page as Page
 import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
 import Athenia.Utilities.Log as Log
 import Athenia.Viewer as Viewer
 import Bootstrap.Grid as Grid
+import Bootstrap.Button as Button
 import Browser.Dom as Dom
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, classList, href, id, placeholder)
-import Html.Events exposing (onClick)
 import Http
 import Task exposing (Task)
 import Time
-import Url.Builder
 
 
 
@@ -109,7 +106,12 @@ viewBanner : Html Msg
 viewBanner =
     div [ id "banner" ]
         [ h1 [ class "logo-font" ] [ text "Welcome" ]
-        , p [] [ text "All available articles listed below" ]
+        , p []
+            [ text "All available articles listed below"
+            ]
+        , Button.button
+            [ Button.outlinePrimary
+            ] [ text "Create Article" ]
         ]
 
 
@@ -120,6 +122,7 @@ type Msg
     = CompletedArticlesLoad (Result Http.Error Article.ArticlePage)
     | GotTimeZone Time.Zone
     | GotSession Session
+    | OpenCreateArticlePrompt
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -140,6 +143,9 @@ update msg model =
 
         CompletedArticlesLoad (Err error) ->
             ( { model | status = Failed, showLoading = False }, Log.error )
+
+        OpenCreateArticlePrompt ->
+            (model, Cmd.none)
 
         GotTimeZone tz ->
             ( { model | timeZone = tz }, Cmd.none )
