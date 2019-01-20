@@ -234,7 +234,7 @@ subscriptions model =
 fetchArticle : Token -> Int -> Cmd Msg
 fetchArticle token articleId =
     Http.send CompletedLoadArticle
-        <| Api.article token articleId
+        <| Api.getArticle token articleId
 
 
 -- EXPORT

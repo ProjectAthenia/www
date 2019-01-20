@@ -5,7 +5,7 @@ port module Athenia.Api exposing
     , delete, get, post, put
     , login, logout, signUp, refresh
     , settings, me
-    , article, articles
+    , getArticle, viewArticles
     , storeCredWith
     , viewerChanges
     )
@@ -265,14 +265,22 @@ me token =
     get Endpoint.me (Just token) User.modelDecoder
 
 
-article : Token -> Int -> Http.Request Article.Model
-article token articleId =
-    get (Endpoint.article articleId) (Just token) Article.modelDecoder
+createArticle : Token -> Article.CreateModel -> Http.Request Article.Model
+createArticle token article =
+    post Endpoint.baseArticle
+        (Just token)
+        (Http.jsonBody (Article.toCreateJson article))
+        Article.modelDecoder
 
 
-articles : Token -> Int -> Http.Request Article.ArticlePage
-articles token page =
-    get (Endpoint.articles page) (Just token) Article.pageDecoder
+getArticle : Token -> Int -> Http.Request Article.Model
+getArticle token articleId =
+    get (Endpoint.viewArticle articleId) (Just token) Article.modelDecoder
+
+
+viewArticles : Token -> Int -> Http.Request Article.ArticlePage
+viewArticles token page =
+    get (Endpoint.viewArticles page) (Just token) Article.pageDecoder
 
 
 decoderFromCred : Decoder (Token -> Int -> a) -> Decoder a

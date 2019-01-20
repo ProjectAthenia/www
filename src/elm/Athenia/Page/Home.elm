@@ -190,7 +190,7 @@ update msg model =
 fetchArticles : Token -> Int -> Cmd Msg
 fetchArticles token page =
     Http.send CompletedArticlesLoad
-        <| Api.articles token page
+        <| Api.viewArticles token page
 
 
 articlesPerPage : Int

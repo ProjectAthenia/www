@@ -3,7 +3,27 @@ module UnitTests.Models.Wiki.ArticleTest exposing (..)
 import Athenia.Models.Wiki.Article as Article
 import Expect
 import Json.Decode as JsonDecode
+import Json.Encode as JsonEncode
 import Test exposing (..)
+
+
+testToCreateJson : Test
+testToCreateJson =
+    test "Make sure that we can transform a create model to a json string" <|
+        \() ->
+            let
+                model = Article.initCreateModel "An Article" <|
+                    { id = 123
+                    , name = ""
+                    , email = ""
+                    , password = ""
+                    , roles = []
+                    }
+            in
+                Expect.equal "{\"title\":\"An Article\",\"created_by_id\":123}"
+                    <| JsonEncode.encode 0
+                        <| Article.toCreateJson model
+
 
 
 testModelDecoder : Test

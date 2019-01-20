@@ -1,6 +1,6 @@
 module Athenia.Api.Endpoint exposing
     ( Endpoint, request
-    , article, articles
+    , baseArticle, viewArticle, viewArticles
     , login, signUp, refresh
     , user, userActivity, me
     )
@@ -65,15 +65,19 @@ url paths queryParams =
 -- System wide endpoints
 
 
-article : Int -> Endpoint
-article articleId =
+baseArticle : Endpoint
+baseArticle =
+    url [ "articles" ] []
+
+viewArticle : Int -> Endpoint
+viewArticle articleId =
     url [ "articles", String.fromInt articleId ]
         [ (Builder.string "expand[createdBy]" "*")
         ]
 
 
-articles : Int -> Endpoint
-articles page =
+viewArticles : Int -> Endpoint
+viewArticles page =
     url [ "articles" ]
         <| if page /= 1 then
             [ (Builder.string "page" (String.fromInt page))
