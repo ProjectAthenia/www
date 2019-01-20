@@ -4,6 +4,7 @@ import Bootstrap.Form.Input as Input
 import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
+import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -45,7 +46,7 @@ view model =
                             ]
                         ]
                     ]
-                , Grid.row []
+                , Grid.row [ Row.attrs [class "button-wrapper"] ]
                     [ Grid.col
                         [ Col.xs6 ]
                         [ Button.button

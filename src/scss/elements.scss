@@ -38,3 +38,10 @@ footer {
 .errors {
   color: $red;
 }
+
+.button-wrapper {
+  margin: 10px 0 0;
+  > div {
+    text-align: center;
+  }
+}

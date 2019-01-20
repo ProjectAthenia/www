@@ -6,6 +6,7 @@ module Athenia.Page.Home exposing (Model, Msg, init, subscriptions, toSession, u
 import Athenia.Api as Api exposing (Token)
 import Athenia.Components.Loading as Loading
 import Athenia.Components.LoadingIndicator as LoadingIndicator
+import Athenia.Modals.CreateArticle as CreateArticleModal
 import Athenia.Models.Wiki.Article as Article
 import Athenia.Models.Page as PageModel
 import Athenia.Route as Route
@@ -16,7 +17,7 @@ import Bootstrap.Grid as Grid
 import Bootstrap.Button as Button
 import Browser.Dom as Dom
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, classList, href, id, placeholder)
+import Html.Attributes exposing (..)
 import Http
 import Task exposing (Task)
 import Time
@@ -33,6 +34,7 @@ type alias Model =
     , timeZone : Time.Zone
     , status : Status
     , articles : List Article.Model
+    , createArticleModal: CreateArticleModal.Model
     }
 
 
@@ -52,6 +54,7 @@ init session token =
       , timeZone = Time.utc
       , status = Loading
       , articles = []
+      , createArticleModal = CreateArticleModal.init
       }
     , Cmd.batch
         [ fetchArticles token 1
@@ -90,6 +93,8 @@ view model =
                     ]
                 ]
             , LoadingIndicator.view model.showLoading
+            , CreateArticleModal.view model.createArticleModal
+                |> Html.map CreateArticleModalMsg
             ]
     }
 
@@ -111,6 +116,7 @@ viewBanner =
             ]
         , Button.button
             [ Button.outlinePrimary
+            , Button.onClick OpenCreateArticlePrompt
             ] [ text "Create Article" ]
         ]
 
@@ -123,6 +129,7 @@ type Msg
     | GotTimeZone Time.Zone
     | GotSession Session
     | OpenCreateArticlePrompt
+    | CreateArticleModalMsg CreateArticleModal.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -145,7 +152,18 @@ update msg model =
             ( { model | status = Failed, showLoading = False }, Log.error )
 
         OpenCreateArticlePrompt ->
-            (model, Cmd.none)
+            ( { model
+                | createArticleModal = CreateArticleModal.show CreateArticleModal.init
+            }
+            , Cmd.none
+            )
+
+        CreateArticleModalMsg modalMsg ->
+            ({ model
+                | createArticleModal = CreateArticleModal.update modalMsg model.createArticleModal
+            }
+            , Cmd.none
+            )
 
         GotTimeZone tz ->
             ( { model | timeZone = tz }, Cmd.none )
