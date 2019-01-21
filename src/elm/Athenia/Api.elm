@@ -5,7 +5,7 @@ port module Athenia.Api exposing
     , delete, get, post, put
     , login, logout, signUp, refresh
     , settings, me
-    , getArticle, viewArticles
+    , getArticle, viewArticles, createArticle
     , storeCredWith
     , viewerChanges
     )
@@ -305,22 +305,3 @@ decodeErrors error =
 
         err ->
             Error.unknownErrorResponse
-
-
-fromPair : ( String, List String ) -> List String
-fromPair ( field, errors ) =
-    List.map (\error -> field ++ " " ++ error) errors
-
-
-
--- LOCALSTORAGE KEYS
-
-
-cacheStorageKey : String
-cacheStorageKey =
-    "cache"
-
-
-credStorageKey : String
-credStorageKey =
-    "cred"

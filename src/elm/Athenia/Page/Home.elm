@@ -16,7 +16,6 @@ import Athenia.Utilities.Log as Log
 import Athenia.Viewer as Viewer
 import Bootstrap.Grid as Grid
 import Bootstrap.Button as Button
-import Browser.Dom as Dom
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
@@ -57,7 +56,7 @@ init session token user =
       , timeZone = Time.utc
       , status = Loading
       , articles = []
-      , createArticleModal = CreateArticleModal.init user
+      , createArticleModal = CreateArticleModal.init user token
       }
     , Cmd.batch
         [ fetchArticles token 1
@@ -158,7 +157,7 @@ update msg model =
             ( { model
                 | createArticleModal =
                     CreateArticleModal.show
-                        <| CreateArticleModal.init model.user
+                        <| CreateArticleModal.init model.user model.token
             }
             , Cmd.none
             )
@@ -200,19 +199,6 @@ fetchArticles : Token -> Int -> Cmd Msg
 fetchArticles token page =
     Http.send CompletedArticlesLoad
         <| Api.viewArticles token page
-
-
-articlesPerPage : Int
-articlesPerPage =
-    10
-
-
-scrollToTop : Task x ()
-scrollToTop =
-    Dom.setViewport 0 0
-        -- It's not worth showing the user anything special if scrolling fails.
-        -- If anything, we'd log this to an error recording service.
-        |> Task.onError (\_ -> Task.succeed ())
 
 
 

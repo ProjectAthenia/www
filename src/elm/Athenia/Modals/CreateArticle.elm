@@ -1,5 +1,6 @@
 module Athenia.Modals.CreateArticle exposing (..)
 
+import Athenia.Api as Api exposing (Token)
 import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.User.User as User
 import Athenia.Models.Wiki.Article as Article
@@ -12,6 +13,7 @@ import Bootstrap.Modal as Modal
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Http
 
 
 -- MODEL
@@ -19,14 +21,16 @@ import Html.Events exposing (..)
 
 type alias Model =
     { article : Article.CreateModel
+    , token : Token
     , visibility : Modal.Visibility
     , showLoading : Bool
     }
 
 
-init : User.Model -> Model
-init user =
+init : User.Model -> Token -> Model
+init user token =
     { article = Article.initCreateModel user
+    , token = token
     , visibility = Modal.hidden
     , showLoading = False
     }
@@ -90,9 +94,10 @@ type Msg
     = EnteredTitle String
     | Cancel
     | Confirm
+    | CompletedArticleCreate (Result Http.Error Article.Model)
 
 
-update: Msg -> Model -> (Model, Cmd Msg)
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         EnteredTitle title ->
@@ -117,19 +122,32 @@ update msg model =
             ( { model
                 | showLoading = True
             }
-            , Cmd.none
+            , createArticle model.token model.article
             )
 
+        CompletedArticleCreate _ ->
+            (model, Cmd.none)
 
-hide: Model -> Model
+
+hide : Model -> Model
 hide model =
     { model
         | visibility = Modal.hidden
     }
 
 
-show: Model -> Model
+show : Model -> Model
 show model =
     { model
         | visibility = Modal.shown
     }
+
+
+-- HTTP
+
+
+createArticle : Token -> Article.CreateModel -> Cmd Msg
+createArticle token article =
+    Http.send CompletedArticleCreate
+        <| Api.createArticle token article
+
