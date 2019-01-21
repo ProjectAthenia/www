@@ -29,9 +29,9 @@ type alias CreateModel =
     }
 
 
-initCreateModel : String -> User.Model -> CreateModel
-initCreateModel title user =
-    { title = title
+initCreateModel : User.Model -> CreateModel
+initCreateModel user =
+    { title = ""
     , created_by = user
     }
 

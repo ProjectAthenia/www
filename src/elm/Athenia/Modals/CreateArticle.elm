@@ -1,5 +1,7 @@
 module Athenia.Modals.CreateArticle exposing (..)
 
+import Athenia.Models.User.User as User
+import Athenia.Models.Wiki.Article as Article
 import Bootstrap.Form.Input as Input
 import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
@@ -14,14 +16,14 @@ import Html.Attributes exposing (..)
 
 
 type alias Model =
-    { title : String
-    , visibility: Modal.Visibility
+    { article : Article.CreateModel
+    , visibility : Modal.Visibility
     }
 
 
-init : Model
-init =
-    { title = ""
+init : User.Model -> Model
+init user =
+    { article = Article.initCreateModel user
     , visibility = Modal.hidden
     }
 
@@ -41,7 +43,7 @@ view model =
                             [ Input.large
                             , Input.placeholder "Enter Article Title"
                             , Input.onInput EnteredTitle
-                            , Input.value model.title
+                            , Input.value model.article.title
                             , Input.attrs [required True]
                             ]
                         ]
@@ -83,9 +85,15 @@ update: Msg -> Model -> Model
 update msg model =
     case msg of
         EnteredTitle title ->
-            { model
-                | title = title
-            }
+            let
+                article = model.article
+            in
+                { model
+                    | article =
+                        { article
+                            | title = title
+                        }
+                }
 
         Cancel ->
             hide model

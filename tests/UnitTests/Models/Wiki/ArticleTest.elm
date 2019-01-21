@@ -12,12 +12,16 @@ testToCreateJson =
     test "Make sure that we can transform a create model to a json string" <|
         \() ->
             let
-                model = Article.initCreateModel "An Article" <|
+                baseModel = Article.initCreateModel <|
                     { id = 123
                     , name = ""
                     , email = ""
                     , password = ""
                     , roles = []
+                    }
+                model =
+                    { baseModel
+                        | title = "An Article"
                     }
             in
                 Expect.equal "{\"title\":\"An Article\",\"created_by_id\":123}"

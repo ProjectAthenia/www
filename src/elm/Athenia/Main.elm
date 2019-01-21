@@ -229,16 +229,16 @@ changeRouteTo maybeRoute model =
                 |> updateWith SignUp GotSignUpMsg model
 
         Just route ->
-            case Session.token session of
-                Just token ->
-                    changeRouteToAuthenticatedRoute route {model | navBarConfig = AppNavBar.updateItems (getNavItems (Just token)) model.navBarConfig} session token
+            case (Session.token session, Session.user session) of
+                (Just token, Just user) ->
+                    changeRouteToAuthenticatedRoute route {model | navBarConfig = AppNavBar.updateItems (getNavItems (Just token)) model.navBarConfig} session token user
 
-                Nothing ->
+                _ ->
                     (model, Route.replaceUrl (Session.navKey session) Route.Login )
 
 
-changeRouteToAuthenticatedRoute : Route -> Model -> Session -> Token -> (Model, Cmd Msg)
-changeRouteToAuthenticatedRoute route model session token =
+changeRouteToAuthenticatedRoute : Route -> Model -> Session -> Token -> User.Model -> (Model, Cmd Msg)
+changeRouteToAuthenticatedRoute route model session token user =
     case route of
         Route.EditArticle articleId ->
             ArticleEditor.init session token articleId
@@ -249,7 +249,7 @@ changeRouteToAuthenticatedRoute route model session token =
                 |> updateWith Settings GotSettingsMsg model
 
         Route.Home ->
-            Home.init session token
+            Home.init session token user
                 |> updateWith Home GotHomeMsg model
 
         Route.Profile userId ->

@@ -7,6 +7,7 @@ import Athenia.Api as Api exposing (Token)
 import Athenia.Components.Loading as Loading
 import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Modals.CreateArticle as CreateArticleModal
+import Athenia.Models.User.User as User
 import Athenia.Models.Wiki.Article as Article
 import Athenia.Models.Page as PageModel
 import Athenia.Route as Route
@@ -29,12 +30,13 @@ import Time
 
 type alias Model =
     { token : Token
+    , user : User.Model
     , showLoading : Bool
     , session : Session
     , timeZone : Time.Zone
     , status : Status
     , articles : List Article.Model
-    , createArticleModal: CreateArticleModal.Model
+    , createArticleModal : CreateArticleModal.Model
     }
 
 
@@ -46,15 +48,16 @@ type Status
 
 
 -- Passes in the current session, and requires the unwrapping of the token
-init : Session -> Token -> ( Model, Cmd Msg )
-init session token =
+init : Session -> Token -> User.Model -> ( Model, Cmd Msg )
+init session token user =
     ( { token = token
+      , user = user
       , showLoading = True
       , session = session
       , timeZone = Time.utc
       , status = Loading
       , articles = []
-      , createArticleModal = CreateArticleModal.init
+      , createArticleModal = CreateArticleModal.init user
       }
     , Cmd.batch
         [ fetchArticles token 1
@@ -153,7 +156,9 @@ update msg model =
 
         OpenCreateArticlePrompt ->
             ( { model
-                | createArticleModal = CreateArticleModal.show CreateArticleModal.init
+                | createArticleModal =
+                    CreateArticleModal.show
+                        <| CreateArticleModal.init model.user
             }
             , Cmd.none
             )
