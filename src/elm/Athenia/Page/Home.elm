@@ -164,11 +164,15 @@ update msg model =
             )
 
         CreateArticleModalMsg modalMsg ->
-            ({ model
-                | createArticleModal = CreateArticleModal.update modalMsg model.createArticleModal
-            }
-            , Cmd.none
-            )
+            let
+                createArticleUpdate = CreateArticleModal.update modalMsg model.createArticleModal
+            in
+                ({ model
+                    | createArticleModal = Tuple.first createArticleUpdate
+                }
+                , Tuple.second createArticleUpdate
+                    |> Cmd.map CreateArticleModalMsg
+                )
 
         GotTimeZone tz ->
             ( { model | timeZone = tz }, Cmd.none )

@@ -1,5 +1,6 @@
 module Athenia.Modals.CreateArticle exposing (..)
 
+import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.User.User as User
 import Athenia.Models.Wiki.Article as Article
 import Bootstrap.Form.Input as Input
@@ -10,6 +11,7 @@ import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 
 
 -- MODEL
@@ -18,6 +20,7 @@ import Html.Attributes exposing (..)
 type alias Model =
     { article : Article.CreateModel
     , visibility : Modal.Visibility
+    , showLoading : Bool
     }
 
 
@@ -25,50 +28,58 @@ init : User.Model -> Model
 init user =
     { article = Article.initCreateModel user
     , visibility = Modal.hidden
+    , showLoading = False
     }
 
 
 -- Create the view for the article creation modal
 view : Model -> Html Msg
 view model =
-    Modal.config Cancel
-        |> Modal.large
-        |> Modal.h4 [] [ text "Create Article" ]
-        |> Modal.body []
-            [ Grid.containerFluid []
-                [ Grid.row []
-                    [ Grid.col
-                        []
-                        [ Input.text
-                            [ Input.large
-                            , Input.placeholder "Enter Article Title"
-                            , Input.onInput EnteredTitle
-                            , Input.value model.article.title
-                            , Input.attrs [required True]
+    div []
+        [ Modal.config Cancel
+            |> Modal.large
+            |> Modal.h4 [] [ text "Create Article" ]
+            |> Modal.body []
+                [ Html.form [ onSubmit Confirm ]
+                    [ Grid.containerFluid []
+                        [ Grid.row []
+                            [ Grid.col
+                                []
+                                [ Input.text
+                                    [ Input.large
+                                    , Input.placeholder "Enter Article Title"
+                                    , Input.onInput EnteredTitle
+                                    , Input.value model.article.title
+                                    , Input.attrs [required True]
+                                    ]
+                                ]
                             ]
-                        ]
-                    ]
-                , Grid.row [ Row.attrs [class "button-wrapper"] ]
-                    [ Grid.col
-                        [ Col.xs6 ]
-                        [ Button.button
-                            [ Button.info
-                            , Button.onClick Cancel
+                        , Grid.row [ Row.attrs [class "button-wrapper"] ]
+                            [ Grid.col
+                                [ Col.xs6 ]
+                                [ Button.button
+                                    [ Button.info
+                                    , Button.disabled model.showLoading
+                                    , Button.onClick Cancel
+                                    ]
+                                    [ text "Cancel" ]
+                                ]
+                            , Grid.col
+                                [ Col.xs6 ]
+                                [ Html.input
+                                    [ class "btn btn-primary"
+                                    , disabled model.showLoading
+                                    , type_ "submit"
+                                    ]
+                                    [ ]
+                                ]
                             ]
-                            [ text "Cancel" ]
-                        ]
-                    , Grid.col
-                        [ Col.xs6 ]
-                        [ Button.button
-                            [ Button.danger
-                            , Button.onClick Confirm
-                            ]
-                            [ text "Submit" ]
                         ]
                     ]
                 ]
-            ]
-        |> Modal.view model.visibility
+            |> Modal.view model.visibility
+        , LoadingIndicator.view model.showLoading
+        ]
 
 
 
@@ -81,36 +92,44 @@ type Msg
     | Confirm
 
 
-update: Msg -> Model -> Model
+update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         EnteredTitle title ->
             let
                 article = model.article
             in
-                { model
+                ( { model
                     | article =
                         { article
                             | title = title
                         }
                 }
+                , Cmd.none
+                )
 
         Cancel ->
-            hide model
+            ( hide model
+            , Cmd.none
+            )
 
         Confirm ->
-            hide model
+            ( { model
+                | showLoading = True
+            }
+            , Cmd.none
+            )
 
 
 hide: Model -> Model
 hide model =
-    {model
+    { model
         | visibility = Modal.hidden
     }
 
 
 show: Model -> Model
 show model =
-    {model
+    { model
         | visibility = Modal.shown
     }
