@@ -56,7 +56,7 @@ init session token user =
       , timeZone = Time.utc
       , status = Loading
       , articles = []
-      , createArticleModal = CreateArticleModal.init user token
+      , createArticleModal = CreateArticleModal.init user session token
       }
     , Cmd.batch
         [ fetchArticles token 1
@@ -157,7 +157,7 @@ update msg model =
             ( { model
                 | createArticleModal =
                     CreateArticleModal.show
-                        <| CreateArticleModal.init model.user model.token
+                        <| CreateArticleModal.init model.user model.session model.token
             }
             , Cmd.none
             )

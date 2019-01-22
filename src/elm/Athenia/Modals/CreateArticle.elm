@@ -4,6 +4,8 @@ import Athenia.Api as Api exposing (Token)
 import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.User.User as User
 import Athenia.Models.Wiki.Article as Article
+import Athenia.Route as Route
+import Athenia.Session as Session exposing (..)
 import Bootstrap.Form.Input as Input
 import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
@@ -21,15 +23,17 @@ import Http
 
 type alias Model =
     { article : Article.CreateModel
+    , session : Session
     , token : Token
     , visibility : Modal.Visibility
     , showLoading : Bool
     }
 
 
-init : User.Model -> Token -> Model
-init user token =
+init : User.Model -> Session -> Token -> Model
+init user session token =
     { article = Article.initCreateModel user
+    , session = session
     , token = token
     , visibility = Modal.hidden
     , showLoading = False
@@ -125,8 +129,17 @@ update msg model =
             , createArticle model.token model.article
             )
 
-        CompletedArticleCreate _ ->
-            (model, Cmd.none)
+        CompletedArticleCreate (Ok article) ->
+            (model
+            , Route.replaceUrl (Session.navKey model.session) (Route.Article article.id)
+            )
+
+        CompletedArticleCreate (Err error) ->
+            ( { model
+                | showLoading = False
+            }
+            , Cmd.none
+            )
 
 
 hide : Model -> Model
