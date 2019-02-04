@@ -26,3 +26,12 @@ window.addEventListener("storage", function(event) {
         app.ports.onStoreChange.send(event.newValue);
     }
 }, false);
+app.ports.connectArticleSocket.subscribe(function(data) {
+    var ws = new WebSocket('ws://dev-socket.projectathenia.com/articles/' + data[1] + '/iterations?token=' + data[0]);
+    ws.onmessage = function(message) {
+        console.log(message);
+    };
+
+    ws.onclose = console.error;
+    ws.onerror = console.error;
+});

@@ -1,6 +1,7 @@
 port module Athenia.Api exposing
     (Token
     , application
+    , unwrapToken
     , decodeErrors
     , delete, get, post, put
     , login, logout, signUp, refresh
@@ -50,6 +51,11 @@ can't be!
 -}
 type Token
     = Token String
+
+
+unwrapToken : Token -> String
+unwrapToken (Token str) =
+    str
 
 
 authHeader : Token -> Http.Header

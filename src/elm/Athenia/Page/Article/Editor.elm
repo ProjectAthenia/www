@@ -1,11 +1,9 @@
 module Athenia.Page.Article.Editor exposing (Model, Msg, init, subscriptions, toSession, update, view)
 
 import Athenia.Api as Api exposing (Token)
-import Athenia.Api.Endpoint as Endpoint
-import Athenia.Components.Loading as Loading
 import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.Wiki.Article as Article
-import Athenia.Page as Page
+import Athenia.Ports.ArticleSocket as ArticleSocket
 import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
 import Athenia.Viewer as Viewer
@@ -13,15 +11,10 @@ import Bootstrap.Form as Form
 import Bootstrap.Form.Textarea as Textarea
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
-import Browser.Navigation as Nav
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, disabled, href, id, placeholder, type_, value)
-import Html.Events exposing (onInput, onSubmit)
+import Html.Attributes exposing (class, id)
+import Html.Events exposing (onSubmit)
 import Http
-import Json.Decode as Decode
-import Json.Encode as Encode
-import Task exposing (Task)
-import Time
 
 
 
@@ -62,6 +55,7 @@ init session token articleId =
       }
     , Cmd.batch
         [ fetchArticle token articleId
+        , ArticleSocket.connectArticleSocket ((Api.unwrapToken token), articleId)
         ]
     )
 
