@@ -227,10 +227,14 @@ updateForm transform model =
     ( newModel, Cmd.none )
 
 
--- @todo make work
 mergeContent : String -> String -> String -> String
-mergeContent lastStable localContent remoteContent =
-    remoteContent
+mergeContent lastContentSnapShot localContent remoteContent =
+    if lastContentSnapShot == localContent then
+        -- content has not changed locally, we can just return the remote content
+        remoteContent
+    else
+        -- @todo make compare
+        remoteContent
 
 -- SUBSCRIPTIONS
 
