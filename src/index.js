@@ -29,7 +29,7 @@ window.addEventListener("storage", function(event) {
 app.ports.connectArticleSocket.subscribe(function(data) {
     var ws = new WebSocket('ws://dev-socket.projectathenia.com/articles/' + data[1] + '/iterations?token=' + data[0]);
     ws.onmessage = function(message) {
-        console.log(message);
+        app.ports.articleUpdated.send(message);
     };
 
     ws.onclose = console.error;

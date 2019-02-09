@@ -31,7 +31,6 @@ type alias Model =
 
 type
     Status
-    -- Edit Article
     = Loading Int
     | LoadingFailed
     | Editing Article.Model (List Problem) Form
@@ -42,7 +41,8 @@ type Problem
 
 
 type alias Form =
-    { body : String
+    { content : String
+    , lastContentSnapshot : String
     }
 
 
@@ -134,8 +134,8 @@ viewForm token fields =
         [ h2 [] [ text "Enter the article contents below." ]
         , Textarea.textarea
             [ Textarea.rows 20
-            , Textarea.onInput EnteredBody
-            , Textarea.value fields.body
+            , Textarea.onInput EnteredContent
+            , Textarea.value fields.content
             ]
         ]
 
@@ -145,9 +145,10 @@ viewForm token fields =
 
 type Msg
     = NoAction
-    | EnteredBody String
+    | EnteredContent String
     | CompletedLoadArticle (Result Http.Error Article.Model)
     | GotSession Session
+    | ReceivedUpdatedContent String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -156,8 +157,8 @@ update msg model =
         NoAction ->
             (model, Cmd.none)
 
-        EnteredBody body ->
-            updateForm (\form -> { form | body = body }) model
+        EnteredContent content ->
+            updateForm (\form -> { form | content = content }) model
 
         CompletedLoadArticle (Err err) ->
             ( { model | showLoading = False, article = LoadingFailed }
@@ -167,10 +168,14 @@ update msg model =
         CompletedLoadArticle (Ok article) ->
             let
                 form =
-                    { body = article.content
+                    { content = article.content
+                    , lastContentSnapshot = article.content
                     }
             in
-            ( { model | showLoading = False, article = Editing article [] form }
+            ( { model
+                | showLoading = False
+                , article = Editing article [] form
+            }
             , Cmd.none
             )
 
@@ -187,6 +192,15 @@ update msg model =
                     ( model
                     , Route.replaceUrl (Session.navKey session) Route.Login
                     )
+
+        ReceivedUpdatedContent updatedContent ->
+            updateForm
+                (\form ->
+                    { form
+                        | lastContentSnapshot = updatedContent
+                        , content = mergeContent form.lastContentSnapshot form.content updatedContent
+                    }
+                ) model
 
 
 {-| Helper function for `update`. Updates the form, if there is one,
@@ -213,13 +227,20 @@ updateForm transform model =
     ( newModel, Cmd.none )
 
 
+-- @todo make work
+mergeContent : String -> String -> String -> String
+mergeContent lastStable localContent remoteContent =
+    remoteContent
 
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Session.changes GotSession (Session.navKey model.session)
+    Sub.batch
+        [ Session.changes GotSession (Session.navKey model.session)
+        , ArticleSocket.articleUpdated ReceivedUpdatedContent
+        ]
 
 
 -- HTTP
