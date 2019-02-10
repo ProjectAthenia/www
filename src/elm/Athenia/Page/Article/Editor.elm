@@ -15,6 +15,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class, id)
 import Html.Events exposing (onSubmit)
 import Http
+import Time
 
 
 
@@ -149,6 +150,7 @@ type Msg
     | CompletedLoadArticle (Result Http.Error Article.Model)
     | GotSession Session
     | ReceivedUpdatedContent String
+    | ReportContentChanges Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -202,6 +204,29 @@ update msg model =
                     }
                 ) model
 
+        ReportContentChanges _ ->
+            case model.article of
+                Editing articleModel errors form ->
+                    if form.content == form.lastContentSnapshot then
+                        (model, Cmd.none)
+                    else
+                        let
+                            updatedForm =
+                                { form
+                                    | lastContentSnapshot = form.content
+                                }
+                        in
+                        ( { model
+                            | article = Editing articleModel errors updatedForm
+                        }
+                        -- @todo determine article difference
+                        , Cmd.none
+                        )
+
+                _ ->
+                    (model, Cmd.none)
+
+
 
 {-| Helper function for `update`. Updates the form, if there is one,
 and returns Cmd.none.
@@ -244,6 +269,7 @@ subscriptions model =
     Sub.batch
         [ Session.changes GotSession (Session.navKey model.session)
         , ArticleSocket.articleUpdated ReceivedUpdatedContent
+        , Time.every 5000 ReportContentChanges
         ]
 
 
