@@ -67,6 +67,10 @@ testGetContentActionType =
             \() ->
                 Expect.equal (Iteration.Add {start_position = 0, content = "Hello"})
                     <| Iteration.getContentActionType "" "Hello"
+        , test "make sure that an add action returns properly when adding to the end" <|
+            \() ->
+                Expect.equal (Iteration.Add {start_position = 5, content = " here's some more"})
+                    <| Iteration.getContentActionType "Hello" "Hello here's some more"
         , test "make sure that an add action returns properly" <|
             \() ->
                 Expect.equal (Iteration.Add {start_position = 2, content = "new "})

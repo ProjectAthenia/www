@@ -34,20 +34,11 @@ convertStringsIntoCharTuples stringA stringB =
 findFirstNoneMatchingStringPosition: String -> String -> Maybe Int
 findFirstNoneMatchingStringPosition stringA stringB =
     findFirstNoneMatchingCharTuplePosition
-        <| convertStringsIntoCharTuples stringA stringB
+        <| convertStringsIntoCharTuples (stringA ++ "\n") (stringB ++ "\n")
 
 
 findLastNoneMatchingStringPosition: String -> String -> Maybe Int
 findLastNoneMatchingStringPosition stringA stringB =
     findFirstNoneMatchingCharTuplePosition
-        <| convertStringsIntoCharTuples (String.reverse stringA) (String.reverse stringB)
+        <| convertStringsIntoCharTuples ((String.reverse stringA) ++ "\n") ((String.reverse stringB) ++ "\n")
 
-
---findFirstMismatchedCharPosition: List (Char, Char) -> Maybe Int
---findFirstMismatchedCharPosition characterPairs =
---    let
---        position = 0
---        charListA = String.toList stringA
---        charListB = String.toList stringB
---    in
---        List.isCharTupleEqual

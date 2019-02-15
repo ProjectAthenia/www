@@ -135,7 +135,7 @@ getContentActionType previousContent newContent =
                             0
                 in
                 -- the position where things are different have the same position going forwards and backwards
-                if firstDifferentPosition == previousContentLastDifferentPosition + buffer then
+                if firstDifferentPosition == String.length previousContent || firstDifferentPosition == previousContentLastDifferentPosition + buffer then
                     Add
                         { start_position = firstDifferentPosition
                         , content = String.slice firstDifferentPosition (newContentLastDifferentPosition + buffer) newContent

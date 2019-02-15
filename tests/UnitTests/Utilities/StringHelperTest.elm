@@ -74,6 +74,10 @@ testFindFirstNoneMatchingStringPosition =
             \() ->
                 Expect.equal Nothing
                     <| StringHelper.findFirstNoneMatchingStringPosition "abcde" "abcde"
+        , test "should return the last digit when the difference is at the end" <|
+            \() ->
+                Expect.equal (Just 5)
+                    <| StringHelper.findFirstNoneMatchingStringPosition "Hello" "Hello Hi"
         ]
 
 
