@@ -2,8 +2,9 @@ module Athenia.Models.Wiki.Iteration exposing (..)
 
 import Athenia.Models.User.User as User
 import Athenia.Utilities.StringHelper as StringHelper
-import Json.Decode as JsonDecode exposing (..)
+import Json.Decode as JsonDecode
 import Json.Decode.Pipeline exposing (..)
+import Json.Encode as JsonEncode
 
 
 
@@ -41,17 +42,63 @@ type alias ReplaceAction =
 
 
 -- Decodes a article model retrieved through the API
-modelDecoder : Decoder Model
+modelDecoder : JsonDecode.Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
-        |> required "id" int
-        |> required "content" string
-        |> optional "created_by" (maybe User.modelDecoder) Nothing
+        |> required "id" JsonDecode.int
+        |> required "content" JsonDecode.string
+        |> optional "created_by" (JsonDecode.maybe User.modelDecoder) Nothing
 
 
-listDecoder : Decoder (List Model)
+listDecoder : JsonDecode.Decoder (List Model)
 listDecoder =
     JsonDecode.list modelDecoder
+
+
+convertAddActionToEncodedValue: AddAction -> JsonEncode.Value
+convertAddActionToEncodedValue action =
+    JsonEncode.object
+        [ ("action", JsonEncode.string "add")
+        , ("start_position", JsonEncode.int action.start_position)
+        , ("content", JsonEncode.string action.content)
+        ]
+
+
+convertRemoveActionToEncodedValue: RemoveAction -> JsonEncode.Value
+convertRemoveActionToEncodedValue action =
+    JsonEncode.object
+        [ ("action", JsonEncode.string "remove")
+        , ("start_position", JsonEncode.int action.start_position)
+        , ("length", JsonEncode.int action.length)
+        ]
+
+
+convertReplaceActionToEncodedValue: ReplaceAction -> JsonEncode.Value
+convertReplaceActionToEncodedValue action =
+    JsonEncode.object
+        [ ("action", JsonEncode.string "replace")
+        , ("start_position", JsonEncode.int action.start_position)
+        , ("length", JsonEncode.int action.length)
+        , ("content", JsonEncode.string action.content)
+        ]
+
+
+encodeAction: ActionType -> String
+encodeAction action =
+    case action of
+        NoAction ->
+            ""
+        Add addAction ->
+            JsonEncode.encode 0
+                <| convertAddActionToEncodedValue addAction
+
+        Remove removeAction ->
+            JsonEncode.encode 0
+                <| convertRemoveActionToEncodedValue removeAction
+
+        Replace replaceAction ->
+            JsonEncode.encode 0
+                <| convertReplaceActionToEncodedValue replaceAction
 
 
 getContentActionType: String -> String -> ActionType
