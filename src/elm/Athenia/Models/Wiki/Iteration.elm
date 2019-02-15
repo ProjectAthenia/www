@@ -104,10 +104,16 @@ encodeAction action =
 getContentActionType: String -> String -> ActionType
 getContentActionType previousContent newContent =
     let
-        maybeFirstDifferentPosition
-            = StringHelper.findFirstNoneMatchingStringPosition previousContent newContent
-        maybeLastDifferentPosition
-            = StringHelper.findLastNoneMatchingStringPosition previousContent newContent
+        maybeFirstDifferentPosition =
+            if String.length previousContent == 0 || String.length newContent == 0 then
+                Just 0
+            else
+                StringHelper.findFirstNoneMatchingStringPosition previousContent newContent
+        maybeLastDifferentPosition =
+            if String.length previousContent == 0 || String.length newContent == 0 then
+                Just 0
+            else
+                StringHelper.findLastNoneMatchingStringPosition previousContent newContent
     in
     case (maybeFirstDifferentPosition, maybeLastDifferentPosition) of
         (Just firstDifferentPosition, Just lastDifferentPosition) ->

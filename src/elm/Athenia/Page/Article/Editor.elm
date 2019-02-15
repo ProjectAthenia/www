@@ -3,6 +3,7 @@ module Athenia.Page.Article.Editor exposing (Model, Msg, init, subscriptions, to
 import Athenia.Api as Api exposing (Token)
 import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.Wiki.Article as Article
+import Athenia.Models.Wiki.Iteration as Iteration
 import Athenia.Ports.ArticleSocket as ArticleSocket
 import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
@@ -211,6 +212,8 @@ update msg model =
                         (model, Cmd.none)
                     else
                         let
+                            action =
+                                Iteration.getContentActionType form.lastContentSnapshot form.content
                             updatedForm =
                                 { form
                                     | lastContentSnapshot = form.content
@@ -219,8 +222,11 @@ update msg model =
                         ( { model
                             | article = Editing articleModel errors updatedForm
                         }
-                        -- @todo determine article difference
-                        , Cmd.none
+                        , if action == Iteration.NoAction then
+                            Cmd.none
+                        else
+                            ArticleSocket.sendUpdateMessage
+                                <| (Iteration.encodeAction action, articleModel.id)
                         )
 
                 _ ->

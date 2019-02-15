@@ -26,12 +26,31 @@ window.addEventListener("storage", function(event) {
         app.ports.onStoreChange.send(event.newValue);
     }
 }, false);
+
+let connectedSockets = [];
+
 app.ports.connectArticleSocket.subscribe(function(data) {
-    var ws = new WebSocket('ws://dev-socket.projectathenia.com/articles/' + data[1] + '/iterations?token=' + data[0]);
+    let articleId = data[1];
+
+    var ws = new WebSocket('ws://dev-socket.projectathenia.com/articles/' + articleId + '/iterations?token=' + data[0]);
     ws.onmessage = function(message) {
         app.ports.articleUpdated.send(message);
     };
 
     ws.onclose = console.error;
     ws.onerror = console.error;
+
+    connectedSockets[articleId] = ws;
+});
+
+
+app.ports.sendUpdateMessage.subscribe(function(data) {
+
+    let articleId = data[1];
+
+    var ws = connectedSockets[articleId];
+
+    if (ws) {
+        ws.send(data[0]);
+    }
 });
