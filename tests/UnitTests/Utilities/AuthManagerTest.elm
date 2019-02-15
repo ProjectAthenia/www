@@ -6,6 +6,7 @@ import Test exposing (..)
 import Time
 
 
+testNeedsRefresh : Test
 testNeedsRefresh =
     describe "Makes sure that the needs refresh function works properly"
         [ test "should return false at 5 minutes" <|
