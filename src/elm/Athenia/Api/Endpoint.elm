@@ -1,10 +1,12 @@
 module Athenia.Api.Endpoint exposing
     ( Endpoint, request
     , baseArticle, viewArticle, viewArticles
+    , viewArticleIterations
     , login, signUp, refresh
     , user, userActivity, me
     )
 
+import Athenia.Models.Wiki.Article as Article
 import Http
 import Url.Builder as Builder exposing (QueryParameter)
 
@@ -79,6 +81,16 @@ viewArticle articleId =
 viewArticles : Int -> Endpoint
 viewArticles page =
     url [ "articles" ]
+        <| if page /= 1 then
+            [ (Builder.string "page" (String.fromInt page))
+            , (Builder.string "expand[createdBy]" "*")
+            ]
+        else
+            [ (Builder.string "expand[createdBy]" "*") ]
+
+viewArticleIterations : Int -> Int -> Endpoint
+viewArticleIterations articleId page =
+    url [ "articles", String.fromInt articleId, "iterations" ]
         <| if page /= 1 then
             [ (Builder.string "page" (String.fromInt page))
             , (Builder.string "expand[createdBy]" "*")

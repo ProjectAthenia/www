@@ -18,7 +18,7 @@ type alias Model =
     }
 
 
-type alias ArticlePage
+type alias Page
     = Page.Model Model
 
 
@@ -61,6 +61,6 @@ listDecoder =
     JsonDecode.list modelDecoder
 
 
-pageDecoder : Decoder ArticlePage
+pageDecoder : Decoder Page
 pageDecoder =
     Page.modelDecoder listDecoder

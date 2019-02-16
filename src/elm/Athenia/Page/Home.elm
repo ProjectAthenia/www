@@ -127,7 +127,7 @@ viewBanner =
 
 
 type Msg
-    = CompletedArticlesLoad (Result Http.Error Article.ArticlePage)
+    = CompletedArticlesLoad (Result Http.Error Article.Page)
     | GotTimeZone Time.Zone
     | GotSession Session
     | OpenCreateArticlePrompt

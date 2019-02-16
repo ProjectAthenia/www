@@ -1,5 +1,6 @@
 module Athenia.Models.Wiki.Iteration exposing (..)
 
+import Athenia.Models.Page as Page
 import Athenia.Models.User.User as User
 import Athenia.Utilities.StringHelper as StringHelper
 import Json.Decode as JsonDecode
@@ -18,8 +19,13 @@ type ActionType
 type alias Model =
     { id : Int
     , content : String
+    , created_at : String
     , created_by : Maybe User.Model
     }
+
+
+type alias Page =
+    Page.Model Model
 
 
 type alias AddAction =
@@ -47,12 +53,18 @@ modelDecoder =
     JsonDecode.succeed Model
         |> required "id" JsonDecode.int
         |> required "content" JsonDecode.string
+        |> required "created_at" JsonDecode.string
         |> optional "created_by" (JsonDecode.maybe User.modelDecoder) Nothing
 
 
 listDecoder : JsonDecode.Decoder (List Model)
 listDecoder =
     JsonDecode.list modelDecoder
+
+
+pageDecoder : JsonDecode.Decoder Page
+pageDecoder =
+    Page.modelDecoder listDecoder
 
 
 convertAddActionToEncodedValue: AddAction -> JsonEncode.Value

@@ -7,6 +7,7 @@ port module Athenia.Api exposing
     , login, logout, signUp, refresh
     , settings, me
     , getArticle, viewArticles, createArticle
+    , viewArticleIterations
     , storeCredWith
     , viewerChanges
     )
@@ -21,6 +22,7 @@ import Athenia.Api.Endpoint as Endpoint
 import Athenia.Models.Error as Error
 import Athenia.Models.User.User as User
 import Athenia.Models.Wiki.Article as Article
+import Athenia.Models.Wiki.Iteration as Iteration
 import Browser
 import Browser.Navigation as Nav
 import Http exposing (Body, Expect)
@@ -284,9 +286,14 @@ getArticle token articleId =
     get (Endpoint.viewArticle articleId) (Just token) Article.modelDecoder
 
 
-viewArticles : Token -> Int -> Http.Request Article.ArticlePage
+viewArticles : Token -> Int -> Http.Request Article.Page
 viewArticles token page =
     get (Endpoint.viewArticles page) (Just token) Article.pageDecoder
+
+
+viewArticleIterations : Token -> Int -> Int -> Http.Request Iteration.Page
+viewArticleIterations token articleId page =
+    get (Endpoint.viewArticleIterations articleId page) (Just token) Iteration.pageDecoder
 
 
 decoderFromCred : Decoder (Token -> Int -> a) -> Decoder a

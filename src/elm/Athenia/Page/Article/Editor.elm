@@ -2,19 +2,21 @@ module Athenia.Page.Article.Editor exposing (Model, Msg, init, subscriptions, to
 
 import Athenia.Api as Api exposing (Token)
 import Athenia.Components.LoadingIndicator as LoadingIndicator
+import Athenia.Modals.ArticleHistoryBrowser as ArticleHistoryBrowser
 import Athenia.Models.Wiki.Article as Article
 import Athenia.Models.Wiki.Iteration as Iteration
 import Athenia.Ports.ArticleSocket as ArticleSocket
 import Athenia.Route as Route
 import Athenia.Session as Session exposing (Session)
 import Athenia.Viewer as Viewer
+import Bootstrap.Button as Button
 import Bootstrap.Form as Form
 import Bootstrap.Form.Textarea as Textarea
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (class, id)
-import Html.Events exposing (onSubmit)
+import Html.Events exposing (onClick)
 import Http
 import Time
 
@@ -28,6 +30,7 @@ type alias Model =
     , showLoading : Bool
     , token : Token
     , article : Status
+    , articleHistoryBrowser : ArticleHistoryBrowser.Model
     }
 
 
@@ -54,6 +57,8 @@ init session token articleId =
       , showLoading = True
       , token = token
       , article = Loading articleId
+      , articleHistoryBrowser
+            = ArticleHistoryBrowser.init articleId session token
       }
     , Cmd.batch
         [ fetchArticle token articleId
@@ -90,6 +95,7 @@ viewContent model =
 
                 Editing article problems form ->
                     [ viewTitle article
+                    , viewHistoryButtons
                     , viewProblems problems
                     , viewForm model.token form
                     ]
@@ -105,12 +111,22 @@ viewContent model =
                 ]
             ]
         , LoadingIndicator.view model.showLoading
+        , ArticleHistoryBrowser.view model.articleHistoryBrowser
+            |> Html.map ArticleHistoryBrowserMsg
         ]
 
 
 viewTitle : Article.Model -> Html msg
 viewTitle article =
     h1 [ id "title" ] [ text article.title ]
+
+
+viewHistoryButtons : Html Msg
+viewHistoryButtons =
+    Button.button
+        [ Button.attrs [onClick ViewHistory]
+        , Button.info
+        ] [ text "View Article History" ]
 
 
 viewProblems : List Problem -> Html msg
@@ -132,7 +148,7 @@ viewProblem problem =
 
 viewForm : Token -> Form -> Html Msg
 viewForm token fields =
-    Form.form [ onSubmit (NoAction) ]
+    Form.form [ ]
         [ h2 [] [ text "Enter the article contents below." ]
         , Textarea.textarea
             [ Textarea.rows 20
@@ -146,18 +162,33 @@ viewForm token fields =
 
 
 type Msg
-    = NoAction
+    = ViewHistory
     | EnteredContent String
     | CompletedLoadArticle (Result Http.Error Article.Model)
     | GotSession Session
     | ReceivedUpdatedContent String
     | ReportContentChanges Time.Posix
+    | ArticleHistoryBrowserMsg ArticleHistoryBrowser.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoAction ->
+        ViewHistory ->
+            let
+                articleHistoryBrowserUpdate
+                    = ArticleHistoryBrowser.initLoad model.articleHistoryBrowser
+            in
+            ( { model
+                | articleHistoryBrowser =
+                    Tuple.first articleHistoryBrowserUpdate
+            }
+            , Cmd.map ArticleHistoryBrowserMsg
+                <| Tuple.second articleHistoryBrowserUpdate
+            )
+
+
+        ArticleHistoryBrowserMsg subMsg ->
             (model, Cmd.none)
 
         EnteredContent content ->
