@@ -94,9 +94,12 @@ viewArticleIterations articleId page =
         <| if page /= 1 then
             [ (Builder.string "page" (String.fromInt page))
             , (Builder.string "expand[createdBy]" "*")
+            , (Builder.string "limit" "100")
             ]
         else
-            [ (Builder.string "expand[createdBy]" "*") ]
+            [ (Builder.string "expand[createdBy]" "*")
+            , (Builder.string "limit" "100")
+            ]
 
 
 me : Endpoint

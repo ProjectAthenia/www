@@ -189,7 +189,17 @@ update msg model =
 
 
         ArticleHistoryBrowserMsg subMsg ->
-            (model, Cmd.none)
+            let
+                articleHistoryBrowserUpdate
+                    = ArticleHistoryBrowser.update subMsg model.articleHistoryBrowser
+            in
+            ( { model
+                | articleHistoryBrowser =
+                    Tuple.first articleHistoryBrowserUpdate
+            }
+            , Cmd.map ArticleHistoryBrowserMsg
+                <| Tuple.second articleHistoryBrowserUpdate
+            )
 
         EnteredContent content ->
             updateForm (\form -> { form | content = content }) model

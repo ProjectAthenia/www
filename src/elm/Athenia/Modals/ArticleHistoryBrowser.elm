@@ -60,6 +60,37 @@ type Msg
     | CompletedArticleIterationLoad (Result Http.Error Iteration.Page)
 
 
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+    case msg of
+        Cancel ->
+            ( hide model
+            , Cmd.none
+            )
+
+        CompletedArticleIterationLoad (Ok page) ->
+            let
+                anotherPage = page.current_page < page.last_page
+            in
+            ( { model
+                | iterations = List.append model.iterations page.data
+                , showLoading = anotherPage
+
+            }
+            , if anotherPage then
+                loadIterations model.token model.articleId (page.current_page + 1)
+            else
+                Cmd.none
+            )
+
+        CompletedArticleIterationLoad (Err error) ->
+            ( { model
+                | showLoading = False
+            }
+            , Cmd.none
+            )
+
+
 hide : Model -> Model
 hide model =
     { model
