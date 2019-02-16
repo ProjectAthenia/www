@@ -264,8 +264,30 @@ mergeContent lastContentSnapShot localContent remoteContent =
         -- content has not changed locally, we can just return the remote content
         remoteContent
     else
-        -- @todo make compare
-        remoteContent
+        let
+            remoteAction =
+                Iteration.getContentActionType lastContentSnapShot remoteContent
+            localAction =
+                Iteration.getContentActionType lastContentSnapShot localContent
+
+        in
+        case (Iteration.getActionStartPosition remoteAction, Iteration.getActionStartPosition localAction) of
+            (Just remoteStartPosition, Just localStartPosition) ->
+                if remoteStartPosition >= localStartPosition then
+                    Iteration.applyAction localAction
+                        <| Iteration.applyAction remoteAction lastContentSnapShot
+                else
+                    Iteration.applyAction remoteAction
+                        <| Iteration.applyAction localAction lastContentSnapShot
+
+            (Just _, Nothing) ->
+                remoteContent
+
+            (Nothing, Just _) ->
+                localContent
+
+            _ ->
+                lastContentSnapShot
 
 -- SUBSCRIPTIONS
 
@@ -275,7 +297,7 @@ subscriptions model =
     Sub.batch
         [ Session.changes GotSession (Session.navKey model.session)
         , ArticleSocket.articleUpdated ReceivedUpdatedContent
-        , Time.every 5000 ReportContentChanges
+        , Time.every 500 ReportContentChanges
         ]
 
 

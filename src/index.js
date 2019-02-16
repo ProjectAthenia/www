@@ -34,7 +34,7 @@ app.ports.connectArticleSocket.subscribe(function(data) {
 
     var ws = new WebSocket('ws://dev-socket.projectathenia.com/articles/' + articleId + '/iterations?token=' + data[0]);
     ws.onmessage = function(message) {
-        app.ports.articleUpdated.send(message);
+        app.ports.articleUpdated.send(message.data);
     };
 
     ws.onclose = console.error;

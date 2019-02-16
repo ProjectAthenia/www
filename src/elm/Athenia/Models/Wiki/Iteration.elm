@@ -101,6 +101,43 @@ encodeAction action =
                 <| convertReplaceActionToEncodedValue replaceAction
 
 
+getActionStartPosition: ActionType -> Maybe Int
+getActionStartPosition action =
+    case action of
+        NoAction ->
+            Nothing
+
+        Add actionModel ->
+            Just actionModel.start_position
+
+        Remove actionModel ->
+            Just actionModel.start_position
+
+        Replace actionModel ->
+            Just actionModel.start_position
+
+
+applyAction: ActionType -> String -> String
+applyAction action inputString =
+    case action of
+        NoAction ->
+            inputString
+
+        Add actionModel ->
+            String.slice 0 actionModel.start_position inputString ++
+            actionModel.content ++
+            String.slice actionModel.start_position (String.length inputString) inputString
+
+        Remove actionModel ->
+            String.slice 0 actionModel.start_position inputString ++
+            String.slice (actionModel.start_position + actionModel.length) (String.length inputString) inputString
+
+        Replace actionModel ->
+            String.slice 0 actionModel.start_position inputString ++
+            actionModel.content ++
+            String.slice (actionModel.start_position + actionModel.length) (String.length inputString) inputString
+
+
 getContentActionType: String -> String -> ActionType
 getContentActionType previousContent newContent =
     let
