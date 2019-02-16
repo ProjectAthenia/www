@@ -57,7 +57,7 @@ viewFooter =
         [ div [ class "container" ]
             [ a [ class "logo-font", href "/" ] [ text "Project Athenia" ]
             , span [ class "attribution" ]
-                [ text "A governing system built for the 21st century "
+                [ text "A governing system built for the 21st century by "
                 , a [ href "https://pomeloproductions.com" ] [ text "Pomelo Productions" ]
                 , text ". Code & design licensed under MIT."
                 ]

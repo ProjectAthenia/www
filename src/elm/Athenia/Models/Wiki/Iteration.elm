@@ -161,21 +161,11 @@ getContentActionType previousContent newContent =
                     = (String.length newContent) - lastDifferentPosition
             in
             if String.length newContent >= String.length previousContent then
-                let
-                    -- If the first different character and the last different character are the same,
-                    -- then the following character will be detected as different, so we need to add a 1 character
-                    -- buffer to certain variables
-                    buffer =
-                        if String.slice firstDifferentPosition 1 newContent == String.slice newContentLastDifferentPosition 1 newContent then
-                            1
-                        else
-                            0
-                in
                 -- the position where things are different have the same position going forwards and backwards
-                if firstDifferentPosition == String.length previousContent || firstDifferentPosition == previousContentLastDifferentPosition + buffer then
+                if firstDifferentPosition == String.length previousContent || firstDifferentPosition >= previousContentLastDifferentPosition then
                     Add
                         { start_position = firstDifferentPosition
-                        , content = String.slice firstDifferentPosition (newContentLastDifferentPosition + buffer) newContent
+                        , content = String.slice firstDifferentPosition (firstDifferentPosition + (String.length newContent) - (String.length previousContent)) newContent
                         }
                 else
                     Replace
@@ -186,10 +176,10 @@ getContentActionType previousContent newContent =
 
             else
                 -- the position where things are different have the same position going forwards and backwards
-                if firstDifferentPosition == newContentLastDifferentPosition then
+                if firstDifferentPosition >= newContentLastDifferentPosition then
                     Remove
                         { start_position = firstDifferentPosition
-                        , length = previousContentLastDifferentPosition - firstDifferentPosition
+                        , length = String.length previousContent - String.length newContent
                         }
                 else
                     Replace

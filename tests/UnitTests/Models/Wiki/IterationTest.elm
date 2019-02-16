@@ -75,6 +75,10 @@ testGetContentActionType =
             \() ->
                 Expect.equal (Iteration.Add {start_position = 2, content = "new "})
                     <| Iteration.getContentActionType "A piece of content." "A new piece of content."
+        , test "make sure that headers con be changed" <|
+            \() ->
+                Expect.equal (Iteration.Add {start_position = 2, content = "#"})
+                    <| Iteration.getContentActionType "## Overview" "### Overview"
         , test "make sure that a remove action returns properly" <|
             \() ->
                 Expect.equal (Iteration.Remove {start_position = 1, length = 5})
@@ -83,6 +87,10 @@ testGetContentActionType =
             \() ->
                 Expect.equal (Iteration.Remove {start_position = 0, length = 3})
                     <| Iteration.getContentActionType "Bye" ""
+        , test "make sure that a remove action returns properly for changing a header level" <|
+            \() ->
+                Expect.equal (Iteration.Remove {start_position = 2, length = 1})
+                    <| Iteration.getContentActionType "### Overview" "## Overview"
         , test "make sure that a replace action returns properly" <|
             \() ->
                 Expect.equal (Iteration.Replace {start_position = 1, length = 7, content = " new" })
