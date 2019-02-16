@@ -16,6 +16,7 @@ type alias Model =
     , visibility : Modal.Visibility
     , showLoading : Bool
     , iterations : List Iteration.Model
+    , groupedSessions : List Iteration.Model
     }
 
 
@@ -27,6 +28,7 @@ init articleId session token =
     , visibility = Modal.hidden
     , showLoading = False
     , iterations = []
+    , groupedSessions = []
     }
 
 

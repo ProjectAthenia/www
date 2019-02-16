@@ -4,6 +4,7 @@ import Athenia.Models.Wiki.Iteration as Iteration
 import Expect
 import Json.Decode as JsonDecode
 import Test exposing (..)
+import Time exposing (..)
 
 
 testModelDecoder : Test
@@ -13,13 +14,15 @@ testModelDecoder =
             \() ->
                 Expect.equal (Ok { id = 342
                                 , content = "Some Content"
+                                , created_at = millisToPosix 1000
                                 , created_by = Nothing
                                 })
-                    <| JsonDecode.decodeString Iteration.modelDecoder "{\"id\":342,\"content\":\"Some Content\"}"
+                    <| JsonDecode.decodeString Iteration.modelDecoder "{\"id\":342,\"content\":\"Some Content\",\"created_at\":\"1970-01-01T00:00:01+00:00\"}"
         , test "Test decode with created by set" <|
             \() ->
                 Expect.equal (Ok { id = 342
                                 , content = "Some Content"
+                                , created_at = millisToPosix 1000
                                 , created_by = Just { id = 53
                                                    , name = "Barry Manilow"
                                                    , email = "butts@butts.com"
@@ -27,7 +30,7 @@ testModelDecoder =
                                                    , roles = []
                                                    }
                                 })
-                    <| JsonDecode.decodeString Iteration.modelDecoder "{\"id\":342,\"content\":\"Some Content\",\"created_by\":{\"id\":53,\"name\":\"Barry Manilow\",\"email\":\"butts@butts.com\"}}"
+                    <| JsonDecode.decodeString Iteration.modelDecoder "{\"id\":342,\"content\":\"Some Content\",\"created_at\":\"1970-01-01T00:00:01+00:00\",\"created_by\":{\"id\":53,\"name\":\"Barry Manilow\",\"email\":\"butts@butts.com\"}}"
         ]
 
 

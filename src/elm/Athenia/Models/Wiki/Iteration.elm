@@ -3,10 +3,11 @@ module Athenia.Models.Wiki.Iteration exposing (..)
 import Athenia.Models.Page as Page
 import Athenia.Models.User.User as User
 import Athenia.Utilities.StringHelper as StringHelper
+import Iso8601 as Iso8601
 import Json.Decode as JsonDecode
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as JsonEncode
-
+import Time exposing (..)
 
 
 type ActionType
@@ -19,7 +20,7 @@ type ActionType
 type alias Model =
     { id : Int
     , content : String
-    , created_at : String
+    , created_at : Posix
     , created_by : Maybe User.Model
     }
 
@@ -53,7 +54,7 @@ modelDecoder =
     JsonDecode.succeed Model
         |> required "id" JsonDecode.int
         |> required "content" JsonDecode.string
-        |> required "created_at" JsonDecode.string
+        |> required "created_at" Iso8601.decoder
         |> optional "created_by" (JsonDecode.maybe User.modelDecoder) Nothing
 
 
