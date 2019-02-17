@@ -98,11 +98,6 @@ update msg model =
 determineIfIterationIsSameSession : Iteration.Model -> Iteration.Model -> Bool
 determineIfIterationIsSameSession newestIteration previousIteration =
     if Iteration.areIterationsTheSameUser newestIteration previousIteration then
-        let
-            dummy =
-                Debug.log "comparisons" (posixToMillis newestIteration.created_at,posixToMillis previousIteration.created_at , (60 * 60 * 1000))
-        in
-
         posixToMillis newestIteration.created_at < (posixToMillis previousIteration.created_at) + (60 * 60 * 1000)
     else
         False
