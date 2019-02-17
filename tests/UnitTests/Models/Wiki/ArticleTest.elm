@@ -59,9 +59,10 @@ testModelDecoder =
                                     [ { id = 342
                                       , content = "Some Content"
                                       , created_at = millisToPosix 1000
+                                      , created_by_id = 53
                                       , created_by = Nothing
                                       }
                                     ]
                                 })
-                    <| JsonDecode.decodeString Article.modelDecoder "{\"id\":342,\"title\":\"A Title\",\"content\":\"Some Content\",\"created_by\":{\"id\":53,\"name\":\"Barry Manilow\",\"email\":\"butts@butts.com\"},\"iterations\":[{\"id\":342,\"content\":\"Some Content\",\"created_at\":\"1970-01-01T00:00:01+00:00\"}]}"
+                    <| JsonDecode.decodeString Article.modelDecoder "{\"id\":342,\"title\":\"A Title\",\"content\":\"Some Content\",\"created_by\":{\"id\":53,\"name\":\"Barry Manilow\",\"email\":\"butts@butts.com\"},\"iterations\":[{\"id\":342,\"content\":\"Some Content\",\"created_by_id\":53,\"created_at\":\"1970-01-01T00:00:01+00:00\"}]}"
         ]

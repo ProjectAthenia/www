@@ -21,6 +21,7 @@ type alias Model =
     { id : Int
     , content : String
     , created_at : Posix
+    , created_by_id : Int
     , created_by : Maybe User.Model
     }
 
@@ -48,13 +49,16 @@ type alias ReplaceAction =
     }
 
 
--- Decodes a article model retrieved through the API
+-- All decoders below
+
+
 modelDecoder : JsonDecode.Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
         |> required "id" JsonDecode.int
         |> required "content" JsonDecode.string
         |> required "created_at" Iso8601.decoder
+        |> required "created_by_id" JsonDecode.int
         |> optional "created_by" (JsonDecode.maybe User.modelDecoder) Nothing
 
 
@@ -66,6 +70,9 @@ listDecoder =
 pageDecoder : JsonDecode.Decoder Page
 pageDecoder =
     Page.modelDecoder listDecoder
+
+
+-- All encoders below
 
 
 convertAddActionToEncodedValue: AddAction -> JsonEncode.Value
@@ -114,6 +121,9 @@ encodeAction action =
                 <| convertReplaceActionToEncodedValue replaceAction
 
 
+-- Action helpers
+
+
 getActionStartPosition: ActionType -> Maybe Int
 getActionStartPosition action =
     case action of
@@ -149,6 +159,9 @@ applyAction action inputString =
             String.slice 0 actionModel.start_position inputString ++
             actionModel.content ++
             String.slice (actionModel.start_position + actionModel.length) (String.length inputString) inputString
+
+
+-- Function for determining an action
 
 
 getContentActionType: String -> String -> ActionType
@@ -204,3 +217,10 @@ getContentActionType previousContent newContent =
         _ ->
             NoAction
 
+
+-- Helpers for determining how to group an action
+
+
+areIterationsTheSameUser : Model -> Model -> Bool
+areIterationsTheSameUser iterationA iterationB =
+    iterationA.created_by_id == iterationB.created_by_id

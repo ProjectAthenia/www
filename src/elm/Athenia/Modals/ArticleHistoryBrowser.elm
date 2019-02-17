@@ -7,6 +7,7 @@ import Athenia.Session as Session exposing (..)
 import Bootstrap.Modal as Modal
 import Html exposing (..)
 import Http
+import List.Extra as ListExtra
 
 
 type alias Model =
@@ -38,6 +39,7 @@ initLoad model =
         | showLoading = True
         , visibility = Modal.shown
         , iterations = []
+        , groupedSessions = []
     }
     , loadIterations model.token model.articleId 1
     )
@@ -73,10 +75,10 @@ update msg model =
         CompletedArticleIterationLoad (Ok page) ->
             let
                 anotherPage = page.current_page < page.last_page
+                updatedModel = processIterations model page.data
             in
-            ( { model
-                | iterations = List.append model.iterations page.data
-                , showLoading = anotherPage
+            ( { updatedModel
+                | showLoading = anotherPage
 
             }
             , if anotherPage then
@@ -93,11 +95,47 @@ update msg model =
             )
 
 
+determineIfIterationIsSameSession : Iteration.Model -> Iteration.Model -> Bool
+determineIfIterationIsSameSession newestIteration previousIteration =
+    Iteration.areIterationsTheSameUser newestIteration previousIteration
+
+
+checkNextIteration : List Iteration.Model -> List Iteration.Model -> List Iteration.Model
+checkNextIteration currentSessions nextIterations =
+    case (List.head (List.reverse currentSessions), List.head nextIterations) of
+        (Just lastIteration, Just nextIteration) ->
+            let
+                updatedSessions =
+                    if determineIfIterationIsSameSession lastIteration nextIteration then
+                        currentSessions
+                    else
+                        List.append currentSessions [nextIteration]
+            in
+                checkNextIteration updatedSessions (List.drop 1 nextIterations)
+        (_, Just nextIteration) ->
+            [nextIteration]
+
+        _ ->
+            currentSessions
+
+
+processIterations : Model -> List Iteration.Model -> Model
+processIterations model iterations =
+    let
+        groupedSessions = model.groupedSessions
+    in
+    { model
+        | iterations = List.append model.iterations iterations
+        , groupedSessions = checkNextIteration groupedSessions iterations
+    }
+
+
 hide : Model -> Model
 hide model =
     { model
         | visibility = Modal.hidden
     }
+
 
 -- HTTP
 
