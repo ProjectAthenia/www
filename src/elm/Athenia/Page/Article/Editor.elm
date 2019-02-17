@@ -190,15 +190,25 @@ update msg model =
 
         ArticleHistoryBrowserMsg subMsg ->
             let
-                articleHistoryBrowserUpdate
+                (articleHistoryBrowser, articleHistoryBrowserCmd)
                     = ArticleHistoryBrowser.update subMsg model.articleHistoryBrowser
+
+                (updatedModel, editorMsg)
+                    = case subMsg of
+                        ArticleHistoryBrowser.ViewIteration iteration ->
+                            takeContentSnapshot model
+
+                        _ ->
+                            (model, Cmd.none)
             in
-            ( { model
-                | articleHistoryBrowser =
-                    Tuple.first articleHistoryBrowserUpdate
+            ( { updatedModel
+                | articleHistoryBrowser = articleHistoryBrowser
             }
-            , Cmd.map ArticleHistoryBrowserMsg
-                <| Tuple.second articleHistoryBrowserUpdate
+            , Cmd.batch
+                [ Cmd.map ArticleHistoryBrowserMsg
+                    <| articleHistoryBrowserCmd
+                , editorMsg
+                ]
             )
 
         EnteredContent content ->
@@ -247,32 +257,36 @@ update msg model =
                 ) model
 
         ReportContentChanges _ ->
-            case model.article of
-                Editing articleModel errors form ->
-                    if form.content == form.lastContentSnapshot then
-                        (model, Cmd.none)
-                    else
-                        let
-                            action =
-                                Iteration.getContentActionType form.lastContentSnapshot form.content
-                            updatedForm =
-                                { form
-                                    | lastContentSnapshot = form.content
-                                }
-                        in
-                        ( { model
-                            | article = Editing articleModel errors updatedForm
+            takeContentSnapshot model
+
+
+takeContentSnapshot : Model -> (Model, Cmd Msg)
+takeContentSnapshot model =
+    case model.article of
+        Editing articleModel errors form ->
+            if form.content == form.lastContentSnapshot then
+                (model, Cmd.none)
+            else
+                let
+                    action =
+                        Iteration.getContentActionType form.lastContentSnapshot form.content
+                    updatedForm =
+                        { form
+                            | lastContentSnapshot = form.content
                         }
-                        , if action == Iteration.NoAction then
-                            Cmd.none
-                        else
-                            ArticleSocket.sendUpdateMessage
-                                <| (Iteration.encodeAction action, articleModel.id)
-                        )
+                in
+                ( { model
+                    | article = Editing articleModel errors updatedForm
+                }
+                , if action == Iteration.NoAction then
+                    Cmd.none
+                else
+                    ArticleSocket.sendUpdateMessage
+                        <| (Iteration.encodeAction action, articleModel.id)
+                )
 
-                _ ->
-                    (model, Cmd.none)
-
+        _ ->
+            (model, Cmd.none)
 
 
 {-| Helper function for `update`. Updates the form, if there is one,

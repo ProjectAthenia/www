@@ -7,6 +7,7 @@ import Athenia.Session as Session exposing (..)
 import Bootstrap.Modal as Modal
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Http
 import Time exposing (..)
 
@@ -62,20 +63,25 @@ view model =
 
 viewSessionPreview : Iteration.Model -> Html Msg
 viewSessionPreview iteration =
-    li [ class "iteration_preview" ] [ text (getIterationPreviewText iteration) ]
+    li [ class "iteration_preview" ]
+        [ text (getIterationPreviewText iteration)
+        , span [ onClick (ViewIteration iteration), class "iteration-history-link" ]
+            [ text "View Iteration"]
+        ]
 
 
 getIterationPreviewText : Iteration.Model -> String
 getIterationPreviewText iteration =
     case iteration.created_by of
         Just createdBy ->
-            "Iteration Created By " ++ createdBy.name ++ " at " ++ (Iteration.formatCreatedAt iteration)
+            "Iteration Created By " ++ createdBy.name ++ " at " ++ (Iteration.formatCreatedAt iteration) ++ " "
         Nothing ->
-            "Iteration Created By Unknown User at " ++ (Iteration.formatCreatedAt iteration)
+            "Iteration Created By Unknown User at " ++ (Iteration.formatCreatedAt iteration) ++ " "
 
 
 type Msg
     = Cancel
+    | ViewIteration Iteration.Model
     | CompletedArticleIterationLoad (Result Http.Error Iteration.Page)
 
 
@@ -83,6 +89,11 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         Cancel ->
+            ( hide model
+            , Cmd.none
+            )
+
+        ViewIteration _ ->
             ( hide model
             , Cmd.none
             )
