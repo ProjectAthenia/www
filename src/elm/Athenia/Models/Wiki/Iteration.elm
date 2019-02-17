@@ -49,6 +49,11 @@ type alias ReplaceAction =
     }
 
 
+formatCreatedAt : Model -> String
+formatCreatedAt model =
+    Iso8601.fromTime model.created_at
+
+
 -- All decoders below
 
 

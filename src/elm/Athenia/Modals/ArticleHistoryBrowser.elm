@@ -6,6 +6,7 @@ import Athenia.Models.Wiki.Iteration as Iteration
 import Athenia.Session as Session exposing (..)
 import Bootstrap.Modal as Modal
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Http
 import Time exposing (..)
 
@@ -53,11 +54,25 @@ view model =
             |> Modal.large
             |> Modal.h4 [] [ text "Article History" ]
             |> Modal.body []
-                [
-                ]
+                [ ul [] (List.map viewSessionPreview model.groupedSessions)]
             |> Modal.view model.visibility
         , LoadingIndicator.view model.showLoading
         ]
+
+
+viewSessionPreview : Iteration.Model -> Html Msg
+viewSessionPreview iteration =
+    li [ class "iteration_preview" ] [ text (getIterationPreviewText iteration) ]
+
+
+getIterationPreviewText : Iteration.Model -> String
+getIterationPreviewText iteration =
+    case iteration.created_by of
+        Just createdBy ->
+            "Iteration Created By " ++ createdBy.name ++ " at " ++ (Iteration.formatCreatedAt iteration)
+        Nothing ->
+            "Iteration Created By Unknown User at " ++ (Iteration.formatCreatedAt iteration)
+
 
 type Msg
     = Cancel
