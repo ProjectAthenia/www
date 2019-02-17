@@ -7,7 +7,7 @@ import Athenia.Session as Session exposing (..)
 import Bootstrap.Modal as Modal
 import Html exposing (..)
 import Http
-import List.Extra as ListExtra
+import Time exposing (..)
 
 
 type alias Model =
@@ -97,7 +97,15 @@ update msg model =
 
 determineIfIterationIsSameSession : Iteration.Model -> Iteration.Model -> Bool
 determineIfIterationIsSameSession newestIteration previousIteration =
-    Iteration.areIterationsTheSameUser newestIteration previousIteration
+    if Iteration.areIterationsTheSameUser newestIteration previousIteration then
+        let
+            dummy =
+                Debug.log "comparisons" (posixToMillis newestIteration.created_at,posixToMillis previousIteration.created_at , (60 * 60 * 1000))
+        in
+
+        posixToMillis newestIteration.created_at < (posixToMillis previousIteration.created_at) + (60 * 60 * 1000)
+    else
+        False
 
 
 checkNextIteration : List Iteration.Model -> List Iteration.Model -> List Iteration.Model
