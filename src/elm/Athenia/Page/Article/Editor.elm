@@ -97,7 +97,7 @@ viewContent model =
 
                 Editing article problems form ->
                     [ viewTitle article
-                    , viewHistoryButtons
+                    , viewHistoryButtons model.currentlyViewingIteration
                     , viewProblems problems
                     , viewForm model.currentlyViewingIteration model.token form
                     ]
@@ -123,12 +123,19 @@ viewTitle article =
     h1 [ id "title" ] [ text article.title ]
 
 
-viewHistoryButtons : Html Msg
-viewHistoryButtons =
-    Button.button
-        [ Button.attrs [onClick ViewHistory]
-        , Button.info
-        ] [ text "View Article History" ]
+viewHistoryButtons : Maybe Iteration.Model ->  Html Msg
+viewHistoryButtons maybeIteration =
+    case maybeIteration of
+        Just iteration ->
+            Button.button
+                [ Button.attrs [onClick ContinueEditing]
+                , Button.outlineInfo
+                ] [ text "Continue Editing" ]
+        Nothing ->
+            Button.button
+                [ Button.attrs [onClick ViewHistory]
+                , Button.info
+                ] [ text "View Article History" ]
 
 
 viewProblems : List Problem -> Html msg
@@ -172,6 +179,7 @@ viewForm maybeIteration token fields =
 
 type Msg
     = ViewHistory
+    | ContinueEditing
     | EnteredContent String
     | CompletedLoadArticle (Result Http.Error Article.Model)
     | GotSession Session
@@ -194,6 +202,14 @@ update msg model =
             }
             , Cmd.map ArticleHistoryBrowserMsg
                 <| Tuple.second articleHistoryBrowserUpdate
+            )
+
+
+        ContinueEditing ->
+            ( { model
+                | currentlyViewingIteration = Nothing
+            }
+            , Cmd.none
             )
 
 
