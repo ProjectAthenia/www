@@ -31,6 +31,7 @@ type alias Model =
     , token : Token
     , article : Status
     , articleHistoryBrowser : ArticleHistoryBrowser.Model
+    , currentlyViewingIteration : Maybe Iteration.Model
     }
 
 
@@ -59,6 +60,7 @@ init session token articleId =
       , article = Loading articleId
       , articleHistoryBrowser
             = ArticleHistoryBrowser.init articleId session token
+      , currentlyViewingIteration = Nothing
       }
     , Cmd.batch
         [ fetchArticle token articleId
@@ -97,7 +99,7 @@ viewContent model =
                     [ viewTitle article
                     , viewHistoryButtons
                     , viewProblems problems
-                    , viewForm model.token form
+                    , viewForm model.currentlyViewingIteration model.token form
                     ]
 
                 LoadingFailed ->
@@ -146,15 +148,20 @@ viewProblem problem =
     li [] [ text errorMessage ]
 
 
-viewForm : Token -> Form -> Html Msg
-viewForm token fields =
+viewForm : Maybe Iteration.Model -> Token -> Form -> Html Msg
+viewForm maybeIteration token fields =
     Form.form [ ]
         [ h2 [] [ text "Enter the article contents below." ]
         , Textarea.textarea
-            [ Textarea.rows 20
-            , Textarea.onInput EnteredContent
-            , Textarea.value fields.content
-            ]
+            <| case maybeIteration of
+                Just iteration ->
+                    [ Textarea.disabled
+                    ]
+                Nothing ->
+                    [ Textarea.rows 20
+                    , Textarea.onInput EnteredContent
+                    , Textarea.value fields.content
+                    ]
         ]
 
 
@@ -196,7 +203,15 @@ update msg model =
                 (updatedModel, editorMsg)
                     = case subMsg of
                         ArticleHistoryBrowser.ViewIteration iteration ->
-                            takeContentSnapshot model
+                            let
+                                (snapShotModel, snapShotCmd) =
+                                    takeContentSnapshot model
+                            in
+                            ( {snapShotModel
+                                | currentlyViewingIteration = Just iteration
+                            }
+                            , snapShotCmd
+                            )
 
                         _ ->
                             (model, Cmd.none)
