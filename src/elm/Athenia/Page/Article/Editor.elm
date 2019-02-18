@@ -155,7 +155,9 @@ viewForm maybeIteration token fields =
         , Textarea.textarea
             <| case maybeIteration of
                 Just iteration ->
-                    [ Textarea.disabled
+                    [ Textarea.rows 20
+                    , Textarea.disabled
+                    , Textarea.value iteration.content
                     ]
                 Nothing ->
                     [ Textarea.rows 20
