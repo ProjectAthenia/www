@@ -1,20 +1,20 @@
 module Modals.CreateArticle exposing (..)
 
-import Api as Api exposing (Token)
-import Components.LoadingIndicator as LoadingIndicator
-import Models.User.User as User
-import Models.Wiki.Article as Article
-import Route as Route
-import Session as Session exposing (..)
+import Api exposing (Token)
 import Bootstrap.Form.Input as Input
 import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
+import Components.LoadingIndicator as LoadingIndicator
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Models.User.User as User
+import Models.Wiki.Article as Article
+import Route
+import Session as Session exposing (..)
 
 
 -- MODEL
@@ -133,7 +133,7 @@ update msg model =
             , Route.replaceUrl (Session.navKey model.session) (Route.Article article.id)
             )
 
-        CompletedArticleCreate (Err error) ->
+        CompletedArticleCreate (Err _) ->
             ( { model
                 | showLoading = False
             }

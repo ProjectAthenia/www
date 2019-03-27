@@ -11,9 +11,6 @@ import Models.User.User as User
 import Utilities.AuthManager as AuthManager
 import Viewer as Viewer
 import Browser.Navigation as Nav
-import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (custom, required)
-import Json.Encode as Encode exposing (Value)
 import Time
 
 

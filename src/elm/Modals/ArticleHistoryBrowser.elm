@@ -121,6 +121,8 @@ update msg model =
             )
 
 
+-- Takes in two iterations to figure out if two iterations are within the same session,
+-- meaning that they are from the user and within the same hour.
 determineIfIterationIsSameSession : Iteration.Model -> Iteration.Model -> Bool
 determineIfIterationIsSameSession newestIteration previousIteration =
     if Iteration.areIterationsTheSameUser newestIteration previousIteration then
