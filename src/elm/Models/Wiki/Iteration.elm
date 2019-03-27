@@ -3,7 +3,7 @@ module Models.Wiki.Iteration exposing (..)
 import Models.Page as Page
 import Models.User.User as User
 import Utilities.StringHelper as StringHelper
-import Iso8601 as Iso8601
+import Iso8601
 import Json.Decode as JsonDecode
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as JsonEncode

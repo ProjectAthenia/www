@@ -8,7 +8,6 @@ import Bootstrap.Modal as Modal
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Http
 import Time exposing (..)
 
 
@@ -101,7 +100,7 @@ update msg model =
         CompletedArticleIterationLoad (Ok page) ->
             let
                 anotherPage = page.current_page < page.last_page
-                updatedModel = processIterations model page.data
+                updatedModel = mergeNewIterations model page.data
             in
             ( { updatedModel
                 | showLoading = anotherPage
@@ -113,7 +112,7 @@ update msg model =
                 Cmd.none
             )
 
-        CompletedArticleIterationLoad (Err error) ->
+        CompletedArticleIterationLoad (Err _) ->
             ( { model
                 | showLoading = False
             }
@@ -124,40 +123,46 @@ update msg model =
 -- Takes in two iterations to figure out if two iterations are within the same session,
 -- meaning that they are from the user and within the same hour.
 determineIfIterationIsSameSession : Iteration.Model -> Iteration.Model -> Bool
-determineIfIterationIsSameSession newestIteration previousIteration =
-    if Iteration.areIterationsTheSameUser newestIteration previousIteration then
-        posixToMillis newestIteration.created_at < (posixToMillis previousIteration.created_at) + (60 * 60 * 1000)
+determineIfIterationIsSameSession iterationA iterationB =
+    if Iteration.areIterationsTheSameUser iterationA iterationB then
+        abs (posixToMillis iterationA.created_at - (posixToMillis iterationB.created_at)) <= (60 * 60 * 1000)
     else
         False
 
 
-checkNextIteration : List Iteration.Model -> List Iteration.Model -> List Iteration.Model
-checkNextIteration currentSessions nextIterations =
-    case (List.head (List.reverse currentSessions), List.head nextIterations) of
+-- Groups
+groupIterations : List Iteration.Model -> List Iteration.Model -> List Iteration.Model
+groupIterations existingGroupings newIterations =
+    case (List.head (List.reverse existingGroupings), List.head newIterations) of
         (Just lastIteration, Just nextIteration) ->
             let
                 updatedSessions =
                     if determineIfIterationIsSameSession lastIteration nextIteration then
-                        currentSessions
+                        existingGroupings
                     else
-                        List.append currentSessions [nextIteration]
+                        List.append existingGroupings [nextIteration]
             in
-                checkNextIteration updatedSessions (List.drop 1 nextIterations)
+                groupIterations updatedSessions (List.drop 1 newIterations)
         (_, Just nextIteration) ->
-            [nextIteration]
+            if List.length newIterations > 1 then
+                groupIterations [nextIteration] (List.drop 1 newIterations)
+            else
+                [nextIteration]
 
         _ ->
-            currentSessions
+            existingGroupings
 
 
-processIterations : Model -> List Iteration.Model -> Model
-processIterations model iterations =
+-- Takes in a new set of iterations, and then merges them into the list of total iterations
+-- as well as grouping them based on our iteration algorithm.
+mergeNewIterations : Model -> List Iteration.Model -> Model
+mergeNewIterations model iterations =
     let
         groupedSessions = model.groupedSessions
     in
     { model
         | iterations = List.append model.iterations iterations
-        , groupedSessions = checkNextIteration groupedSessions iterations
+        , groupedSessions = groupIterations groupedSessions iterations
     }
 
 
