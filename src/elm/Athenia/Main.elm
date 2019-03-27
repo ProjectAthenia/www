@@ -64,7 +64,7 @@ init maybeViewer url navKey =
                 (getNavItems maybeToken)
             , currentState
                 = case maybeToken of
-                    Just token ->
+                    Just _ ->
                         (Loading url (Session.fromViewer navKey maybeViewer))
                     Nothing ->
                         (Redirect (Session.fromViewer navKey maybeViewer))
@@ -74,7 +74,7 @@ init maybeViewer url navKey =
             }
         (readyModel, initialCmd) =
             case maybeToken of
-                Just token ->
+                Just _ ->
                     (initialModel, Cmd.none)
                 Nothing ->
                     changeRouteTo (Route.fromUrl url)
@@ -92,7 +92,7 @@ init maybeViewer url navKey =
 getNavItems : Maybe token -> List (AppNavBar.NavLink Msg)
 getNavItems maybeToken =
     case maybeToken of
-        Just token ->
+        Just _ ->
             [ ("Settings", Route.href Route.Settings)
             , ("Log Out", Route.href Route.Logout)
             ]
@@ -131,13 +131,13 @@ view model =
         SignUp signUp ->
             viewPage (SignUp.view signUp) GotSignUpMsg
 
-        Profile userId profile ->
+        Profile _ profile ->
             viewPage (Profile.view profile) GotProfileMsg
 
-        ArticleViewer articleId article ->
+        ArticleViewer _ article ->
             viewPage (ArticleViewer.view article) GotArticleViewerMsg
 
-        ArticleEditor articleId article ->
+        ArticleEditor _ article ->
             viewPage (ArticleEditor.view article) GotArticleEditorMsg
 
 
@@ -361,7 +361,7 @@ update msg model =
                     changeRouteTo (Just Route.Login) model
 
         ( CompletedTokenRefresh (Err _), _ ) ->
-            changeRouteTo (Just Route.Login) model
+            changeRouteTo (Just Route.Logout) model
 
         ( ChangedUrl url, _ ) ->
             changeRouteTo (Route.fromUrl url) model
