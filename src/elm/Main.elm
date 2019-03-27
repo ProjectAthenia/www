@@ -2,7 +2,11 @@
 module Main exposing (..)
 
 import Api as Api exposing (Token)
+import Bootstrap.Navbar as Navbar
+import Browser exposing (Document)
+import Browser.Navigation as Nav
 import Components.NavBar as AppNavBar
+import Json.Decode as Decode exposing (Value)
 import Models.User.User as User
 import Page as Page
 import Page.Article.Editor as ArticleEditor
@@ -17,14 +21,10 @@ import Page.Settings as Settings
 import Page.SignUp as SignUp
 import Route as Route exposing (Route)
 import Session as Session exposing (Session)
-import Viewer as Viewer exposing (Viewer)
-import Bootstrap.Navbar as Navbar
-import Browser exposing (Document)
-import Browser.Navigation as Nav
-import Json.Decode as Decode exposing (Value)
 import Task
 import Time
 import Url exposing (Url)
+import Viewer as Viewer exposing (Viewer)
 
 type CurrentState
     = Redirect Session
