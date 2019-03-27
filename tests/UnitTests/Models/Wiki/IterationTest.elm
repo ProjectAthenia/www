@@ -1,6 +1,6 @@
 module UnitTests.Models.Wiki.IterationTest exposing (..)
 
-import Athenia.Models.Wiki.Iteration as Iteration
+import Models.Wiki.Iteration as Iteration
 import Expect
 import Json.Decode as JsonDecode
 import Test exposing (..)

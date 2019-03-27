@@ -1,6 +1,6 @@
 module UnitTests.Models.ErrorTest exposing(..)
 
-import Athenia.Models.Error as Error
+import Models.Error as Error
 import Expect
 import Json.Decode as JsonDecode
 import Test exposing (..)

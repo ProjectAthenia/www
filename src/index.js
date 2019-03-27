@@ -2,14 +2,14 @@
 require( './scss/main.scss' );
 
 // inject bundled Elm app into div#main
-var Elm = require( './elm/Athenia/Main' );
+var Elm = require( './elm/Main' );
 
 
 var storageKey = "store";
 var flags = localStorage.getItem(storageKey);
 
 // full screen the app and inject the env flags
-var app = Elm.Elm.Athenia.Main.init({flags: flags});
+var app = Elm.Elm.Main.init({flags: flags});
 
 app.ports.storeCache.subscribe(function(val) {
     if (val === null) {

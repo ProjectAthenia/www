@@ -1,6 +1,6 @@
 module UnitTests.Utilities.AuthManagerTest exposing (..)
 
-import Athenia.Utilities.AuthManager as AuthManager
+import Utilities.AuthManager as AuthManager
 import Expect
 import Test exposing (..)
 import Time

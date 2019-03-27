@@ -1,6 +1,6 @@
 module UnitTests.Utilities.StringHelperTest exposing (..)
 
-import Athenia.Utilities.StringHelper as StringHelper
+import Utilities.StringHelper as StringHelper
 import Expect
 import Test exposing (..)
 

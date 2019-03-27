@@ -1,6 +1,6 @@
 module UnitTests.Models.Wiki.ArticleTest exposing (..)
 
-import Athenia.Models.Wiki.Article as Article
+import Models.Wiki.Article as Article
 import Expect
 import Json.Decode as JsonDecode
 import Json.Encode as JsonEncode

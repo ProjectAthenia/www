@@ -1,7 +1,7 @@
 module UnitTests.Models.PageTest exposing(..)
 
-import Athenia.Models.Page as Page
-import Athenia.Models.User.User as User
+import Models.Page as Page
+import Models.User.User as User
 import Expect
 import Json.Decode as JsonDecode
 import Test exposing (..)

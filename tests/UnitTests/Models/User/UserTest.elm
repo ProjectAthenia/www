@@ -1,6 +1,6 @@
 module UnitTests.Models.User.UserTest exposing (..)
 
-import Athenia.Models.User.User as User
+import Models.User.User as User
 import Expect
 import Json.Decode as JsonDecode
 import Json.Encode as JsonEncode
