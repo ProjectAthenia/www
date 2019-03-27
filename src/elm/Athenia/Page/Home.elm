@@ -127,7 +127,7 @@ viewBanner =
 
 
 type Msg
-    = CompletedArticlesLoad (Result Http.Error Article.Page)
+    = CompletedArticlesLoad (Result Api.Error Article.Page)
     | GotTimeZone Time.Zone
     | GotSession Session
     | OpenCreateArticlePrompt
@@ -197,8 +197,7 @@ update msg model =
 
 fetchArticles : Token -> Int -> Cmd Msg
 fetchArticles token page =
-    Http.send CompletedArticlesLoad
-        <| Api.viewArticles token page
+    Api.viewArticles token page CompletedArticlesLoad
 
 
 

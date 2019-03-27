@@ -4,7 +4,6 @@ module Athenia.Page.Article.Viewer exposing (Model, Msg, init, subscriptions, to
 -}
 
 import Athenia.Api as Api exposing (Token)
-import Athenia.Api.Endpoint as Endpoint
 import Athenia.Components.Loading as Loading
 import Athenia.Components.LoadingIndicator as LoadingIndicator
 import Athenia.Models.Wiki.Article as Article
@@ -15,12 +14,8 @@ import Athenia.Utilities.Log as Log
 import Athenia.Viewer as Viewer exposing (Viewer)
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
-import Browser.Navigation as Nav
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, disabled, href, id, placeholder, value)
-import Html.Events exposing (onClick, onInput, onSubmit)
-import Http
-import Json.Decode as Decode
+import Html.Attributes exposing (class, id)
 import Markdown
 import Task exposing (Task)
 import Time
@@ -46,17 +41,9 @@ type Status
     | Failed
 
 
-type CommentText
-    = Editing String
-    | Sending String
-
 
 init : Session -> Token -> Int -> ( Model, Cmd Msg )
 init session token articleId =
-    let
-        maybeCred =
-            Session.token session
-    in
     ( { session = session
       , token = token
       , timeZone = Time.utc
@@ -125,7 +112,7 @@ viewArticleMeta article =
 
 type Msg
     = ClickedDismissErrors
-    | CompletedLoadArticle (Result Http.Error Article.Model)
+    | CompletedLoadArticle (Result Api.Error Article.Model)
     | GotTimeZone Time.Zone
     | GotSession Session
 
@@ -175,8 +162,7 @@ subscriptions model =
 
 fetchArticle : Token -> Int -> Cmd Msg
 fetchArticle token articleId =
-    Http.send CompletedLoadArticle
-        <| Api.getArticle token articleId
+    Api.getArticle token articleId CompletedLoadArticle
 
 
 -- EXPORT

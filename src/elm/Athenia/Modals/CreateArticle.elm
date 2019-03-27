@@ -15,7 +15,6 @@ import Bootstrap.Modal as Modal
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Http
 
 
 -- MODEL
@@ -98,7 +97,7 @@ type Msg
     = EnteredTitle String
     | Cancel
     | Confirm
-    | CompletedArticleCreate (Result Http.Error Article.Model)
+    | CompletedArticleCreate (Result Api.Error Article.Model)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -161,6 +160,4 @@ show model =
 
 createArticle : Token -> Article.CreateModel -> Cmd Msg
 createArticle token article =
-    Http.send CompletedArticleCreate
-        <| Api.createArticle token article
-
+    Api.createArticle token article CompletedArticleCreate

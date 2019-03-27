@@ -82,7 +82,7 @@ getIterationPreviewText iteration =
 type Msg
     = Cancel
     | ViewIteration Iteration.Model
-    | CompletedArticleIterationLoad (Result Http.Error Iteration.Page)
+    | CompletedArticleIterationLoad (Result Api.Error Iteration.Page)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -171,5 +171,4 @@ hide model =
 
 loadIterations : Token -> Int -> Int -> Cmd Msg
 loadIterations token articleId page =
-    Http.send CompletedArticleIterationLoad
-        <| Api.viewArticleIterations token articleId page
+    Api.viewArticleIterations token articleId page CompletedArticleIterationLoad

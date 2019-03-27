@@ -1,5 +1,6 @@
 port module Athenia.Api exposing
-    (Token
+    ( Token
+    , Error(..)
     , application
     , unwrapToken
     , decodeErrors
@@ -184,12 +185,10 @@ storageDecoder viewerDecoder =
 -- HTTP
 
 
-get : Endpoint.Endpoint -> Maybe Token -> Decoder a -> Http.Request a
-get url maybeToken decoder =
+get : Endpoint.Endpoint -> Maybe Token -> Decoder a -> (Result Error a -> msg) -> Cmd msg
+get url maybeToken decoder toMsg =
     Endpoint.request
         { method = "GET"
-        , url = url
-        , expect = Http.expectJson decoder
         , headers =
             case maybeToken of
                 Just cred ->
@@ -197,31 +196,29 @@ get url maybeToken decoder =
 
                 Nothing ->
                     []
+        , url = url
+        , expect = expectJson toMsg decoder
         , body = Http.emptyBody
         , timeout = Nothing
-        , withCredentials = False
         }
 
 
-put : Endpoint.Endpoint -> Token -> Body -> Decoder a -> Http.Request a
-put url token body decoder =
+put : Endpoint.Endpoint -> Token -> Body -> Decoder a -> (Result Error a -> msg) -> Cmd msg
+put url token body decoder toMsg =
     Endpoint.request
         { method = "PUT"
-        , url = url
-        , expect = Http.expectJson decoder
         , headers = [ authHeader token ]
+        , url = url
+        , expect = expectJson toMsg decoder
         , body = body
         , timeout = Nothing
-        , withCredentials = False
         }
 
 
-post : Endpoint.Endpoint -> Maybe Token -> Body -> Decoder a -> Http.Request a
-post url maybeToken body decoder =
+post : Endpoint.Endpoint -> Maybe Token -> Body -> Decoder a -> (Result Error a -> msg) -> Cmd msg
+post url maybeToken body decoder toMsg =
     Endpoint.request
         { method = "POST"
-        , url = url
-        , expect = Http.expectJson decoder
         , headers =
             case maybeToken of
                 Just token ->
@@ -229,71 +226,72 @@ post url maybeToken body decoder =
 
                 Nothing ->
                     []
+        , url = url
+        , expect = expectJson toMsg decoder
         , body = body
         , timeout = Nothing
-        , withCredentials = False
         }
 
 
-delete : Endpoint.Endpoint -> Token -> Body -> Decoder a -> Http.Request a
-delete url token body decoder =
+delete : Endpoint.Endpoint -> Token -> Body -> Decoder a -> (Result Error a -> msg) -> Cmd msg
+delete url token body decoder toMsg =
     Endpoint.request
         { method = "DELETE"
-        , url = url
-        , expect = Http.expectJson decoder
         , headers = [ authHeader token ]
+        , url = url
+        , expect = expectJson toMsg decoder
         , body = body
         , timeout = Nothing
-        , withCredentials = False
         }
 
 
-login : Http.Body -> Http.Request Token
-login body =
-    post Endpoint.login Nothing body tokenDecoder
+login : Http.Body -> (Result Error Token -> msg) -> Cmd msg
+login body toMsg =
+    post Endpoint.login Nothing body tokenDecoder toMsg
 
 
-signUp : Http.Body -> Http.Request Token
-signUp body =
-    post Endpoint.signUp Nothing body tokenDecoder
+signUp : Http.Body -> (Result Error Token -> msg) -> Cmd msg
+signUp body toMsg =
+    post Endpoint.signUp Nothing body tokenDecoder toMsg
 
 
-refresh : Token -> Http.Request Token
-refresh token =
-    post Endpoint.refresh (Just token) Http.emptyBody tokenDecoder
+refresh : Token -> (Result Error Token -> msg) -> Cmd msg
+refresh token toMsg =
+    post Endpoint.refresh (Just token) Http.emptyBody tokenDecoder toMsg
 
 
-settings : Token -> Int -> Http.Body -> Http.Request User.Model
-settings token userId body =
-    put (Endpoint.user userId) token body User.modelDecoder
+settings : Token -> Int -> Http.Body -> (Result Error User.Model -> msg) -> Cmd msg
+settings token userId body toMsg =
+    put (Endpoint.user userId) token body User.modelDecoder toMsg
 
 
-me : Token -> Http.Request User.Model
-me token =
-    get Endpoint.me (Just token) User.modelDecoder
+me : Token -> (Result Error User.Model -> msg) -> Cmd msg
+me token toMsg =
+    get Endpoint.me (Just token) User.modelDecoder toMsg
 
 
-createArticle : Token -> Article.CreateModel -> Http.Request Article.Model
-createArticle token article =
+createArticle : Token -> Article.CreateModel -> (Result Error Article.Model -> msg) -> Cmd msg
+createArticle token article  toMsg =
     post Endpoint.baseArticle
         (Just token)
         (Http.jsonBody (Article.toCreateJson article))
         Article.modelDecoder
+        toMsg
 
 
-getArticle : Token -> Int -> Http.Request Article.Model
-getArticle token articleId =
-    get (Endpoint.viewArticle articleId) (Just token) Article.modelDecoder
+getArticle : Token -> Int -> (Result Error Article.Model -> msg) -> Cmd msg
+getArticle token articleId toMsg =
+    get (Endpoint.viewArticle articleId) (Just token) Article.modelDecoder toMsg
 
 
-viewArticles : Token -> Int -> Http.Request Article.Page
-viewArticles token page =
-    get (Endpoint.viewArticles page) (Just token) Article.pageDecoder
+viewArticles : Token -> Int -> (Result Error Article.Page -> msg) -> Cmd msg
+viewArticles token page toMsg =
+    get (Endpoint.viewArticles page) (Just token) Article.pageDecoder toMsg
 
 
-viewArticleIterations : Token -> Int -> Int -> Http.Request Iteration.Page
-viewArticleIterations token articleId page =
-    get (Endpoint.viewArticleIterations articleId page) (Just token) Iteration.pageDecoder
+viewArticleIterations : Token -> Int -> Int -> (Result Error Iteration.Page -> msg) -> Cmd msg
+viewArticleIterations token articleId page toMsg =
+    get (Endpoint.viewArticleIterations articleId page) (Just token) Iteration.pageDecoder toMsg
 
 
 decoderFromCred : Decoder (Token -> Int -> a) -> Decoder a
@@ -305,16 +303,43 @@ decoderFromCred decoder =
 
 
 
+type Error
+    = BadStatus Int Error.Model
+    | Timeout
+    | BadUrl String
+    | NetworkError
+    | BadBody String
+
+
+expectJson : (Result Error a -> msg) -> Decoder a -> Expect msg
+expectJson toMsg decoder =
+  Http.expectStringResponse toMsg <|
+    \response ->
+      case response of
+        Http.BadUrl_ url ->
+          Err (BadUrl url)
+
+        Http.Timeout_ ->
+          Err Timeout
+
+        Http.NetworkError_ ->
+          Err NetworkError
+
+        Http.BadStatus_ metadata body ->
+          Err (BadStatus metadata.statusCode (decodeErrors body))
+
+        Http.GoodStatus_ metadata body ->
+          case decodeString decoder body of
+            Ok value ->
+              Ok value
+
+            Err err ->
+              Err (BadBody (Decode.errorToString err))
 
 {-| Many API endpoints include an "errors" field in their BadStatus responses.
 -}
-decodeErrors : Http.Error -> Error.Model
-decodeErrors error =
-    case error of
-        Http.BadStatus response ->
-            response.body
-                |> decodeString Error.decoder
-                |> Result.withDefault Error.unknownErrorResponse
-
-        err ->
-            Error.unknownErrorResponse
+decodeErrors : String -> Error.Model
+decodeErrors body =
+    body
+        |> decodeString Error.decoder
+        |> Result.withDefault Error.unknownErrorResponse

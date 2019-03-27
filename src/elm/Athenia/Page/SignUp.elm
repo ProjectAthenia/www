@@ -143,8 +143,8 @@ type Msg
     | EnteredName String
     | EnteredEmail String
     | EnteredPassword String
-    | CompletedRegister (Result Http.Error Token)
-    | LoadedMe Token (Result Http.Error User.Model)
+    | CompletedRegister (Result Api.Error Token)
+    | LoadedMe Token (Result Api.Error User.Model)
     | GotSession Session
 
 
@@ -155,7 +155,7 @@ update msg model =
             case validate model.form of
                 Ok validForm ->
                     ( { model | showLoading = True, problems = [] }
-                    , Http.send CompletedRegister (register validForm)
+                    , register validForm
                     )
 
                 Err problems ->
@@ -173,29 +173,33 @@ update msg model =
             updateForm (\form -> { form | password = password }) model
 
         CompletedRegister (Err error) ->
-            let
-                serverError =
-                    ServerError
-                        <| Api.decodeErrors error
-            in
-            ( { model | showLoading = False, problems = List.append model.problems [serverError] }
-            , Cmd.none
-            )
+            case error of
+                Api.BadStatus status errorModel ->
+                    ( { model | showLoading = False, problems = List.append model.problems [ServerError errorModel] }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model
+                    , Cmd.none
+                    )
 
         CompletedRegister (Ok token) ->
             ( model
-            , Http.send (LoadedMe token) (loadMe token)
+            , loadMe token
             )
 
         LoadedMe token (Err error) ->
-            let
-                serverError =
-                    ServerError
-                        <| Api.decodeErrors error
-            in
-            ( { model | showLoading = False, problems = List.append model.problems [serverError] }
-            , Cmd.none
-            )
+            case error of
+                Api.BadStatus status errorModel ->
+                    ( { model | showLoading = False, problems = List.append model.problems [ServerError errorModel] }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model
+                    , Cmd.none
+                    )
 
         LoadedMe token (Ok user) ->
             ( { model | showLoading = False }
@@ -323,7 +327,7 @@ trimFields form =
 -- HTTP
 
 
-register : TrimmedForm -> Http.Request Token
+register : TrimmedForm -> Cmd Msg
 register (Trimmed form) =
     let
         body =
@@ -334,9 +338,9 @@ register (Trimmed form) =
                 ]
                 |> Http.jsonBody
     in
-    Api.signUp body
+    Api.signUp body CompletedRegister
 
 
-loadMe : Token -> Http.Request User.Model
+loadMe : Token -> Cmd Msg
 loadMe token =
-    Api.me token
+    Api.me token (LoadedMe token)

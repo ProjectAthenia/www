@@ -17,13 +17,10 @@ import Athenia.Page.Settings as Settings
 import Athenia.Page.SignUp as SignUp
 import Athenia.Route as Route exposing (Route)
 import Athenia.Session as Session exposing (Session)
-import Athenia.Utilities.AuthManager as AuthManager
 import Athenia.Viewer as Viewer exposing (Viewer)
 import Bootstrap.Navbar as Navbar
 import Browser exposing (Document)
 import Browser.Navigation as Nav
-import Html exposing (..)
-import Http exposing (..)
 import Json.Decode as Decode exposing (Value)
 import Task
 import Time
@@ -158,7 +155,7 @@ type Msg
     | GotArticleEditorMsg ArticleEditor.Msg
     | NavBarStateChange Navbar.State
     | GotSession Session
-    | CompletedTokenRefresh (Result Http.Error Api.Token)
+    | CompletedTokenRefresh (Result Api.Error Api.Token)
     | Tick Time.Posix
 
 
@@ -312,7 +309,7 @@ update msg model =
                 [ cmd
                 , case (needsRefresh, maybeToken) of
                     (True, Just token) ->
-                        Http.send CompletedTokenRefresh (Api.refresh token)
+                        (Api.refresh token CompletedTokenRefresh)
                     (True, Nothing) ->
                         Route.replaceUrl (Session.navKey session) Route.Login
                     _ ->

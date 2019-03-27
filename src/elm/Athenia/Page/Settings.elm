@@ -14,9 +14,9 @@ import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
-import Html exposing (Html, button, div, fieldset, h1, input, li, text, textarea, ul)
+import Html exposing (Html, div, fieldset, h1, text)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput, onSubmit)
+import Html.Events exposing (onSubmit)
 import Http
 import Json.Encode as Encode
 
@@ -61,10 +61,7 @@ init session token =
       , problems = []
       , status = Loading
       }
-    , Cmd.batch
-        [ Api.get Endpoint.me (Session.token session) User.modelDecoder
-            |> Http.send CompletedFormLoad
-        ]
+    , Api.get Endpoint.me (Session.token session) User.modelDecoder CompletedFormLoad
     )
 
 
@@ -167,8 +164,8 @@ type Msg
     | EnteredName String
     | EnteredEmail String
     | EnteredPassword String
-    | CompletedFormLoad (Result Http.Error User.Model)
-    | CompletedSave (Result Http.Error User.Model)
+    | CompletedFormLoad (Result Api.Error User.Model)
+    | CompletedSave (Result Api.Error User.Model)
     | GotSession Session
 
 
@@ -196,7 +193,6 @@ update msg model =
                 Ok validForm ->
                     ( { model | showLoading = True, status = Loaded form }
                     , edit token validForm
-                        |> Http.send CompletedSave
                     )
 
                 Err problems ->
@@ -214,14 +210,16 @@ update msg model =
             updateForm (\form -> { form | password = password }) model
 
         CompletedSave (Err error) ->
-            let
-                serverError =
-                    ServerError
-                        <| Api.decodeErrors error
-            in
-            ( { model | showLoading = False, problems = List.append model.problems [serverError] }
-            , Cmd.none
-            )
+            case error of
+                Api.BadStatus status errorModel ->
+                    ( { model | showLoading = False, problems = List.append model.problems [ServerError errorModel] }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model
+                    , Cmd.none
+                    )
 
         CompletedSave (Ok user) ->
             ( { model | showLoading = False }
@@ -375,7 +373,7 @@ trimFields form =
 {-| This takes a Valid Form as a reminder that it needs to have been validated
 first.
 -}
-edit : Token -> TrimmedForm -> Http.Request User.Model
+edit : Token -> TrimmedForm -> Cmd Msg
 edit token (Trimmed form) =
     let
         encodedUser =
@@ -398,13 +396,4 @@ edit token (Trimmed form) =
         body =
             Http.jsonBody encodedUser
     in
-    Api.settings token form.id body
-
-
-nothingIfEmpty : String -> Maybe String
-nothingIfEmpty str =
-    if String.isEmpty str then
-        Nothing
-
-    else
-        Just str
+    Api.settings token form.id body CompletedSave

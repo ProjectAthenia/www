@@ -17,7 +17,6 @@ import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (class, id)
 import Html.Events exposing (onClick)
-import Http
 import Time
 
 
@@ -181,7 +180,7 @@ type Msg
     = ViewHistory
     | ContinueEditing
     | EnteredContent String
-    | CompletedLoadArticle (Result Http.Error Article.Model)
+    | CompletedLoadArticle (Result Api.Error Article.Model)
     | GotSession Session
     | ReceivedUpdatedContent String
     | ReportContentChanges Time.Posix
@@ -394,8 +393,7 @@ subscriptions model =
 
 fetchArticle : Token -> Int -> Cmd Msg
 fetchArticle token articleId =
-    Http.send CompletedLoadArticle
-        <| Api.getArticle token articleId
+    Api.getArticle token articleId CompletedLoadArticle
 
 
 -- EXPORT

@@ -152,8 +152,8 @@ type Msg
     = SubmittedForm
     | EnteredEmail String
     | EnteredPassword String
-    | CompletedLogin (Result Http.Error Api.Token)
-    | RetrieveMe Token (Result Http.Error User.Model)
+    | CompletedLogin (Result Api.Error Api.Token)
+    | RetrieveMe Token (Result Api.Error User.Model)
     | GotSession Session
 
 
@@ -164,7 +164,7 @@ update msg model =
             case validate model.form of
                 Ok validForm ->
                     ( { model | problems = [], showLoading = True }
-                    , Http.send CompletedLogin (login validForm)
+                    , login validForm
                     )
 
                 Err problems ->
@@ -183,7 +183,7 @@ update msg model =
 
         CompletedLogin (Ok token) ->
             ( model
-            , Http.send (RetrieveMe token) (getMe token)
+            , getMe token
             )
 
         GotSession session ->
@@ -219,16 +219,18 @@ updateForm transform model =
     ( { model | form = transform model.form }, Cmd.none )
 
 
-handleErrors : Http.Error -> Model -> (Model, Cmd Msg)
-handleErrors errors model =
-    let
-        serverError =
-            ServerError
-                <| Api.decodeErrors errors
-    in
-    ( { model | problems = List.append model.problems [serverError], showLoading = False }
-    , Cmd.none
-    )
+handleErrors : Api.Error -> Model -> (Model, Cmd Msg)
+handleErrors error model =
+    case error of
+        Api.BadStatus status errorModel ->
+            ( { model | problems = List.append model.problems [ServerError errorModel], showLoading = False }
+            , Cmd.none
+            )
+
+        _ ->
+            ( model
+            , Cmd.none
+            )
 
 -- SUBSCRIPTIONS
 
@@ -313,7 +315,7 @@ trimFields user =
 -- HTTP
 
 
-login : TrimmedForm -> Http.Request Token
+login : TrimmedForm -> Cmd Msg
 login (Trimmed model) =
     let
         user =
@@ -326,12 +328,12 @@ login (Trimmed model) =
         body =
             Http.jsonBody (User.toJson user)
     in
-        Api.login body
+        Api.login body CompletedLogin
 
 
-getMe : Token -> Http.Request User.Model
+getMe : Token -> Cmd Msg
 getMe token =
-    Api.me token
+    Api.me token (RetrieveMe token)
 
 
 -- EXPORT

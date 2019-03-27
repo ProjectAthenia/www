@@ -18,10 +18,8 @@ import Bootstrap.Grid.Col as Col
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Http
 import Task exposing (Task)
 import Time
-import Url.Builder
 
 
 -- MODEL
@@ -83,8 +81,7 @@ fetchUser session userId =
             Session.token session
 
     in
-    Http.send CompletedUserLoad
-        <| Api.get (Endpoint.userActivity userId) maybeToken User.modelDecoder
+    Api.get (Endpoint.userActivity userId) maybeToken User.modelDecoder CompletedUserLoad
 
 
 -- VIEW
@@ -174,7 +171,7 @@ viewTab activeTab (tabName, tab) =
 type Msg
     = ClickedDismissErrors
     | ClickedTab ActiveTab
-    | CompletedUserLoad (Result Http.Error User.Model)
+    | CompletedUserLoad (Result Api.Error User.Model)
     | GotTimeZone Time.Zone
     | GotSession Session
 
