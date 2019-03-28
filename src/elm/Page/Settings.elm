@@ -28,6 +28,7 @@ import Json.Encode as Encode
 type alias Model =
     { session : Session
     , showLoading : Bool
+    , apiUrl : String
     , token : Token
     , problems : List Problem
     , status : Status
@@ -53,15 +54,16 @@ type Problem
     | ServerError Error.Model
 
 
-init : Session -> Token -> ( Model, Cmd Msg )
-init session token =
+init : Session -> String -> Token -> ( Model, Cmd Msg )
+init session apiUrl token =
     ( { session = session
       , showLoading = True
+      , apiUrl = apiUrl
       , token = token
       , problems = []
       , status = Loading
       }
-    , Api.get Endpoint.me (Session.token session) User.modelDecoder CompletedFormLoad
+    , Api.get (Endpoint.me apiUrl) (Session.token session) User.modelDecoder CompletedFormLoad
     )
 
 
@@ -192,7 +194,7 @@ update msg model =
             case validate form of
                 Ok validForm ->
                     ( { model | showLoading = True, status = Loaded form }
-                    , edit token validForm
+                    , edit model.apiUrl token validForm
                     )
 
                 Err problems ->
@@ -211,7 +213,7 @@ update msg model =
 
         CompletedSave (Err error) ->
             case error of
-                Api.BadStatus status errorModel ->
+                Api.BadStatus _ errorModel ->
                     ( { model | showLoading = False, problems = List.append model.problems [ServerError errorModel] }
                     , Cmd.none
                     )
@@ -373,8 +375,8 @@ trimFields form =
 {-| This takes a Valid Form as a reminder that it needs to have been validated
 first.
 -}
-edit : Token -> TrimmedForm -> Cmd Msg
-edit token (Trimmed form) =
+edit : String -> Token -> TrimmedForm -> Cmd Msg
+edit apiUrl token (Trimmed form) =
     let
         encodedUser =
             Encode.object
@@ -396,4 +398,4 @@ edit token (Trimmed form) =
         body =
             Http.jsonBody encodedUser
     in
-    Api.settings token form.id body CompletedSave
+    Api.settings apiUrl token form.id body CompletedSave

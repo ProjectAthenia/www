@@ -23,15 +23,17 @@ import Session as Session exposing (..)
 type alias Model =
     { article : Article.CreateModel
     , session : Session
+    , apiUrl : String
     , token : Token
     , visibility : Modal.Visibility
     , showLoading : Bool
     }
 
 
-init : User.Model -> Session -> Token -> Model
-init user session token =
+init : User.Model -> Session -> String -> Token -> Model
+init user session apiUrl token =
     { article = Article.initCreateModel user
+    , apiUrl = apiUrl
     , session = session
     , token = token
     , visibility = Modal.hidden
@@ -125,7 +127,7 @@ update msg model =
             ( { model
                 | showLoading = True
             }
-            , createArticle model.token model.article
+            , createArticle model.apiUrl model.token model.article
             )
 
         CompletedArticleCreate (Ok article) ->
@@ -158,6 +160,6 @@ show model =
 -- HTTP
 
 
-createArticle : Token -> Article.CreateModel -> Cmd Msg
-createArticle token article =
-    Api.createArticle token article CompletedArticleCreate
+createArticle : String -> Token -> Article.CreateModel -> Cmd Msg
+createArticle apiUrl token article =
+    Api.createArticle apiUrl token article CompletedArticleCreate

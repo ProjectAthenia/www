@@ -42,8 +42,8 @@ type Status
 
 
 
-init : Session -> Token -> Int -> ( Model, Cmd Msg )
-init session token articleId =
+init : Session -> String -> Token -> Int -> ( Model, Cmd Msg )
+init session apiUrl token articleId =
     ( { session = session
       , token = token
       , timeZone = Time.utc
@@ -51,7 +51,7 @@ init session token articleId =
       , article = Loading
       }
     , Cmd.batch
-        [ fetchArticle token articleId
+        [ fetchArticle apiUrl token articleId
         , Task.perform GotTimeZone Time.here
         ]
     )
@@ -126,7 +126,7 @@ update msg model =
         CompletedLoadArticle (Ok article) ->
             ( { model | article = Loaded article }, Cmd.none )
 
-        CompletedLoadArticle (Err error) ->
+        CompletedLoadArticle (Err _) ->
             ( { model | article = Failed }
             , Log.error
             )
@@ -160,9 +160,9 @@ subscriptions model =
 -- HTTP
 
 
-fetchArticle : Token -> Int -> Cmd Msg
-fetchArticle token articleId =
-    Api.getArticle token articleId CompletedLoadArticle
+fetchArticle : String -> Token -> Int -> Cmd Msg
+fetchArticle apiUrl token articleId =
+    Api.getArticle apiUrl token articleId CompletedLoadArticle
 
 
 -- EXPORT

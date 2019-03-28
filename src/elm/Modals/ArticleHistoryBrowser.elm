@@ -14,6 +14,7 @@ import Time exposing (..)
 type alias Model =
     { articleId : Int
     , session : Session
+    , apiUrl : String
     , token : Token
     , visibility : Modal.Visibility
     , showLoading : Bool
@@ -22,10 +23,11 @@ type alias Model =
     }
 
 
-init : Int -> Session -> Token -> Model
-init articleId session token =
+init : Int -> Session -> String -> Token -> Model
+init articleId session apiUrl token =
     { articleId = articleId
     , session = session
+    , apiUrl = apiUrl
     , token = token
     , visibility = Modal.hidden
     , showLoading = False
@@ -42,7 +44,7 @@ initLoad model =
         , iterations = []
         , groupedSessions = []
     }
-    , loadIterations model.token model.articleId 1
+    , loadIterations model.apiUrl model.token model.articleId 1
     )
 
 
@@ -107,7 +109,7 @@ update msg model =
 
             }
             , if anotherPage then
-                loadIterations model.token model.articleId (page.current_page + 1)
+                loadIterations model.apiUrl model.token model.articleId (page.current_page + 1)
             else
                 Cmd.none
             )
@@ -176,6 +178,6 @@ hide model =
 -- HTTP
 
 
-loadIterations : Token -> Int -> Int -> Cmd Msg
-loadIterations token articleId page =
-    Api.viewArticleIterations token articleId page CompletedArticleIterationLoad
+loadIterations : String -> Token -> Int -> Int -> Cmd Msg
+loadIterations apiUrl token articleId page =
+    Api.viewArticleIterations apiUrl token articleId page CompletedArticleIterationLoad

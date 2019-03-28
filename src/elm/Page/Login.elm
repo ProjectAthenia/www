@@ -28,6 +28,7 @@ import Time
 
 type alias Model =
     { session : Session
+    , apiUrl : String
     , showLoading : Bool
     , currentTime : Time.Posix
     , problems : List Problem
@@ -64,9 +65,10 @@ type Problem
     | ServerError Error.Model
 
 
-init : Time.Posix -> Session -> ( Model, Cmd msg )
-init currentTime session =
+init : Time.Posix -> Session -> String -> ( Model, Cmd msg )
+init currentTime session apiUrl =
     ( { session = session
+      , apiUrl = apiUrl
       , showLoading = False
       , currentTime = currentTime
       , problems = []
@@ -164,7 +166,7 @@ update msg model =
             case validate model.form of
                 Ok validForm ->
                     ( { model | problems = [], showLoading = True }
-                    , login validForm
+                    , login model.apiUrl validForm
                     )
 
                 Err problems ->
@@ -183,7 +185,7 @@ update msg model =
 
         CompletedLogin (Ok token) ->
             ( model
-            , getMe token
+            , getMe model.apiUrl token
             )
 
         GotSession session ->
@@ -191,7 +193,7 @@ update msg model =
             , Route.replaceUrl (Session.navKey session) Route.Home
             )
 
-        RetrieveMe token (Err error) ->
+        RetrieveMe _ (Err error) ->
             handleErrors error model
 
         RetrieveMe token (Ok user) ->
@@ -222,7 +224,7 @@ updateForm transform model =
 handleErrors : Api.Error -> Model -> (Model, Cmd Msg)
 handleErrors error model =
     case error of
-        Api.BadStatus status errorModel ->
+        Api.BadStatus _ errorModel ->
             ( { model | problems = List.append model.problems [ServerError errorModel], showLoading = False }
             , Cmd.none
             )
@@ -315,8 +317,8 @@ trimFields user =
 -- HTTP
 
 
-login : TrimmedForm -> Cmd Msg
-login (Trimmed model) =
+login : String -> TrimmedForm -> Cmd Msg
+login apiUrl (Trimmed model) =
     let
         user =
             { id = 0
@@ -328,12 +330,12 @@ login (Trimmed model) =
         body =
             Http.jsonBody (User.toJson user)
     in
-        Api.login body CompletedLogin
+        Api.login apiUrl body CompletedLogin
 
 
-getMe : Token -> Cmd Msg
-getMe token =
-    Api.me token (RetrieveMe token)
+getMe : String -> Token -> Cmd Msg
+getMe apiUrl token =
+    Api.me apiUrl token (RetrieveMe token)
 
 
 -- EXPORT

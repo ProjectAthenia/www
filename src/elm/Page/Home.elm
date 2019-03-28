@@ -18,7 +18,6 @@ import Bootstrap.Grid as Grid
 import Bootstrap.Button as Button
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Http
 import Task exposing (Task)
 import Time
 
@@ -31,6 +30,7 @@ type alias Model =
     { token : Token
     , user : User.Model
     , showLoading : Bool
+    , apiUrl : String
     , session : Session
     , timeZone : Time.Zone
     , status : Status
@@ -47,19 +47,20 @@ type Status
 
 
 -- Passes in the current session, and requires the unwrapping of the token
-init : Session -> Token -> User.Model -> ( Model, Cmd Msg )
-init session token user =
+init : Session -> String -> Token -> User.Model -> ( Model, Cmd Msg )
+init session apiUrl token user =
     ( { token = token
       , user = user
       , showLoading = True
       , session = session
+      , apiUrl = apiUrl
       , timeZone = Time.utc
       , status = Loading
       , articles = []
-      , createArticleModal = CreateArticleModal.init user session token
+      , createArticleModal = CreateArticleModal.init  user session apiUrl token
       }
     , Cmd.batch
-        [ fetchArticles token 1
+        [ fetchArticles apiUrl token 1
         , Task.perform GotTimeZone Time.here
         ]
     )
@@ -145,19 +146,19 @@ update msg model =
             }
             , case PageModel.nextPageNumber articlePage of
                 Just pageNumber ->
-                    fetchArticles model.token pageNumber
+                    fetchArticles model.apiUrl model.token pageNumber
                 Nothing ->
                     Cmd.none
             )
 
-        CompletedArticlesLoad (Err error) ->
+        CompletedArticlesLoad (Err _) ->
             ( { model | status = Failed, showLoading = False }, Log.error )
 
         OpenCreateArticlePrompt ->
             ( { model
                 | createArticleModal =
                     CreateArticleModal.show
-                        <| CreateArticleModal.init model.user model.session model.token
+                        <| CreateArticleModal.init model.user model.session model.apiUrl model.token
             }
             , Cmd.none
             )
@@ -195,9 +196,9 @@ update msg model =
 -- HTTP
 
 
-fetchArticles : Token -> Int -> Cmd Msg
-fetchArticles token page =
-    Api.viewArticles token page CompletedArticlesLoad
+fetchArticles : String -> Token -> Int -> Cmd Msg
+fetchArticles apiUrl token page =
+    Api.viewArticles apiUrl token page CompletedArticlesLoad
 
 
 

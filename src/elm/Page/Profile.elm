@@ -46,8 +46,8 @@ type Status
     | Failed
 
 
-init : Session -> Token -> Int -> ( Model, Cmd Msg )
-init session token userId =
+init : Session -> String -> Token -> Int -> ( Model, Cmd Msg )
+init session apiUrl token userId =
     let
         maybeToken =
             Session.token session
@@ -60,7 +60,7 @@ init session token userId =
       , user = Loading userId
       }
     , Cmd.batch
-        [ fetchUser session userId
+        [ fetchUser apiUrl session userId
         , Task.perform GotTimeZone Time.here
         ]
     )
@@ -74,14 +74,14 @@ defaultFeedTab =
 -- HTTP
 
 
-fetchUser : Session -> Int -> Cmd Msg
-fetchUser session userId =
+fetchUser : String -> Session -> Int -> Cmd Msg
+fetchUser apiUrl session userId =
     let
         maybeToken =
             Session.token session
 
     in
-    Api.get (Endpoint.userActivity userId) maybeToken User.modelDecoder CompletedUserLoad
+    Api.get (Endpoint.userActivity apiUrl userId) maybeToken User.modelDecoder CompletedUserLoad
 
 
 -- VIEW

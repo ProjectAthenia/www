@@ -49,11 +49,11 @@ unwrap (Endpoint str) =
     str
 
 
-url : List String -> List QueryParameter -> Endpoint
-url paths queryParams =
+url : String -> List String -> List QueryParameter -> Endpoint
+url apiUrl paths queryParams =
     -- NOTE: Url.Builder takes care of percent-encoding special URL characters.
     -- See https://package.elm-lang.org/packages/elm/url/latest/Url#percentEncode
-    Builder.crossOrigin "http://dev-api.projectathenia.com"
+    Builder.crossOrigin apiUrl
         ("v1" :: paths)
         queryParams
         |> Endpoint
@@ -63,20 +63,20 @@ url paths queryParams =
 -- System wide endpoints
 
 
-baseArticle : Endpoint
-baseArticle =
-    url [ "articles" ] []
+baseArticle : String -> Endpoint
+baseArticle apiUrl =
+    url apiUrl [ "articles" ] []
 
-viewArticle : Int -> Endpoint
-viewArticle articleId =
-    url [ "articles", String.fromInt articleId ]
+viewArticle : String -> Int -> Endpoint
+viewArticle apiUrl articleId =
+    url apiUrl [ "articles", String.fromInt articleId ]
         [ (Builder.string "expand[createdBy]" "*")
         ]
 
 
-viewArticles : Int -> Endpoint
-viewArticles page =
-    url [ "articles" ]
+viewArticles : String -> Int -> Endpoint
+viewArticles apiUrl page =
+    url apiUrl [ "articles" ]
         <| if page /= 1 then
             [ (Builder.string "page" (String.fromInt page))
             , (Builder.string "expand[createdBy]" "*")
@@ -84,9 +84,9 @@ viewArticles page =
         else
             [ (Builder.string "expand[createdBy]" "*") ]
 
-viewArticleIterations : Int -> Int -> Endpoint
-viewArticleIterations articleId page =
-    url [ "articles", String.fromInt articleId, "iterations" ]
+viewArticleIterations : String -> Int -> Int -> Endpoint
+viewArticleIterations apiUrl articleId page =
+    url apiUrl [ "articles", String.fromInt articleId, "iterations" ]
         <| if page /= 1 then
             [ (Builder.string "page" (String.fromInt page))
             , (Builder.string "expand[createdBy]" "*")
@@ -98,39 +98,39 @@ viewArticleIterations articleId page =
             ]
 
 
-me : Endpoint
-me =
-    url [ "users", "me" ] []
+me : String -> Endpoint
+me apiUrl =
+    url apiUrl [ "users", "me" ] []
 
 
-refresh : Endpoint
-refresh =
-    url [ "auth", "refresh" ] []
+refresh : String -> Endpoint
+refresh apiUrl =
+    url apiUrl [ "auth", "refresh" ] []
 
 
-login : Endpoint
-login =
-    url [ "auth", "login" ] []
+login : String -> Endpoint
+login apiUrl =
+    url apiUrl [ "auth", "login" ] []
 
 
-logout : Endpoint
-logout =
-    url [ "auth", "logout" ] []
+logout : String -> Endpoint
+logout apiUrl =
+    url apiUrl [ "auth", "logout" ] []
 
 
-signUp : Endpoint
-signUp =
-    url [ "auth", "sign-up" ] []
+signUp : String -> Endpoint
+signUp apiUrl =
+    url apiUrl [ "auth", "sign-up" ] []
 
 
-user : Int -> Endpoint
-user userId =
-    url [ "users", String.fromInt userId ] []
+user : String -> Int -> Endpoint
+user apiUrl userId =
+    url apiUrl [ "users", String.fromInt userId ] []
 
 
-userActivity : Int -> Endpoint
-userActivity userId =
-    url [ "users", String.fromInt userId ]
+userActivity : String -> Int -> Endpoint
+userActivity apiUrl userId =
+    url apiUrl [ "users", String.fromInt userId ]
         [ (Builder.string "expand[createdArticles]" "*")
         , (Builder.string "expand[createdIterations]" "*")
         ]

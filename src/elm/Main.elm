@@ -257,11 +257,11 @@ changeRouteTo maybeRoute model =
             )
 
         Just Route.Login ->
-            Login.init model.currentTime session
+            Login.init model.currentTime session model.apiUrl
                 |> updateWith Login GotLoginMsg model
 
         Just Route.SignUp ->
-            SignUp.init model.currentTime session
+            SignUp.init model.currentTime session model.apiUrl
                 |> updateWith SignUp GotSignUpMsg model
 
         Just route ->
@@ -277,23 +277,23 @@ changeRouteToAuthenticatedRoute : Route -> Model -> Session -> Token -> User.Mod
 changeRouteToAuthenticatedRoute route model session token user =
     case route of
         Route.EditArticle articleId ->
-            ArticleEditor.init session token articleId
+            ArticleEditor.init session model.apiUrl token articleId
                 |> updateWith (ArticleEditor articleId) GotArticleEditorMsg model
 
         Route.Settings ->
-            Settings.init session token
+            Settings.init session model.apiUrl token
                 |> updateWith Settings GotSettingsMsg model
 
         Route.Home ->
-            Home.init session token user
+            Home.init session model.apiUrl token user
                 |> updateWith Home GotHomeMsg model
 
         Route.Profile userId ->
-            Profile.init session token userId
+            Profile.init session model.apiUrl token userId
                 |> updateWith (Profile userId) GotProfileMsg model
 
         Route.Article articleId ->
-            ArticleViewer.init session token articleId
+            ArticleViewer.init session model.apiUrl token articleId
                 |> updateWith (ArticleViewer articleId) GotArticleViewerMsg model
 
         _ ->
@@ -348,7 +348,7 @@ update msg model =
                 [ cmd
                 , case (needsRefresh, maybeToken) of
                     (True, Just token) ->
-                        (Api.refresh token CompletedTokenRefresh)
+                        (Api.refresh model.apiUrl token CompletedTokenRefresh)
                     (True, Nothing) ->
                         Route.replaceUrl (Session.navKey session) Route.Login
                     _ ->

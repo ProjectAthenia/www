@@ -25,6 +25,7 @@ import Time
 
 type alias Model =
     { session : Session
+    , apiUrl : String
     , showLoading : Bool
     , currentTime : Time.Posix
     , problems : List Problem
@@ -44,9 +45,10 @@ type Problem
     | ServerError Error.Model
 
 
-init : Time.Posix -> Session -> ( Model, Cmd msg )
-init currentTime session =
+init : Time.Posix -> Session -> String -> ( Model, Cmd msg )
+init currentTime session apiUrl =
     ( { session = session
+      , apiUrl = apiUrl
       , showLoading = False
       , currentTime = currentTime
       , problems = []
@@ -155,7 +157,7 @@ update msg model =
             case validate model.form of
                 Ok validForm ->
                     ( { model | showLoading = True, problems = [] }
-                    , register validForm
+                    , register model.apiUrl validForm
                     )
 
                 Err problems ->
@@ -174,7 +176,7 @@ update msg model =
 
         CompletedRegister (Err error) ->
             case error of
-                Api.BadStatus status errorModel ->
+                Api.BadStatus _ errorModel ->
                     ( { model | showLoading = False, problems = List.append model.problems [ServerError errorModel] }
                     , Cmd.none
                     )
@@ -186,12 +188,12 @@ update msg model =
 
         CompletedRegister (Ok token) ->
             ( model
-            , loadMe token
+            , loadMe model.apiUrl token
             )
 
-        LoadedMe token (Err error) ->
+        LoadedMe _ (Err error) ->
             case error of
-                Api.BadStatus status errorModel ->
+                Api.BadStatus _ errorModel ->
                     ( { model | showLoading = False, problems = List.append model.problems [ServerError errorModel] }
                     , Cmd.none
                     )
@@ -327,8 +329,8 @@ trimFields form =
 -- HTTP
 
 
-register : TrimmedForm -> Cmd Msg
-register (Trimmed form) =
+register : String -> TrimmedForm -> Cmd Msg
+register apiUrl (Trimmed form) =
     let
         body =
             Encode.object
@@ -338,9 +340,9 @@ register (Trimmed form) =
                 ]
                 |> Http.jsonBody
     in
-    Api.signUp body CompletedRegister
+    Api.signUp apiUrl body CompletedRegister
 
 
-loadMe : Token -> Cmd Msg
-loadMe token =
-    Api.me token (LoadedMe token)
+loadMe : String -> Token -> Cmd Msg
+loadMe apiUrl token =
+    Api.me apiUrl token (LoadedMe token)

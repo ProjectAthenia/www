@@ -27,6 +27,7 @@ import Time
 type alias Model =
     { session : Session
     , showLoading : Bool
+    , apiUrl : String
     , token : Token
     , article : Status
     , articleHistoryBrowser : ArticleHistoryBrowser.Model
@@ -51,18 +52,19 @@ type alias Form =
     }
 
 
-init : Session -> Token -> Int -> ( Model, Cmd Msg )
-init session token articleId =
+init : Session -> String -> Token -> Int -> ( Model, Cmd Msg )
+init session apiUrl token articleId =
     ( { session = session
       , showLoading = True
+      , apiUrl = apiUrl
       , token = token
       , article = Loading articleId
       , articleHistoryBrowser
-            = ArticleHistoryBrowser.init articleId session token
+            = ArticleHistoryBrowser.init articleId session apiUrl token
       , currentlyViewingIteration = Nothing
       }
     , Cmd.batch
-        [ fetchArticle token articleId
+        [ fetchArticle apiUrl token articleId
         , ArticleSocket.connectArticleSocket ((Api.unwrapToken token), articleId)
         ]
     )
@@ -391,9 +393,9 @@ subscriptions model =
 -- HTTP
 
 
-fetchArticle : Token -> Int -> Cmd Msg
-fetchArticle token articleId =
-    Api.getArticle token articleId CompletedLoadArticle
+fetchArticle : String -> Token -> Int -> Cmd Msg
+fetchArticle apiUrl token articleId =
+    Api.getArticle apiUrl token articleId CompletedLoadArticle
 
 
 -- EXPORT

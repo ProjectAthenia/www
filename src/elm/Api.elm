@@ -210,53 +210,53 @@ delete url token body decoder toMsg =
         }
 
 
-login : Http.Body -> (Result Error Token -> msg) -> Cmd msg
-login body toMsg =
-    post Endpoint.login Nothing body tokenDecoder toMsg
+login : String -> Http.Body -> (Result Error Token -> msg) -> Cmd msg
+login apiUrl body toMsg =
+    post (Endpoint.login apiUrl) Nothing body tokenDecoder toMsg
 
 
-signUp : Http.Body -> (Result Error Token -> msg) -> Cmd msg
-signUp body toMsg =
-    post Endpoint.signUp Nothing body tokenDecoder toMsg
+signUp : String -> Http.Body -> (Result Error Token -> msg) -> Cmd msg
+signUp apiUrl body toMsg =
+    post (Endpoint.signUp apiUrl) Nothing body tokenDecoder toMsg
 
 
-refresh : Token -> (Result Error Token -> msg) -> Cmd msg
-refresh token toMsg =
-    post Endpoint.refresh (Just token) Http.emptyBody tokenDecoder toMsg
+refresh : String -> Token -> (Result Error Token -> msg) -> Cmd msg
+refresh apiUrl token toMsg =
+    post (Endpoint.refresh apiUrl) (Just token) Http.emptyBody tokenDecoder toMsg
 
 
-settings : Token -> Int -> Http.Body -> (Result Error User.Model -> msg) -> Cmd msg
-settings token userId body toMsg =
-    put (Endpoint.user userId) token body User.modelDecoder toMsg
+settings : String -> Token -> Int -> Http.Body -> (Result Error User.Model -> msg) -> Cmd msg
+settings apiUrl token userId body toMsg =
+    put (Endpoint.user apiUrl userId) token body User.modelDecoder toMsg
 
 
-me : Token -> (Result Error User.Model -> msg) -> Cmd msg
-me token toMsg =
-    get Endpoint.me (Just token) User.modelDecoder toMsg
+me : String -> Token -> (Result Error User.Model -> msg) -> Cmd msg
+me apiUrl token toMsg =
+    get (Endpoint.me apiUrl) (Just token) User.modelDecoder toMsg
 
 
-createArticle : Token -> Article.CreateModel -> (Result Error Article.Model -> msg) -> Cmd msg
-createArticle token article  toMsg =
-    post Endpoint.baseArticle
+createArticle : String -> Token -> Article.CreateModel -> (Result Error Article.Model -> msg) -> Cmd msg
+createArticle apiUrl token article  toMsg =
+    post (Endpoint.baseArticle apiUrl)
         (Just token)
         (Http.jsonBody (Article.toCreateJson article))
         Article.modelDecoder
         toMsg
 
 
-getArticle : Token -> Int -> (Result Error Article.Model -> msg) -> Cmd msg
-getArticle token articleId toMsg =
-    get (Endpoint.viewArticle articleId) (Just token) Article.modelDecoder toMsg
+getArticle : String -> Token -> Int -> (Result Error Article.Model -> msg) -> Cmd msg
+getArticle apiUrl token articleId toMsg =
+    get (Endpoint.viewArticle apiUrl articleId) (Just token) Article.modelDecoder toMsg
 
 
-viewArticles : Token -> Int -> (Result Error Article.Page -> msg) -> Cmd msg
-viewArticles token page toMsg =
-    get (Endpoint.viewArticles page) (Just token) Article.pageDecoder toMsg
+viewArticles : String -> Token -> Int -> (Result Error Article.Page -> msg) -> Cmd msg
+viewArticles apiUrl token page toMsg =
+    get (Endpoint.viewArticles apiUrl page) (Just token) Article.pageDecoder toMsg
 
 
-viewArticleIterations : Token -> Int -> Int -> (Result Error Iteration.Page -> msg) -> Cmd msg
-viewArticleIterations token articleId page toMsg =
-    get (Endpoint.viewArticleIterations articleId page) (Just token) Iteration.pageDecoder toMsg
+viewArticleIterations : String -> Token -> Int -> Int -> (Result Error Iteration.Page -> msg) -> Cmd msg
+viewArticleIterations apiUrl token articleId page toMsg =
+    get (Endpoint.viewArticleIterations apiUrl articleId page) (Just token) Iteration.pageDecoder toMsg
 
 
 decoderFromCred : Decoder (Token -> Int -> a) -> Decoder a

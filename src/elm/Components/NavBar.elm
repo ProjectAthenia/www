@@ -2,8 +2,6 @@ module Components.NavBar exposing (NavLink, config, updateItems)
 
 import Bootstrap.Navbar as Navbar
 import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
 
 
 type alias NavLink msg =

@@ -1,15 +1,10 @@
 module Page exposing (Page(..), view, viewErrors)
 
-import Api as Api exposing (Token)
-import Models.User.User as User
-import Route as Route exposing (Route)
-import Session as Session exposing (Session)
-import Viewer as Viewer exposing (Viewer)
 import Bootstrap.CDN as CDN
 import Bootstrap.Navbar as Navbar
 import Browser exposing (Document)
-import Html exposing (Html, a, button, div, footer, i, img, li, nav, p, span, text, ul)
-import Html.Attributes exposing (class, classList, href, style)
+import Html exposing (Html, a, button, div, footer, p, span, text)
+import Html.Attributes exposing (class, href, style)
 import Html.Events exposing (onClick)
 
 
@@ -24,8 +19,6 @@ type Page
     = Other
     | Home
     | Login
-    | SignUp
-    | Settings
     | Profile Int
     | Article
 
