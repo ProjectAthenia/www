@@ -43,11 +43,6 @@ let commonConfig = {
         }]
     },
     plugins: [
-        new webpack.LoaderOptionsPlugin({
-            options: {
-                postcss: [autoprefixer()]
-            }
-        }),
         new HtmlWebpackPlugin({
             template: 'src/index.html',
             inject: 'body',
@@ -84,7 +79,7 @@ if (isDev === true) {
                 }]
             },{
                 test: /\.sc?ss$/,
-                use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader']
+                use: ['style-loader', 'css-loader', 'sass-loader']
             }]
         }
     });
@@ -103,7 +98,7 @@ if (isProd === true) {
                 test: /\.sc?ss$/,
                 use: ExtractTextPlugin.extract({
                     fallback: 'style-loader',
-                        use: ['css-loader', 'postcss-loader', 'sass-loader']
+                        use: ['css-loader', 'sass-loader']
                 })
             }]
         },
