@@ -1,9 +1,9 @@
 module UnitTests.Models.PageTest exposing(..)
 
-import Models.Page as Page
-import Models.User.User as User
 import Expect
 import Json.Decode as JsonDecode
+import Models.Page as Page
+import Models.User.User as User
 import Test exposing (..)
 
 

@@ -4,6 +4,7 @@ module Models.User.User exposing(..)
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
+import Models.Role as Role
 
 
 type alias Model =
@@ -11,7 +12,7 @@ type alias Model =
     , name: String
     , email: String
     , password : String
-    , roles: List Int
+    , roles: List Role.Model
     }
 
 
@@ -38,11 +39,9 @@ toJson model =
 cacheEncoder : Model -> Encode.Value
 cacheEncoder model =
     Encode.object
-        [
-            ( "id" , Encode.int model.id)
-            , ("name", Encode.string model.name)
-            , ("email", Encode.string model.email)
-            , ("roles", (Encode.list Encode.int model.roles))
+        [ ( "id" , Encode.int model.id)
+        , ("name", Encode.string model.name)
+        , ("email", Encode.string model.email)
         ]
 
 
@@ -54,7 +53,7 @@ modelDecoder =
         |> required "name" string
         |> required "email" string
         |> hardcoded ""
-        |> optional "roles" (list (at ["id"] int)) []
+        |> optional "roles" Role.listDecoder []
 
 
 listDecoder : Decoder (List Model)
