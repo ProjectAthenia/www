@@ -1,7 +1,7 @@
 port module Api exposing
     ( Token
     , Error(..)
-    , application
+    , storageDecoder
     , unwrapToken
     , decodeErrors
     , delete, get, post, put
@@ -24,13 +24,10 @@ import Models.Error as Error
 import Models.User.User as User
 import Models.Wiki.Article as Article
 import Models.Wiki.Iteration as Iteration
-import Browser
-import Browser.Navigation as Nav
 import Http exposing (Body, Expect)
-import Json.Decode as Decode exposing (Decoder, Value, decodeString, field, string)
-import Json.Decode.Pipeline as Pipeline exposing (optional, required)
+import Json.Decode as Decode exposing (Decoder, Value, decodeString, field)
+import Json.Decode.Pipeline as Pipeline exposing (required)
 import Json.Encode as Encode
-import Url exposing (Url)
 
 
 
@@ -142,38 +139,6 @@ port storeCache : Maybe Value -> Cmd msg
 
 -- SERIALIZATION
 -- APPLICATION
-
-
-application :
-    Decoder (Token -> Int -> viewer)
-    ->
-        { init : Maybe viewer -> Url -> Nav.Key -> ( model, Cmd msg )
-        , onUrlChange : Url -> msg
-        , onUrlRequest : Browser.UrlRequest -> msg
-        , subscriptions : model -> Sub msg
-        , update : msg -> model -> ( model, Cmd msg )
-        , view : model -> Browser.Document msg
-        }
-    -> Program Value model msg
-application viewerDecoder config =
-    let
-        init flags url navKey =
-            let
-                maybeViewer =
-                    Decode.decodeValue Decode.string flags
-                        |> Result.andThen (Decode.decodeString (storageDecoder viewerDecoder))
-                        |> Result.toMaybe
-            in
-            config.init maybeViewer url navKey
-    in
-    Browser.application
-        { init = init
-        , onUrlChange = config.onUrlChange
-        , onUrlRequest = config.onUrlRequest
-        , subscriptions = config.subscriptions
-        , update = config.update
-        , view = config.view
-        }
 
 
 storageDecoder : Decoder (Token -> Int -> viewer) -> Decoder viewer

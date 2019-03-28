@@ -4,12 +4,19 @@ require( './scss/main.scss' );
 // inject bundled Elm app into div#main
 var Elm = require( './elm/Main' );
 
-
 var storageKey = "store";
-var flags = localStorage.getItem(storageKey);
+var storage = localStorage.getItem(storageKey);
 
 // full screen the app and inject the env flags
-var app = Elm.Elm.Main.init({flags: flags});
+var app = Elm.Elm.Main.init({flags: {
+    storage: storage,
+    config: {
+        API_URL: process.env.API_URL,
+        APP_NAME: process.env.APP_NAME,
+        SOCKET_URL: process.env.SOCKET_URL,
+        FOOTER_MESSAGE: process.env.FOOTER_MESSAGE,
+    }
+}});
 
 app.ports.storeCache.subscribe(function(val) {
     if (val === null) {

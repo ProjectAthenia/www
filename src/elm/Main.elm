@@ -6,7 +6,9 @@ import Bootstrap.Navbar as Navbar
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Components.NavBar as AppNavBar
+import Dict
 import Json.Decode as Decode exposing (Value)
+import Json.Decode.Pipeline as Pipeline
 import Models.User.User as User
 import Page as Page
 import Page.Article.Editor as ArticleEditor
@@ -24,6 +26,7 @@ import Session as Session exposing (Session)
 import Task
 import Time
 import Url exposing (Url)
+import Utilities.Configuration as Configuration
 import Viewer as Viewer exposing (Viewer)
 
 type CurrentState
@@ -48,16 +51,31 @@ type alias Model =
     }
 
 
+type alias Flags =
+    { maybeViewer: Maybe Viewer
+    , config: Configuration.Model
+    }
+
+
 -- MODEL
 
 
-init : Maybe Viewer -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init maybeViewer url navKey =
+defaultFlags: Flags
+defaultFlags =
+    { maybeViewer = Nothing
+    , config = Dict.fromList []
+    }
+
+
+appInit : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
+appInit flags url navKey =
     let
+        dummy =
+            Debug.log "flogs" (flags)
         (navBarState, navBarCmd) =
             Navbar.initialState NavBarStateChange
         maybeToken =
-            Viewer.maybeToken maybeViewer
+            Viewer.maybeToken flags.maybeViewer
         initialModel =
             { navBarState = navBarState
             , navBarConfig = AppNavBar.config NavBarStateChange (Route.href Route.Home)
@@ -65,9 +83,9 @@ init maybeViewer url navKey =
             , currentState
                 = case maybeToken of
                     Just _ ->
-                        (Loading url (Session.fromViewer navKey maybeViewer))
+                        (Loading url (Session.fromViewer navKey flags.maybeViewer))
                     Nothing ->
-                        (Redirect (Session.fromViewer navKey maybeViewer))
+                        (Redirect (Session.fromViewer navKey flags.maybeViewer))
 
             , currentTime = Time.millisToPosix 0
             , refreshingToken = False
@@ -456,10 +474,51 @@ subscriptions model =
         ]
 
 
+flagsDecoder: Decode.Decoder Flags
+flagsDecoder =
+    Decode.succeed Flags
+        |> Pipeline.optional "maybeViewer" (Decode.maybe (Api.storageDecoder Viewer.decoder)) Nothing
+        |> Pipeline.optional "config" Configuration.decoder (Dict.fromList [])
+
+
+application :
+        { init : Flags -> Url -> Nav.Key -> ( model, Cmd msg )
+        , onUrlChange : Url -> msg
+        , onUrlRequest : Browser.UrlRequest -> msg
+        , subscriptions : model -> Sub msg
+        , update : msg -> model -> ( model, Cmd msg )
+        , view : model -> Browser.Document msg
+        }
+    -> Program Value model msg
+application config =
+    let
+        init flags url navKey =
+            let
+                dummy =
+                    Debug.log "init" (Decode.decodeValue Decode.string flags)
+                decodedFlags =
+                    case Decode.decodeValue flagsDecoder flags of
+                        Ok result ->
+                            result
+                        _ ->
+                            defaultFlags
+            in
+            config.init decodedFlags url navKey
+    in
+    Browser.application
+        { init = init
+        , onUrlChange = config.onUrlChange
+        , onUrlRequest = config.onUrlRequest
+        , subscriptions = config.subscriptions
+        , update = config.update
+        , view = config.view
+        }
+
+
 main : Program Value Model Msg
 main =
-    Api.application Viewer.decoder
-        { init = init
+    application
+        { init = appInit
         , onUrlChange = ChangedUrl
         , onUrlRequest = ClickedLink
         , subscriptions = subscriptions

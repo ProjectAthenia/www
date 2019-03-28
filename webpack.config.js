@@ -48,7 +48,12 @@ let commonConfig = {
             inject: 'body',
             filename: 'index.html'
         }),
-        new webpack.EnvironmentPlugin(["API_URL"])
+        new webpack.EnvironmentPlugin([
+            "API_URL",
+            "APP_NAME",
+            "SOCKET_URL",
+            "FOOTER_MESSAGE",
+        ])
     ]
 };
 
