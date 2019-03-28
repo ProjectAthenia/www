@@ -14,6 +14,7 @@ import Page as Page
 import Page.Article.Editor as ArticleEditor
 import Page.Article.Viewer as ArticleViewer
 import Page.Blank as Blank
+import Page.ConfigError as ConfigError
 import Page.Home as Home
 import Page.Loading as Loading
 import Page.Login as Login
@@ -32,6 +33,7 @@ import Viewer as Viewer exposing (Viewer)
 type CurrentState
     = Redirect Session
     | NotFound Session
+    | ConfigError String Session
     | Loading Url Session
     | Home Home.Model
     | Settings Settings.Model
@@ -45,6 +47,8 @@ type CurrentState
 type alias Model =
     { navBarState : Navbar.State
     , navBarConfig : Navbar.Config Msg
+    , configuration: Configuration.Model
+    , apiUrl: String
     , currentState : CurrentState
     , currentTime : Time.Posix
     , refreshingToken : Bool
@@ -70,8 +74,6 @@ defaultFlags =
 appInit : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
 appInit flags url navKey =
     let
-        dummy =
-            Debug.log "flogs" (flags)
         (navBarState, navBarCmd) =
             Navbar.initialState NavBarStateChange
         maybeToken =
@@ -88,6 +90,13 @@ appInit flags url navKey =
                         (Redirect (Session.fromViewer navKey flags.maybeViewer))
 
             , currentTime = Time.millisToPosix 0
+            , configuration = flags.config
+            , apiUrl
+                = case Configuration.fetchConfigVariable flags.config "API_URL" of
+                    Just apiUrl ->
+                        apiUrl
+                    Nothing ->
+                        ""
             , refreshingToken = False
             }
         (readyModel, initialCmd) =
@@ -98,7 +107,13 @@ appInit flags url navKey =
                     changeRouteTo (Route.fromUrl url)
                         initialModel
     in
-        ( readyModel
+        ( { readyModel
+            | currentState
+                = if String.length readyModel.apiUrl == 0 then
+                    ConfigError "Please set the API url in the .env file" (Session.fromViewer navKey flags.maybeViewer)
+                else
+                    readyModel.currentState
+        }
         , Cmd.batch
             [ initialCmd
             , navBarCmd
@@ -136,6 +151,9 @@ view model =
 
         NotFound _ ->
             viewPage NotFound.view (\_ -> Ignored)
+
+        ConfigError message _ ->
+            viewPage (ConfigError.view message) (\_ -> Ignored)
 
         Settings settings ->
             viewPage (Settings.view settings) GotSettingsMsg
@@ -187,6 +205,9 @@ toSession page =
             session
 
         NotFound session ->
+            session
+
+        ConfigError _ session ->
             session
 
         Home home ->
@@ -444,6 +465,9 @@ subscriptions model =
                 Sub.none
 
             NotFound _ ->
+                Sub.none
+
+            ConfigError _ _ ->
                 Sub.none
 
             Redirect _ ->

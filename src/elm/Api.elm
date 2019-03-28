@@ -293,7 +293,7 @@ expectJson toMsg decoder =
         Http.BadStatus_ metadata body ->
           Err (BadStatus metadata.statusCode (decodeErrors body))
 
-        Http.GoodStatus_ metadata body ->
+        Http.GoodStatus_ _ body ->
           case decodeString decoder body of
             Ok value ->
               Ok value
