@@ -80,7 +80,7 @@ appInit flags url navKey =
             Viewer.maybeToken flags.maybeViewer
         initialModel =
             { navBarState = navBarState
-            , navBarConfig = AppNavBar.config NavBarStateChange (Route.href Route.Home)
+            , navBarConfig = AppNavBar.config flags.config NavBarStateChange (Route.href Route.Home)
                 (getNavItems maybeToken)
             , currentState
                 = case maybeToken of
@@ -140,7 +140,7 @@ view : Model -> Document Msg
 view model =
     let
         viewPage viewData parentMsg =
-            Page.view model.navBarState model.navBarConfig viewData parentMsg
+            Page.view model.configuration model.navBarState model.navBarConfig viewData parentMsg
     in
     case model.currentState of
         Redirect _ ->

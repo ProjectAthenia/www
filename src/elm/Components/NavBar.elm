@@ -2,16 +2,17 @@ module Components.NavBar exposing (NavLink, config, updateItems)
 
 import Bootstrap.Navbar as Navbar
 import Html exposing (..)
+import Utilities.Configuration as Configuration
 
 
 type alias NavLink msg =
     (String, Attribute msg)
 
 
-config : (Navbar.State -> msg) -> Attribute msg -> List (NavLink msg) -> Navbar.Config msg
-config msg brand navLinks =
+config : Configuration.Model -> (Navbar.State -> msg) -> Attribute msg -> List (NavLink msg) -> Navbar.Config msg
+config configuration msg brand navLinks =
     Navbar.config msg
-        |> Navbar.brand [ brand ] [ text "Project Athenia"]
+        |> Navbar.brand [ brand ] [ text <| Configuration.getAppName configuration ]
         |> Navbar.items (List.map createNavItem navLinks)
 
 

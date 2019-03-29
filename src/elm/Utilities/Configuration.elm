@@ -16,3 +16,12 @@ decoder =
 fetchConfigVariable: Model -> String -> Maybe String
 fetchConfigVariable model key =
     Dict.get key model
+
+
+getAppName: Model -> String
+getAppName model =
+    case fetchConfigVariable model "APP_NAME" of
+        Just branding ->
+            branding
+        Nothing ->
+            "Project Athenia"

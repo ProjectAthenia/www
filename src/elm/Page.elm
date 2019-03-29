@@ -6,6 +6,9 @@ import Browser exposing (Document)
 import Html exposing (Html, a, button, div, footer, p, span, text)
 import Html.Attributes exposing (class, href, style)
 import Html.Events exposing (onClick)
+import Html.Parser as Parser
+import Html.Parser.Util as ParserUtil
+import Utilities.Configuration as Configuration
 
 
 {-| Determines which navbar link (if any) will be rendered as active.
@@ -32,10 +35,10 @@ isLoading is for determining whether we should show a loading spinner
 in the header. (This comes up during slow page transitions.)
 
 -}
-view : Navbar.State -> Navbar.Config msg -> { title : String, content : Html subMsg } -> (subMsg -> msg) -> Document msg
-view navBarState navBarConfig { title, content } parentMsg =
-    { title = title ++ " - Project Athenia"
-    , body = CDN.stylesheet :: viewHeader navBarState navBarConfig :: Html.map parentMsg content :: [ viewFooter ]
+view : Configuration.Model -> Navbar.State -> Navbar.Config msg -> { title : String, content : Html subMsg } -> (subMsg -> msg) -> Document msg
+view configuration navBarState navBarConfig { title, content } parentMsg =
+    { title = title ++ " - " ++ Configuration.getAppName configuration
+    , body = CDN.stylesheet :: viewHeader navBarState navBarConfig :: Html.map parentMsg content :: [ viewFooter configuration ]
     }
 
 
@@ -44,16 +47,26 @@ viewHeader navBarState navBarConfig =
     Navbar.view navBarState navBarConfig
 
 
-viewFooter : Html msg
-viewFooter =
+viewFooter : Configuration.Model -> Html msg
+viewFooter configuration =
     footer []
         [ div [ class "container" ]
-            [ a [ class "logo-font", href "/" ] [ text "Project Athenia" ]
+            [ a [ class "logo-font", href "/" ]
+                [ text <| Configuration.getAppName configuration ]
             , span [ class "attribution" ]
-                [ text "A governing system built for the 21st century by "
-                , a [ href "https://pomeloproductions.com" ] [ text "Pomelo Productions" ]
-                , text ". Code & design licensed under MIT."
-                ]
+                <| case Configuration.fetchConfigVariable configuration "FOOTER_MESSAGE" of
+                    Just footerMessage ->
+                        case Parser.run footerMessage of
+                            Ok result ->
+                                ParserUtil.toVirtualDom result
+                            Err _ ->
+                                [ text footerMessage ]
+
+                    Nothing ->
+                        [ text "A governing system built for the 21st century by "
+                        , a [ href "https://pomeloproductions.com" ] [ text "Pomelo Productions" ]
+                        , text ". Code & design licensed under MIT."
+                        ]
             ]
         ]
 
