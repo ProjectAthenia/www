@@ -19,6 +19,7 @@ testToCreateJson =
                     , email = ""
                     , password = ""
                     , roles = []
+                    , payment_methods = []
                     }
                 model =
                     { baseModel
@@ -54,6 +55,7 @@ testModelDecoder =
                                         , email = "butts@butts.com"
                                         , password  = ""
                                         , roles = []
+                                        , payment_methods = []
                                         }
                                 , iterations =
                                     [ { id = 342

@@ -1,7 +1,6 @@
 module UnitTests.Models.User.UserTest exposing (..)
 
 import Models.User.User as User
-import Models.Role as Role
 import Expect
 import Json.Decode as JsonDecode
 import Json.Encode as JsonEncode
@@ -15,6 +14,7 @@ mockUser name email password =
     , email = email
     , password = password
     , roles = []
+    , payment_methods = []
     }
 
 
@@ -70,6 +70,7 @@ testModelDecoder =
                                 , email = "test@test.com"
                                 , password = ""
                                 , roles = []
+                                , payment_methods = []
                                 })
                     <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\"}"
         , test "Test decode with roles" <|
@@ -86,6 +87,22 @@ testModelDecoder =
                                     , name = "A Different Role"
                                     }
                                   ]
+                                , payment_methods = []
                                 })
                     <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"roles\":[{\"id\":2,\"name\":\"A Role\"},{\"id\":6,\"name\":\"A Different Role\"}]}"
+        , test "Test decode with payment methods" <|
+            \() ->
+                Expect.equal (Ok { id = 342
+                                , name = "Steve"
+                                , email = "test@test.com"
+                                , password = ""
+                                , roles = []
+                                , payment_methods =
+                                  [ { id = 4354
+                                    , payment_method_key = "Hi"
+                                    , payment_method_type = "bye"
+                                    }
+                                  ]
+                                })
+                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"payment_methods\":[{\"id\":4354,\"payment_method_key\":\"Hi\",\"payment_method_type\":\"bye\"}]}"
         ]

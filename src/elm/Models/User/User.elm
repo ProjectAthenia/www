@@ -5,13 +5,15 @@ import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
 import Models.Role as Role
+import Models.Payment.PaymentMethod as PaymentMethod
 
 
 type alias Model =
     { id: Int
     , name: String
     , email: String
-    , password : String
+    , password: String
+    , payment_methods: List PaymentMethod.Model
     , roles: List Role.Model
     }
 
@@ -53,6 +55,7 @@ modelDecoder =
         |> required "name" string
         |> required "email" string
         |> hardcoded ""
+        |> optional "payment_methods" PaymentMethod.listDecoder []
         |> optional "roles" Role.listDecoder []
 
 

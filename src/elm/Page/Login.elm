@@ -326,6 +326,7 @@ login apiUrl (Trimmed model) =
             , password = model.password
             , name = ""
             , roles = []
+            , payment_methods = []
             }
         body =
             Http.jsonBody (User.toJson user)
