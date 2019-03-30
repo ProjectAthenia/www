@@ -10,7 +10,6 @@ import Html exposing (Attribute)
 import Html.Attributes as Attr
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser, oneOf, s, int, string)
-import Models.User.User as User
 
 
 -- ROUTING
@@ -23,6 +22,7 @@ type Route
     | Logout
     | Settings
     | SignUp
+    | Articles
     | Article Int
     | Profile Int
     | EditArticle Int
@@ -37,7 +37,8 @@ parser =
         , Parser.map Settings (s "settings")
         , Parser.map Profile (s "profile" </> int)
         , Parser.map SignUp (s "sign-up")
-        , Parser.map Article (s "article" </> int)
+        , Parser.map Articles (s "articles")
+        , Parser.map Article (s "articles" </> int)
         , Parser.map EditArticle (s "editor" </> int)
         ]
 
@@ -88,11 +89,14 @@ routeToString page =
                 Settings ->
                     [ "settings" ]
 
+                Articles ->
+                    [ "articles" ]
+
                 Article articleId ->
-                    [ "article", String.fromInt articleId ]
+                    [ "articles", String.fromInt articleId ]
 
                 Profile userId ->
-                    [ "profile", String.fromInt userId ]
+                    [ "profiles", String.fromInt userId ]
 
                 EditArticle articleId ->
                     [ "editor", String.fromInt articleId ]

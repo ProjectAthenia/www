@@ -12,6 +12,7 @@ import Json.Decode.Pipeline as Pipeline
 import Models.User.User as User
 import Page as Page
 import Page.Article.Editor as ArticleEditor
+import Page.Article.Index as ArticleIndex
 import Page.Article.Viewer as ArticleViewer
 import Page.Blank as Blank
 import Page.ConfigError as ConfigError
@@ -40,6 +41,7 @@ type CurrentState
     | Login Login.Model
     | SignUp SignUp.Model
     | Profile Int Profile.Model
+    | ArticleIndex ArticleIndex.Model
     | ArticleEditor Int ArticleEditor.Model
     | ArticleViewer Int ArticleViewer.Model
 
@@ -126,7 +128,8 @@ getNavItems : Maybe token -> List (AppNavBar.NavLink Msg)
 getNavItems maybeToken =
     case maybeToken of
         Just _ ->
-            [ ("Settings", Route.href Route.Settings)
+            [ ("Browse Articles", Route.href Route.Articles)
+            , ("Settings", Route.href Route.Settings)
             , ("Log Out", Route.href Route.Logout)
             ]
         Nothing ->
@@ -170,6 +173,9 @@ view model =
         Profile _ profile ->
             viewPage (Profile.view profile) GotProfileMsg
 
+        ArticleIndex articleIndex ->
+            viewPage (ArticleIndex.view articleIndex) GotArticleIndexMsg
+
         ArticleViewer _ article ->
             viewPage (ArticleViewer.view article) GotArticleViewerMsg
 
@@ -187,6 +193,7 @@ type Msg
     | GotLoginMsg Login.Msg
     | GotProfileMsg Profile.Msg
     | GotSignUpMsg SignUp.Msg
+    | GotArticleIndexMsg ArticleIndex.Msg
     | GotArticleViewerMsg ArticleViewer.Msg
     | GotArticleEditorMsg ArticleEditor.Msg
     | NavBarStateChange Navbar.State
@@ -224,6 +231,9 @@ toSession page =
 
         Profile _ profile ->
             Profile.toSession profile
+
+        ArticleIndex articleIndex ->
+            ArticleIndex.toSession articleIndex
 
         ArticleViewer _ article ->
             ArticleViewer.toSession article
@@ -291,6 +301,10 @@ changeRouteToAuthenticatedRoute route model session token user =
         Route.Profile userId ->
             Profile.init session model.apiUrl token userId
                 |> updateWith (Profile userId) GotProfileMsg model
+
+        Route.Articles ->
+            ArticleIndex.init session model.apiUrl token user
+                |> updateWith ArticleIndex GotArticleIndexMsg model
 
         Route.Article articleId ->
             ArticleViewer.init session model.apiUrl token articleId
@@ -428,6 +442,10 @@ update msg model =
             Profile.update subMsg profile
                 |> updateWith (Profile username) GotProfileMsg model
 
+        ( GotArticleIndexMsg subMsg, ArticleIndex articleIndex ) ->
+            ArticleIndex.update subMsg articleIndex
+                |> updateWith ArticleIndex GotArticleIndexMsg model
+
         ( GotArticleViewerMsg subMsg, ArticleViewer articleId article ) ->
             ArticleViewer.update subMsg article
                 |> updateWith (ArticleViewer articleId) GotArticleViewerMsg model
@@ -487,6 +505,9 @@ subscriptions model =
 
             Profile _ profile ->
                 Sub.map GotProfileMsg (Profile.subscriptions profile)
+
+            ArticleIndex articleIndex ->
+                Sub.map GotArticleIndexMsg (ArticleIndex.subscriptions articleIndex)
 
             ArticleViewer _ article ->
                 Sub.map GotArticleViewerMsg (ArticleViewer.subscriptions article)

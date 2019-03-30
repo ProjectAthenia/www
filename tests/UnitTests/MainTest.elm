@@ -18,7 +18,8 @@ testGetNavItems =
         , test "Should Return the logged in nav with a token" <|
             \() ->
                 Expect.equal (Main.getNavItems (Just ()))
-                    [ ("Settings", Route.href  Route.Settings)
+                    [ ("Browse Articles", Route.href Route.Articles)
+                    , ("Settings", Route.href  Route.Settings)
                     , ("Log Out", Route.href  Route.Logout)
                     ]
         ]
