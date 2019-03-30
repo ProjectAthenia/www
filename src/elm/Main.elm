@@ -83,7 +83,7 @@ appInit flags url navKey =
         initialModel =
             { navBarState = navBarState
             , navBarConfig = AppNavBar.config flags.config NavBarStateChange (Route.href Route.Home)
-                (getNavItems maybeToken)
+                (getNavItems maybeToken Nothing)
             , currentState
                 = case maybeToken of
                     Just _ ->
@@ -124,14 +124,24 @@ appInit flags url navKey =
         )
 
 
-getNavItems : Maybe token -> List (AppNavBar.NavLink Msg)
-getNavItems maybeToken =
+getNavItems : Maybe token -> Maybe User.Model -> List (AppNavBar.NavLink Msg)
+getNavItems maybeToken maybeUser =
     case maybeToken of
         Just _ ->
-            [ ("Browse Articles", Route.href Route.Articles)
-            , ("Settings", Route.href Route.Settings)
-            , ("Log Out", Route.href Route.Logout)
-            ]
+            List.concat
+                [ case maybeUser of
+                    Just user ->
+                        if User.canViewArticles user then
+                            [("Browse Articles", Route.href Route.Articles)]
+                        else
+                            []
+                    Nothing ->
+                        []
+                , [ ("Settings", Route.href Route.Settings)
+                  , ("Log Out", Route.href Route.Logout)
+                  ]
+                ]
+
         Nothing ->
             [ ("Sign In", Route.href  Route.Login)
             , ("Sign Up", Route.href  Route.SignUp)
@@ -259,7 +269,7 @@ changeRouteTo maybeRoute model =
 
         Just Route.Logout ->
             ( {model
-                | navBarConfig = AppNavBar.updateItems (getNavItems Nothing) model.navBarConfig
+                | navBarConfig = AppNavBar.updateItems (getNavItems Nothing Nothing) model.navBarConfig
             }, Cmd.batch
                 [ Api.logout
                 , Route.replaceUrl (Session.navKey session) Route.Login
@@ -277,7 +287,7 @@ changeRouteTo maybeRoute model =
         Just route ->
             case (Session.token session, Session.user session) of
                 (Just token, Just user) ->
-                    changeRouteToAuthenticatedRoute route {model | navBarConfig = AppNavBar.updateItems (getNavItems (Just token)) model.navBarConfig} session token user
+                    changeRouteToAuthenticatedRoute route {model | navBarConfig = AppNavBar.updateItems (getNavItems (Just token) (Just user)) model.navBarConfig} session token user
 
                 _ ->
                     (model, Route.replaceUrl (Session.navKey session) Route.Login )

@@ -1,5 +1,6 @@
 module UnitTests.Models.User.UserTest exposing (..)
 
+import Models.Role as Role
 import Models.User.User as User
 import Expect
 import Json.Decode as JsonDecode
@@ -7,13 +8,13 @@ import Json.Encode as JsonEncode
 import Test exposing (..)
 
 
-mockUser : String -> String -> String -> User.Model
-mockUser name email password =
+mockUser : String -> String -> String -> List Role.Model -> User.Model
+mockUser name email password roles =
     { id = 543
     , name = name
     , email = email
     , password = password
-    , roles = []
+    , roles = roles
     , payment_methods = []
     }
 
@@ -24,7 +25,7 @@ testToJson =
         [ test "Makes sure that an empty user can be encoded" <|
             \() ->
                 let
-                    model = mockUser "" "" ""
+                    model = mockUser "" "" "" []
                 in
                     Expect.equal "{}"
                         <| JsonEncode.encode 0
@@ -32,7 +33,7 @@ testToJson =
         , test "Makes sure that an login user can be encoded" <|
             \() ->
                 let
-                    model = mockUser "" "test@test.com" "secret"
+                    model = mockUser "" "test@test.com" "secret" []
                 in
                     Expect.equal "{\"email\":\"test@test.com\",\"password\":\"secret\"}"
                         <| JsonEncode.encode 0
@@ -40,7 +41,7 @@ testToJson =
         , test "Makes sure that we can encode a full user properly" <|
             \() ->
                 let
-                    model = mockUser "Hello" "test@test.com" "secret"
+                    model = mockUser "Hello" "test@test.com" "secret" []
                 in
                     Expect.equal "{\"email\":\"test@test.com\",\"password\":\"secret\",\"name\":\"Hello\"}"
                         <| JsonEncode.encode 0
@@ -53,9 +54,9 @@ testCacheEncoder =
    test "Makes sure that the cache encoder works properly" <|
         \() ->
             let
-                model = mockUser "Hello" "test@test.com" "secret"
+                model = mockUser "Hello" "test@test.com" "secret" []
             in
-                Expect.equal "{\"id\":543,\"name\":\"Hello\",\"email\":\"test@test.com\"}"
+                Expect.equal "{\"id\":543,\"name\":\"Hello\",\"email\":\"test@test.com\",\"roles\":[]}"
                     <| JsonEncode.encode 0
                         <| User.cacheEncoder model
 

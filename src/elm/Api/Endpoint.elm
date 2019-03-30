@@ -100,7 +100,9 @@ viewArticleIterations apiUrl articleId page =
 
 me : String -> Endpoint
 me apiUrl =
-    url apiUrl [ "users", "me" ] []
+    url apiUrl [ "users", "me" ]
+        [ (Builder.string "expand[roles]" "*")
+        ]
 
 
 refresh : String -> Endpoint

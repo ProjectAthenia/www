@@ -2,6 +2,7 @@ module Models.Role exposing (..)
 
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
+import Json.Encode as JsonEncode exposing (..)
 
 
 appUser = 1
@@ -17,12 +18,21 @@ type alias Model =
     }
 
 
+cacheEncoder : Model -> JsonEncode.Value
+cacheEncoder model =
+    JsonEncode.object
+        [ ( "id" , JsonEncode.int model.id)
+        -- We dont need the name when we cache it, and it leaves it ambiguous if someone is digging around in the storage
+        , ("name", JsonEncode.string "")
+        ]
+
+
 -- Decodes a user model retrieved through the API
 modelDecoder : Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
-        |> required "id" int
-        |> required "name" string
+        |> required "id" JsonDecode.int
+        |> required "name" JsonDecode.string
 
 
 listDecoder : Decoder (List Model)
