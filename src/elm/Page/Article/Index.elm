@@ -70,6 +70,19 @@ init session apiUrl token user =
 -- VIEW
 
 
+viewBanner : Html Msg
+viewBanner =
+    div [ id "banner" ]
+        [ h2 []
+            [ text "All available articles listed below"
+            ]
+        , Button.button
+            [ Button.outlinePrimary
+            , Button.onClick OpenCreateArticlePrompt
+            ] [ text "Create Article" ]
+        ]
+
+
 view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Articles"
@@ -107,19 +120,6 @@ viewArticle article =
     div [ class "article" ]
         [ h2 [] [text article.title]
         , a [ Route.href (Route.Article article.id) ] [text "View"]
-        ]
-
-
-viewBanner : Html Msg
-viewBanner =
-    div [ id "banner" ]
-        [ p []
-            [ text "All available articles listed below"
-            ]
-        , Button.button
-            [ Button.outlinePrimary
-            , Button.onClick OpenCreateArticlePrompt
-            ] [ text "Create Article" ]
         ]
 
 
