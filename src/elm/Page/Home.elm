@@ -4,18 +4,11 @@ module Page.Home exposing (Model, Msg, init, subscriptions, toSession, update, v
 -}
 
 import Api as Api exposing (Token)
-import Components.Loading as Loading
 import Components.LoadingIndicator as LoadingIndicator
-import Modals.CreateArticle as CreateArticleModal
 import Models.User.User as User
-import Models.Wiki.Article as Article
-import Models.Page as PageModel
 import Route as Route
 import Session as Session exposing (Session)
-import Utilities.Log as Log
 import Viewer as Viewer
-import Bootstrap.Grid as Grid
-import Bootstrap.Button as Button
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Task exposing (Task)
@@ -33,17 +26,8 @@ type alias Model =
     , apiUrl : String
     , session : Session
     , timeZone : Time.Zone
-    , status : Status
-    , articles : List Article.Model
-    , createArticleModal : CreateArticleModal.Model
     }
 
-
-type Status
-    = Loading
-    | LoadingSlowly
-    | Loaded
-    | Failed
 
 
 -- Passes in the current session, and requires the unwrapping of the token
@@ -51,17 +35,13 @@ init : Session -> String -> Token -> User.Model -> ( Model, Cmd Msg )
 init session apiUrl token user =
     ( { token = token
       , user = user
-      , showLoading = True
+      , showLoading = False
       , session = session
       , apiUrl = apiUrl
       , timeZone = Time.utc
-      , status = Loading
-      , articles = []
-      , createArticleModal = CreateArticleModal.init  user session apiUrl token
       }
     , Cmd.batch
-        [ fetchArticles apiUrl token 1
-        , Task.perform GotTimeZone Time.here
+        [ Task.perform GotTimeZone Time.here
         ]
     )
 
@@ -72,55 +52,25 @@ init session apiUrl token user =
 
 view : Model -> { title : String, content : Html Msg }
 view model =
-    { title = "Project Athenia"
+    { title = "Home"
     , content =
         div [ id "home", class "page" ]
             [ viewBanner
-            , Grid.container []
-                [ Grid.row []
-                    [ Grid.col [] <|
-                        case model.status of
-                            Loaded ->
-                                [ div [ class "available-articles" ] <|
-                                    List.map viewArticle model.articles
-                                ]
+            -- put some page content here
 
-                            Loading ->
-                                []
-
-                            LoadingSlowly ->
-                                [ Loading.icon ]
-
-                            Failed ->
-                                [ Loading.error "Articles" ]
-                    ]
-                ]
             , LoadingIndicator.view model.showLoading
-            , CreateArticleModal.view model.createArticleModal
-                |> Html.map CreateArticleModalMsg
+            -- Any modals should be put here
+
             ]
     }
 
-
-viewArticle : Article.Model -> Html Msg
-viewArticle article =
-    div [ class "article" ]
-        [ h2 [] [text article.title]
-        , a [ Route.href (Route.Article article.id) ] [text "View"]
-        ]
 
 
 viewBanner : Html Msg
 viewBanner =
     div [ id "banner" ]
         [ h1 [ class "logo-font" ] [ text "Welcome" ]
-        , p []
-            [ text "All available articles listed below"
-            ]
-        , Button.button
-            [ Button.outlinePrimary
-            , Button.onClick OpenCreateArticlePrompt
-            ] [ text "Create Article" ]
+        -- Put all of your custom content below
         ]
 
 
@@ -128,52 +78,13 @@ viewBanner =
 
 
 type Msg
-    = CompletedArticlesLoad (Result Api.Error Article.Page)
-    | GotTimeZone Time.Zone
+    = GotTimeZone Time.Zone
     | GotSession Session
-    | OpenCreateArticlePrompt
-    | CreateArticleModalMsg CreateArticleModal.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        CompletedArticlesLoad (Ok articlePage) ->
-            ( { model
-                | status = Loaded
-                , showLoading = (PageModel.nextPageNumber articlePage) /= Nothing
-                , articles = List.concat [model.articles, articlePage.data]
-            }
-            , case PageModel.nextPageNumber articlePage of
-                Just pageNumber ->
-                    fetchArticles model.apiUrl model.token pageNumber
-                Nothing ->
-                    Cmd.none
-            )
-
-        CompletedArticlesLoad (Err _) ->
-            ( { model | status = Failed, showLoading = False }, Log.error )
-
-        OpenCreateArticlePrompt ->
-            ( { model
-                | createArticleModal =
-                    CreateArticleModal.show
-                        <| CreateArticleModal.init model.user model.session model.apiUrl model.token
-            }
-            , Cmd.none
-            )
-
-        CreateArticleModalMsg modalMsg ->
-            let
-                createArticleUpdate = CreateArticleModal.update modalMsg model.createArticleModal
-            in
-                ({ model
-                    | createArticleModal = Tuple.first createArticleUpdate
-                }
-                , Tuple.second createArticleUpdate
-                    |> Cmd.map CreateArticleModalMsg
-                )
-
         GotTimeZone tz ->
             ( { model | timeZone = tz }, Cmd.none )
 
@@ -195,10 +106,6 @@ update msg model =
 
 -- HTTP
 
-
-fetchArticles : String -> Token -> Int -> Cmd Msg
-fetchArticles apiUrl token page =
-    Api.viewArticles apiUrl token page CompletedArticlesLoad
 
 
 

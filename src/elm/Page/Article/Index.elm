@@ -72,7 +72,7 @@ init session apiUrl token user =
 
 view : Model -> { title : String, content : Html Msg }
 view model =
-    { title = "Project Athenia - Articles"
+    { title = "Articles"
     , content =
         div [ id "home", class "page" ]
             [ viewBanner
