@@ -5,6 +5,7 @@ import Expect
 import Json.Decode as JsonDecode
 import Test exposing (..)
 
+
 testModelDecoder : Test
 testModelDecoder =
     test "Test decode" <|
