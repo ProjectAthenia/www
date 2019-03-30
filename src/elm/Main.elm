@@ -522,7 +522,7 @@ subscriptions model =
 flagsDecoder: Decode.Decoder Flags
 flagsDecoder =
     Decode.succeed Flags
-        |> Pipeline.optional "maybeViewer" (Decode.maybe (Api.storageDecoder Viewer.decoder)) Nothing
+        |> Pipeline.optional "storage" (Decode.maybe (Api.storageDecoder Viewer.decoder)) Nothing
         |> Pipeline.optional "config" Configuration.decoder (Dict.fromList [])
 
 
@@ -539,8 +539,6 @@ application config =
     let
         init flags url navKey =
             let
-                dummy =
-                    Debug.log "init" (Decode.decodeValue Decode.string flags)
                 decodedFlags =
                     case Decode.decodeValue flagsDecoder flags of
                         Ok result ->

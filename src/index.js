@@ -9,7 +9,7 @@ var storage = localStorage.getItem(storageKey);
 
 // full screen the app and inject the env flags
 var app = Elm.Elm.Main.init({flags: {
-    storage: storage,
+    storage: JSON.parse(storage),
     config: {
         API_URL: process.env.API_URL,
         APP_NAME: process.env.APP_NAME,
