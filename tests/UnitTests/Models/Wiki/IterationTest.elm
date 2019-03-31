@@ -25,13 +25,15 @@ testModelDecoder =
                                 , content = "Some Content"
                                 , created_at = millisToPosix 1000
                                 , created_by_id = 53
-                                , created_by = Just { id = 53
-                                                   , name = "Barry Manilow"
-                                                   , email = "butts@butts.com"
-                                                   , password  = ""
-                                                   , roles = []
-                                                   , payment_methods = []
-                                                   }
+                                , created_by = Just
+                                    { id = 53
+                                    , name = "Barry Manilow"
+                                    , email = "butts@butts.com"
+                                    , password  = ""
+                                    , stripe_customer_key = Nothing
+                                    , roles = []
+                                    , payment_methods = []
+                                    }
                                 })
                     <| JsonDecode.decodeString Iteration.modelDecoder "{\"id\":342,\"content\":\"Some Content\",\"created_by_id\":53,\"created_at\":\"1970-01-01T00:00:01+00:00\",\"created_by\":{\"id\":53,\"name\":\"Barry Manilow\",\"email\":\"butts@butts.com\"}}"
         ]

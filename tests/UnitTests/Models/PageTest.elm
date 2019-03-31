@@ -54,6 +54,24 @@ testModelDecoder =
                     <| JsonDecode.decodeString (Page.modelDecoder User.listDecoder) "{\"total\":0,\"data\":[],\"current_page\":1,\"last_page\":1,\"per_page\":10}"
         , test "Makes sure that a page with a few roles can be decoded" <|
             \() ->
-                Expect.equal (Ok {total = 1, data = [{id = 21, name = "Steve", email = "test@test.com", password = "", roles = [], payment_methods = [] }], current_page = 1, last_page = 1, per_page = 10})
+                let
+                    model =
+                        { total = 1
+                        , data = [
+                            { id = 21
+                            , name = "Steve"
+                            , email = "test@test.com"
+                            , password = ""
+                            , stripe_customer_key = Nothing
+                            , roles = []
+                            , payment_methods = []
+                            }
+                        ]
+                        , current_page = 1
+                        , last_page = 1
+                        , per_page = 10
+                        }
+                in
+                Expect.equal (Ok model)
                     <| JsonDecode.decodeString (Page.modelDecoder User.listDecoder) "{\"total\":1,\"data\":[{\"id\":21,\"name\":\"Steve\",\"email\":\"test@test.com\"}],\"current_page\":1,\"last_page\":1,\"per_page\":10}"
         ]

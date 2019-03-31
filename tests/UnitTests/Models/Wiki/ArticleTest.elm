@@ -18,6 +18,7 @@ testToCreateJson =
                     , name = ""
                     , email = ""
                     , password = ""
+                    , stripe_customer_key = Nothing
                     , roles = []
                     , payment_methods = []
                     }
@@ -54,6 +55,7 @@ testModelDecoder =
                                         , name = "Barry Manilow"
                                         , email = "butts@butts.com"
                                         , password  = ""
+                                        , stripe_customer_key = Nothing
                                         , roles = []
                                         , payment_methods = []
                                         }

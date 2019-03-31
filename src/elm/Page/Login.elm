@@ -324,6 +324,7 @@ login apiUrl (Trimmed model) =
             { id = 0
             , email = model.email
             , password = model.password
+            , stripe_customer_key = Nothing
             , name = ""
             , roles = []
             , payment_methods = []

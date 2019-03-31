@@ -27,6 +27,7 @@
     "node-sass": "^4.11.0",
     "rimraf": "^2.6.3",
     "sass-loader": "^7.1.0",
+    "stripe": "^6.28.0",
     "style-loader": "^0.23.1",
     "url-loader": "^1.1.2",
     "webpack": "^4.29.6",

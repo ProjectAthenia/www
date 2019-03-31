@@ -14,6 +14,7 @@ mockUser name email password roles =
     , name = name
     , email = email
     , password = password
+    , stripe_customer_key = Nothing
     , roles = roles
     , payment_methods = []
     }
@@ -70,6 +71,7 @@ testModelDecoder =
                                 , name = "Steve"
                                 , email = "test@test.com"
                                 , password = ""
+                                , stripe_customer_key = Nothing
                                 , roles = []
                                 , payment_methods = []
                                 })
@@ -80,6 +82,7 @@ testModelDecoder =
                                 , name = "Steve"
                                 , email = "test@test.com"
                                 , password = ""
+                                , stripe_customer_key = Nothing
                                 , roles =
                                   [ { id = 2
                                     , name = "A Role"
@@ -97,6 +100,7 @@ testModelDecoder =
                                 , name = "Steve"
                                 , email = "test@test.com"
                                 , password = ""
+                                , stripe_customer_key = Just "test_key"
                                 , roles = []
                                 , payment_methods =
                                   [ { id = 4354
@@ -105,5 +109,5 @@ testModelDecoder =
                                     }
                                   ]
                                 })
-                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"payment_methods\":[{\"id\":4354,\"payment_method_key\":\"Hi\",\"payment_method_type\":\"bye\"}]}"
+                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"stripe_customer_key\":\"test_key\",\"payment_methods\":[{\"id\":4354,\"payment_method_key\":\"Hi\",\"payment_method_type\":\"bye\"}]}"
         ]

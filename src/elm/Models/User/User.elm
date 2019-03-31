@@ -13,6 +13,7 @@ type alias Model =
     , name: String
     , email: String
     , password: String
+    , stripe_customer_key: Maybe String
     , payment_methods: List PaymentMethod.Model
     , roles: List Role.Model
     }
@@ -49,11 +50,19 @@ toJson model =
 
 cacheEncoder : Model -> Encode.Value
 cacheEncoder model =
-    Encode.object
-        [ ( "id" , Encode.int model.id)
-        , ("name", Encode.string model.name)
-        , ("email", Encode.string model.email)
-        , ("roles", (Encode.list Role.cacheEncoder) model.roles)
+    Encode.object <| List.concat
+        [
+          [ ( "id" , Encode.int model.id)
+          , ("name", Encode.string model.name)
+          , ("email", Encode.string model.email)
+          ]
+        , case model.stripe_customer_key of
+            Just stripe_customer_key ->
+                [("stripe_customer_key", Encode.string stripe_customer_key)]
+            Nothing ->
+                []
+        , [ ("roles", (Encode.list Role.cacheEncoder) model.roles)
+          ]
         ]
 
 
@@ -65,6 +74,7 @@ modelDecoder =
         |> required "name" string
         |> required "email" string
         |> hardcoded ""
+        |> optional "stripe_customer_key" (maybe string) Nothing
         |> optional "payment_methods" PaymentMethod.listDecoder []
         |> optional "roles" Role.listDecoder []
 
