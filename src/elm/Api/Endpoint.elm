@@ -4,6 +4,7 @@ module Api.Endpoint exposing
     , viewArticleIterations
     , login, signUp, refresh
     , user, userActivity, me
+    , userPaymentMethods
     )
 
 import Http
@@ -128,6 +129,11 @@ signUp apiUrl =
 user : String -> Int -> Endpoint
 user apiUrl userId =
     url apiUrl [ "users", String.fromInt userId ] []
+
+
+userPaymentMethods : String -> Int -> Endpoint
+userPaymentMethods apiUrl userId =
+    url apiUrl [ "users", String.fromInt userId, "payment-methods" ] []
 
 
 userActivity : String -> Int -> Endpoint

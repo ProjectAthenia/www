@@ -1,6 +1,8 @@
 // pull in desired CSS/SASS files
 require( './scss/main.scss' );
 
+var stripe = Stripe(process.env.STRIPE_PUBLISHABLE_KEY);
+
 // inject bundled Elm app into div#main
 var Elm = require( './elm/Main' );
 
@@ -60,4 +62,29 @@ app.ports.sendUpdateMessage.subscribe(function(data) {
     if (ws) {
         ws.send(data[0]);
     }
+});
+
+let formElements = {};
+
+app.ports.initStripeForm.subscribe(function(id) {
+    var elements = stripe.elements();
+    formElements[id] = elements.create('card');
+    initElement(id);
+});
+
+function initElement(id) {
+    if (document.getElementById(id)) {
+        formElements[id].mount('#' + id);
+    } else {
+        setTimeout(() => initElement(id), 5);
+    }
+}
+
+app.ports.createPaymentToken.subscribe(function(id) {
+
+    stripe.createToken(formElements[id]).then(result => {
+        app.ports.tokenCreated.send(result.token.id);
+    }).catch(error => {
+        app.ports.stripeError.send(error.message());
+    });
 });

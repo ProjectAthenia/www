@@ -4,6 +4,7 @@ import Api as Api exposing (Token)
 import Api.Endpoint as Endpoint
 import Components.LoadingIndicator as LoadingIndicator
 import Models.Error as Error
+import Models.Payment.PaymentMethod as PaymentMethod
 import Models.User.User as User
 import Route as Route
 import Session as Session exposing (Session)
@@ -19,6 +20,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onSubmit)
 import Http
 import Json.Encode as Encode
+import Ports.Stripe as Stripe
 
 
 
@@ -32,6 +34,7 @@ type alias Model =
     , token : Token
     , problems : List Problem
     , status : Status
+    , maybeUser : Maybe User.Model
     }
 
 
@@ -62,8 +65,11 @@ init session apiUrl token =
       , token = token
       , problems = []
       , status = Loading
+      , maybeUser = Nothing
       }
-    , Api.get (Endpoint.me apiUrl) (Session.token session) User.modelDecoder CompletedFormLoad
+    , Cmd.batch
+        [ Api.get (Endpoint.me apiUrl) (Session.token session) User.modelDecoder CompletedFormLoad
+        ]
     )
 
 
@@ -95,8 +101,11 @@ view model =
                         , div [ ]
                             (List.map viewProblem model.problems)
                         , case model.status of
-                            Loaded form ->
-                                viewForm model.token form
+                            Loaded settingsForm ->
+                                div []
+                                    [ viewSubscriptionForm
+                                    , viewSettingsForm model.token settingsForm
+                                    ]
 
                             Loading ->
                                 text ""
@@ -111,9 +120,20 @@ view model =
     }
 
 
-viewForm : Token -> Form -> Html Msg
-viewForm token form =
-    Form.form [ onSubmit (SubmittedForm token form) ]
+viewSubscriptionForm : Html Msg
+viewSubscriptionForm =
+    Form.form [ onSubmit (SubmittedSubscriptionForm) ]
+        [ div [ id "card-element" ] []
+        , Button.button
+            [ Button.primary
+            , Button.large
+            ] [ text "Submit Payment" ]
+        ]
+
+
+viewSettingsForm : Token -> Form -> Html Msg
+viewSettingsForm token form =
+    Form.form [ onSubmit (SubmittedSettingsForm token form) ]
         [ fieldset [ class "form-group" ]
             [ Input.text
                 [ Input.large
@@ -162,27 +182,37 @@ viewProblem problem =
 
 
 type Msg
-    = SubmittedForm Token Form
+    = SubmittedSettingsForm Token Form
+    | SubmittedSubscriptionForm
     | EnteredName String
     | EnteredEmail String
     | EnteredPassword String
     | CompletedFormLoad (Result Api.Error User.Model)
     | CompletedSave (Result Api.Error User.Model)
+    | CreatedPaymentMethod (Result Api.Error PaymentMethod.Model)
     | GotSession Session
+    | TokenCreated String
+    | StripeError String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CompletedFormLoad (Ok user) ->
-            ( { model | showLoading = False, status = Loaded
-                { id = user.id
-                , name = user.name
-                , email = user.email
-                , password = ""
-                }
+            let
+                settingsForm =
+                    { id = user.id
+                    , name = user.name
+                    , email = user.email
+                    , password = ""
+                    }
+            in
+            ( { model
+                | showLoading = False
+                , status = Loaded settingsForm
+                , maybeUser = Just user
             }
-            , Cmd.none
+            , Stripe.initStripeForm "card-element"
             )
 
         CompletedFormLoad (Err _) ->
@@ -190,10 +220,10 @@ update msg model =
             , Cmd.none
             )
 
-        SubmittedForm token form ->
+        SubmittedSettingsForm token form ->
             case validate form of
                 Ok validForm ->
-                    ( { model | showLoading = True, status = Loaded form }
+                    ( { model | showLoading = True }
                     , edit model.apiUrl token validForm
                     )
 
@@ -201,6 +231,22 @@ update msg model =
                     ( { model | problems = problems }
                     , Cmd.none
                     )
+
+        SubmittedSubscriptionForm ->
+            ( { model
+                | showLoading = True
+            }
+            , Stripe.createPaymentToken "card-element"
+            )
+
+        TokenCreated stripeToken ->
+            ( model
+            , case model.maybeUser of
+                Just user ->
+                    createPaymentMethod model.apiUrl model.token user.id stripeToken
+                Nothing ->
+                    Cmd.none
+            )
 
         EnteredEmail email ->
             updateForm (\form -> { form | email = email }) model
@@ -233,6 +279,11 @@ update msg model =
                     Cmd.none
             )
 
+        StripeError _ ->
+            ( { model | showLoading = False }
+            , Cmd.none
+            )
+
         GotSession session ->
             case Viewer.maybeToken (Session.viewer session) of
                 Just token ->
@@ -246,6 +297,26 @@ update msg model =
                     ( model
                     , Route.replaceUrl (Session.navKey session) Route.Login
                     )
+
+        CreatedPaymentMethod (Ok paymentMethod) ->
+            ( { model
+                | showLoading = False
+            }
+            , Cmd.none
+            )
+
+        CreatedPaymentMethod (Err error) ->
+            case error of
+                Api.BadStatus _ errorModel ->
+                    ( { model | showLoading = False, problems = List.append model.problems [ServerError errorModel] }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model
+                    , Cmd.none
+                    )
+
 
 
 {-| Helper function for `update`. Updates the form and returns Cmd.none.
@@ -267,7 +338,11 @@ updateForm transform model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Session.changes GotSession (Session.navKey model.session)
+    Sub.batch
+        [ Session.changes GotSession (Session.navKey model.session)
+        , Stripe.tokenCreated TokenCreated
+        , Stripe.stripeError StripeError
+        ]
 
 
 
@@ -399,3 +474,14 @@ edit apiUrl token (Trimmed form) =
             Http.jsonBody encodedUser
     in
     Api.settings apiUrl token form.id body CompletedSave
+
+
+createPaymentMethod : String -> Token -> Int -> String -> Cmd Msg
+createPaymentMethod apiUrl token userId stripeToken =
+    let
+        encodedPaymentMethod =
+            Encode.object
+                [ ("token", Encode.string stripeToken)
+                ]
+    in
+        Api.createUserPaymentMethod apiUrl token userId (Http.jsonBody encodedPaymentMethod) CreatedPaymentMethod

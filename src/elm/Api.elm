@@ -7,6 +7,7 @@ port module Api exposing
     , delete, get, post, put
     , login, logout, signUp, refresh
     , settings, me
+    , createUserPaymentMethod
     , getArticle, viewArticles, createArticle
     , viewArticleIterations
     , storeCredWith
@@ -21,6 +22,7 @@ It exposes an opaque Endpoint type which is guaranteed to point to the correct U
 
 import Api.Endpoint as Endpoint
 import Models.Error as Error
+import Models.Payment.PaymentMethod as PaymentMethod
 import Models.User.User as User
 import Models.Wiki.Article as Article
 import Models.Wiki.Iteration as Iteration
@@ -233,6 +235,11 @@ settings apiUrl token userId body toMsg =
 me : String -> Token -> (Result Error User.Model -> msg) -> Cmd msg
 me apiUrl token toMsg =
     get (Endpoint.me apiUrl) (Just token) User.modelDecoder toMsg
+
+
+createUserPaymentMethod : String -> Token -> Int -> Http.Body -> (Result Error PaymentMethod.Model -> msg) -> Cmd msg
+createUserPaymentMethod apiUrl token userId body toMsg =
+    post (Endpoint.userPaymentMethods apiUrl userId) (Just token) body PaymentMethod.modelDecoder toMsg
 
 
 createArticle : String -> Token -> Article.CreateModel -> (Result Error Article.Model -> msg) -> Cmd msg

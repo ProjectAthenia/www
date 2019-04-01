@@ -53,7 +53,8 @@ let commonConfig = {
             "APP_NAME",
             "SOCKET_URL",
             "FOOTER_MESSAGE",
-        ])
+            "STRIPE_PUBLISHABLE_KEY",
+        ]),
     ]
 };
 
