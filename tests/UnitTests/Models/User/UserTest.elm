@@ -106,6 +106,7 @@ testModelDecoder =
                                   [ { id = 4354
                                     , payment_method_key = "Hi"
                                     , payment_method_type = "bye"
+                                    , identifier = Nothing
                                     }
                                   ]
                                 })

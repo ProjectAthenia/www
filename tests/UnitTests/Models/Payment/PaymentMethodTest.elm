@@ -27,6 +27,7 @@ testModelDecoder =
             Expect.equal (Ok { id = 342
                             , payment_method_key = "payment_method_key"
                             , payment_method_type = "payment_method_type"
+                            , identifier = Just "identifier"
                             })
-                <| JsonDecode.decodeString PaymentMethod.modelDecoder "{\"id\":342,\"payment_method_key\":\"payment_method_key\",\"payment_method_type\":\"payment_method_type\"}"
+                <| JsonDecode.decodeString PaymentMethod.modelDecoder "{\"id\":342,\"payment_method_key\":\"payment_method_key\",\"payment_method_type\":\"payment_method_type\",\"identifier\":\"identifier\"}"
 

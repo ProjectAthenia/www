@@ -103,6 +103,7 @@ me : String -> Endpoint
 me apiUrl =
     url apiUrl [ "users", "me" ]
         [ (Builder.string "expand[roles]" "*")
+        , (Builder.string "expand[paymentMethods]" "*")
         ]
 
 

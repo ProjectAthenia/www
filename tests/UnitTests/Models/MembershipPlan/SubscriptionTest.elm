@@ -31,6 +31,7 @@ testModelDecoder =
                                 , payment_method = { id = 563
                                                    , payment_method_key = "test_key"
                                                    , payment_method_type = "stripe"
+                                                   , identifier = Nothing
                                                    }
                                 })
                     <| JsonDecode.decodeString Subscription.modelDecoder "{\"id\":342,\"last_renewed_at\":\"1970-01-01T00:00:01+00:00\",\"subscribed_at\":\"1970-01-01T00:00:02+00:00\",\"expires_at\":\"1970-01-01T00:00:04+00:00\",\"canceled_at\":null,\"recurring\":false,\"membership_plan\":{\"id\":453,\"name\":\"A membership plan\",\"duration\":\"yearly\",\"current_cost\":10.00,\"current_rate_id\":5},\"membership_plan_rate\":{\"id\":2,\"cost\":4.00},\"payment_method\":{\"id\":563,\"payment_method_key\":\"test_key\",\"payment_method_type\":\"stripe\"}}"
@@ -54,6 +55,7 @@ testModelDecoder =
                                 , payment_method = { id = 563
                                                    , payment_method_key = "test_key"
                                                    , payment_method_type = "stripe"
+                                                   , identifier = Nothing
                                                    }
                                 })
                     <| JsonDecode.decodeString Subscription.modelDecoder "{\"id\":342,\"last_renewed_at\":\"1970-01-01T00:00:01+00:00\",\"subscribed_at\":\"1970-01-01T00:00:02+00:00\",\"expires_at\":\"1970-01-01T00:00:04+00:00\",\"canceled_at\":\"1970-01-01T00:00:05+00:00\",\"recurring\":false,\"membership_plan\":{\"id\":453,\"name\":\"A membership plan\",\"duration\":\"yearly\",\"current_cost\":10.00,\"current_rate_id\":5},\"membership_plan_rate\":{\"id\":2,\"cost\":4.00},\"payment_method\":{\"id\":563,\"payment_method_key\":\"test_key\",\"payment_method_type\":\"stripe\"}}"

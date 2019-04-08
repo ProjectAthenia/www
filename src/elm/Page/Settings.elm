@@ -4,6 +4,7 @@ import Api as Api exposing (Token)
 import Api.Endpoint as Endpoint
 import Components.LoadingIndicator as LoadingIndicator
 import Models.Error as Error
+import Models.MembershipPlan.MembershipPlan as MembershipPlan
 import Models.Payment.PaymentMethod as PaymentMethod
 import Models.User.User as User
 import Route as Route
@@ -17,7 +18,7 @@ import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Html exposing (Html, div, fieldset, h1, text)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onSubmit)
+import Html.Events exposing (onSubmit, onCheck)
 import Http
 import Json.Encode as Encode
 import Ports.Stripe as Stripe
@@ -35,6 +36,9 @@ type alias Model =
     , problems : List Problem
     , status : Status
     , maybeUser : Maybe User.Model
+    , membershipPlans : List MembershipPlan.Model
+    , selectedMembershipPlan : Maybe MembershipPlan.Model
+    , selectedPaymentMethod : (Bool, Maybe PaymentMethod.Model)
     }
 
 
@@ -66,6 +70,9 @@ init session apiUrl token =
       , problems = []
       , status = Loading
       , maybeUser = Nothing
+      , membershipPlans = []
+      , selectedMembershipPlan = Nothing
+      , selectedPaymentMethod = (False, Nothing)
       }
     , Cmd.batch
         [ Api.get (Endpoint.me apiUrl) (Session.token session) User.modelDecoder CompletedFormLoad
@@ -103,7 +110,11 @@ view model =
                         , case model.status of
                             Loaded settingsForm ->
                                 div []
-                                    [ viewSubscriptionForm
+                                    [ case (List.length model.membershipPlans > 0, model.maybeUser) of
+                                        (True, Just user) ->
+                                            viewSubscriptionForm model user
+                                        _ ->
+                                            text ""
                                     , viewSettingsForm model.token settingsForm
                                     ]
 
@@ -120,15 +131,59 @@ view model =
     }
 
 
-viewSubscriptionForm : Html Msg
-viewSubscriptionForm =
+viewSubscriptionForm : Model -> User.Model -> Html Msg
+viewSubscriptionForm model user =
     Form.form [ onSubmit (SubmittedSubscriptionForm) ]
-        [ div [ id "card-element" ] []
+        [ div []
+            <| List.map (viewMembershipPlanOption model.selectedMembershipPlan) model.membershipPlans
+        , if List.length user.payment_methods == 0 then
+            viewStripeForm
+          else
+            div []
+                <| List.concat
+                    [ List.map (viewPaymentMethod model.selectedPaymentMethod) user.payment_methods
+                    , [viewStripeOption model.selectedPaymentMethod]
+                    ]
         , Button.button
             [ Button.primary
             , Button.large
             ] [ text "Submit Payment" ]
         ]
+
+
+viewMembershipPlanOption : Maybe MembershipPlan.Model -> MembershipPlan.Model -> Html Msg
+viewMembershipPlanOption selectedMembershipPlan membershipPlan =
+    Button.radioButton
+        (isMembershipPlanSelected membershipPlan selectedMembershipPlan)
+        [ Button.attrs [onCheck (SelectedMembershipPlan membershipPlan)]
+        ] [ text (MembershipPlan.makeReadable membershipPlan) ]
+
+
+viewStripeForm : Html Msg
+viewStripeForm =
+    div [ id "card-element" ] []
+
+
+viewPaymentMethod : (Bool, Maybe PaymentMethod.Model) -> PaymentMethod.Model -> Html Msg
+viewPaymentMethod maybeSelectedMembershipPlan paymentMethod =
+    Button.radioButton
+        (isPaymentMethodSelected paymentMethod maybeSelectedMembershipPlan)
+        [ Button.attrs [onCheck (SelectedPaymentMethod (Just paymentMethod))]
+        ] [ text (PaymentMethod.makeReadable paymentMethod) ]
+
+
+viewStripeOption : (Bool, Maybe PaymentMethod.Model) -> Html Msg
+viewStripeOption maybeSelectedMembershipPlan =
+    let
+        optionSelected = maybeSelectedMembershipPlan == (True, Nothing)
+    in
+    div []
+        [ Button.radioButton optionSelected
+            [ Button.attrs [onCheck (SelectedPaymentMethod Nothing)]
+            ] [ text "New Credit Card" ]
+        , div [ style "display" (if optionSelected then "block" else "none")] [viewStripeForm]
+        ]
+
 
 
 viewSettingsForm : Token -> Form -> Html Msg
@@ -184,6 +239,8 @@ viewProblem problem =
 type Msg
     = SubmittedSettingsForm Token Form
     | SubmittedSubscriptionForm
+    | SelectedMembershipPlan MembershipPlan.Model Bool
+    | SelectedPaymentMethod (Maybe PaymentMethod.Model) Bool
     | EnteredName String
     | EnteredEmail String
     | EnteredPassword String
@@ -246,6 +303,22 @@ update msg model =
                     createPaymentMethod model.apiUrl model.token user.id stripeToken
                 Nothing ->
                     Cmd.none
+            )
+
+        SelectedMembershipPlan membershipPlan selected ->
+            ({ model
+                | selectedMembershipPlan
+                    = if selected then Just membershipPlan else Nothing
+            }
+            , Cmd.none
+            )
+
+        SelectedPaymentMethod maybePaymentMethod selected ->
+            ({ model
+                | selectedPaymentMethod
+                    = if selected then (True, maybePaymentMethod) else (True, Nothing)
+            }
+            , Cmd.none
             )
 
         EnteredEmail email ->
@@ -330,6 +403,24 @@ updateForm transform model =
 
         _ ->
             ( model, Log.error )
+
+
+isMembershipPlanSelected : MembershipPlan.Model -> Maybe MembershipPlan.Model -> Bool
+isMembershipPlanSelected membershipPlan maybeSelectedMembershipPlan =
+    case maybeSelectedMembershipPlan of
+        Just selectedMembershipPlan ->
+            selectedMembershipPlan.id == membershipPlan.id
+        Nothing ->
+            False
+
+
+isPaymentMethodSelected : PaymentMethod.Model -> (Bool, Maybe PaymentMethod.Model) -> Bool
+isPaymentMethodSelected paymentMethod maybeSelectedPaymentMethod =
+    case maybeSelectedPaymentMethod of
+        (True, Just selectedPaymentMethod) ->
+            selectedPaymentMethod.id == paymentMethod.id
+        _ ->
+            False
 
 
 

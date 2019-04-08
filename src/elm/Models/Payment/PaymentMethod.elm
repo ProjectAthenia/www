@@ -9,6 +9,7 @@ type alias Model =
     { id: Int
     , payment_method_key: String
     , payment_method_type: String
+    , identifier : Maybe String
     }
 
 
@@ -34,6 +35,16 @@ modelDecoder =
         |> required "id" int
         |> required "payment_method_key" string
         |> required "payment_method_type" string
+        |> optional "identifier" (maybe string) Nothing
+
+
+makeReadable : Model -> String
+makeReadable model =
+    case model.identifier of
+        Just identifier ->
+            "Credit Card Ending in" ++ identifier
+        Nothing ->
+            "Existing Credit Card"
 
 
 listDecoder: Decoder (List Model)

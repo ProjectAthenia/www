@@ -13,6 +13,11 @@ type alias Model =
     }
 
 
+makeReadable : Model -> String
+makeReadable model =
+    model.name ++ " (" ++ String.fromFloat model.current_cost ++ ")"
+
+
 -- Decodes a user model retrieved through the API
 modelDecoder : Decoder Model
 modelDecoder =
