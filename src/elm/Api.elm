@@ -10,6 +10,7 @@ port module Api exposing
     , createUserPaymentMethod
     , getArticle, viewArticles, createArticle
     , viewArticleIterations
+    , getMembershipPlans
     , storeCredWith
     , viewerChanges
     )
@@ -23,6 +24,7 @@ It exposes an opaque Endpoint type which is guaranteed to point to the correct U
 import Api.Endpoint as Endpoint
 import Models.Error as Error
 import Models.Payment.PaymentMethod as PaymentMethod
+import Models.MembershipPlan.MembershipPlan as MembershipPlan
 import Models.User.User as User
 import Models.Wiki.Article as Article
 import Models.Wiki.Iteration as Iteration
@@ -264,6 +266,11 @@ viewArticles apiUrl token page toMsg =
 viewArticleIterations : String -> Token -> Int -> Int -> (Result Error Iteration.Page -> msg) -> Cmd msg
 viewArticleIterations apiUrl token articleId page toMsg =
     get (Endpoint.viewArticleIterations apiUrl articleId page) (Just token) Iteration.pageDecoder toMsg
+
+
+getMembershipPlans : String -> Token -> (Result Error MembershipPlan.Page -> msg) -> Cmd msg
+getMembershipPlans apiUrl token toMsg =
+    get (Endpoint.membershipPlans apiUrl) (Just token) MembershipPlan.pageDecoder toMsg
 
 
 decoderFromCred : Decoder (Token -> Int -> a) -> Decoder a

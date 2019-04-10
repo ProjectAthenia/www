@@ -16,7 +16,7 @@ import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
-import Html exposing (Html, div, fieldset, h1, text)
+import Html exposing (Html, div, fieldset, h1, h3, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onSubmit, onCheck)
 import Http
@@ -75,7 +75,8 @@ init session apiUrl token =
       , selectedPaymentMethod = (False, Nothing)
       }
     , Cmd.batch
-        [ Api.get (Endpoint.me apiUrl) (Session.token session) User.modelDecoder CompletedFormLoad
+        [ Api.get (Endpoint.me apiUrl) (Just token) User.modelDecoder CompletedFormLoad
+        , viewMembershipPlans apiUrl token
         ]
     )
 
@@ -133,15 +134,17 @@ view model =
 
 viewSubscriptionForm : Model -> User.Model -> Html Msg
 viewSubscriptionForm model user =
-    Form.form [ onSubmit (SubmittedSubscriptionForm) ]
-        [ div []
+    Form.form [ id "subscription-form", onSubmit (SubmittedSubscriptionForm) ]
+        [ h3 [] [text "Select a Membership Plan" ]
+        , div []
             <| List.map (viewMembershipPlanOption model.selectedMembershipPlan) model.membershipPlans
         , if List.length user.payment_methods == 0 then
             viewStripeForm
           else
             div []
                 <| List.concat
-                    [ List.map (viewPaymentMethod model.selectedPaymentMethod) user.payment_methods
+                    [ [ h3 [] [ text "Select A Payment Method" ] ]
+                    , List.map (viewPaymentMethod model.selectedPaymentMethod) user.payment_methods
                     , [viewStripeOption model.selectedPaymentMethod]
                     ]
         , Button.button
@@ -244,6 +247,7 @@ type Msg
     | EnteredName String
     | EnteredEmail String
     | EnteredPassword String
+    | CompletedMembershipPlansLoad (Result Api.Error MembershipPlan.Page)
     | CompletedFormLoad (Result Api.Error User.Model)
     | CompletedSave (Result Api.Error User.Model)
     | CreatedPaymentMethod (Result Api.Error PaymentMethod.Model)
@@ -273,7 +277,19 @@ update msg model =
             )
 
         CompletedFormLoad (Err _) ->
-            ( { model | showLoading = True, status = Failed }
+            ( { model | showLoading = False, status = Failed }
+            , Cmd.none
+            )
+
+        CompletedMembershipPlansLoad (Ok membershipPlans) ->
+            ( { model
+                | membershipPlans = membershipPlans.data
+            }
+            , Cmd.none
+            )
+
+        CompletedMembershipPlansLoad (Err _) ->
+            ( { model | showLoading = False, status = Failed }
             , Cmd.none
             )
 
@@ -565,6 +581,11 @@ edit apiUrl token (Trimmed form) =
             Http.jsonBody encodedUser
     in
     Api.settings apiUrl token form.id body CompletedSave
+
+
+viewMembershipPlans : String -> Token -> Cmd Msg
+viewMembershipPlans apiUrl token =
+    Api.getMembershipPlans apiUrl token CompletedMembershipPlansLoad
 
 
 createPaymentMethod : String -> Token -> Int -> String -> Cmd Msg

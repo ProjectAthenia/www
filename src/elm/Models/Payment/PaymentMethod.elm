@@ -42,7 +42,7 @@ makeReadable : Model -> String
 makeReadable model =
     case model.identifier of
         Just identifier ->
-            "Credit Card Ending in" ++ identifier
+            "Credit Card Ending in " ++ identifier
         Nothing ->
             "Existing Credit Card"
 

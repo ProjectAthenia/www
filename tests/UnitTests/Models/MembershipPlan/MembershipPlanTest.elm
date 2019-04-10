@@ -16,4 +16,4 @@ testModelDecoder =
                             , current_cost = 12.12
                             , current_rate_id = 345
                             })
-                <| JsonDecode.decodeString MembershipPlan.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"duration\":\"yearly\",\"current_cost\":12.12,\"current_rate_id\":345}"
+                <| JsonDecode.decodeString MembershipPlan.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"duration\":\"yearly\",\"current_cost\":\"12.12\",\"current_rate_id\":345}"
