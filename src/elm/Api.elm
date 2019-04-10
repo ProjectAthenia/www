@@ -8,6 +8,7 @@ port module Api exposing
     , login, logout, signUp, refresh
     , settings, me
     , createUserPaymentMethod
+    , createUserSubscription
     , getArticle, viewArticles, createArticle
     , viewArticleIterations
     , getMembershipPlans
@@ -25,6 +26,7 @@ import Api.Endpoint as Endpoint
 import Models.Error as Error
 import Models.Payment.PaymentMethod as PaymentMethod
 import Models.MembershipPlan.MembershipPlan as MembershipPlan
+import Models.MembershipPlan.Subscription as Subscription
 import Models.User.User as User
 import Models.Wiki.Article as Article
 import Models.Wiki.Iteration as Iteration
@@ -242,6 +244,11 @@ me apiUrl token toMsg =
 createUserPaymentMethod : String -> Token -> Int -> Http.Body -> (Result Error PaymentMethod.Model -> msg) -> Cmd msg
 createUserPaymentMethod apiUrl token userId body toMsg =
     post (Endpoint.userPaymentMethods apiUrl userId) (Just token) body PaymentMethod.modelDecoder toMsg
+
+
+createUserSubscription : String -> Token -> Int -> Http.Body -> (Result Error Subscription.Model -> msg) -> Cmd msg
+createUserSubscription apiUrl token userId body toMsg =
+    post (Endpoint.userSubscriptions apiUrl userId) (Just token) body Subscription.modelDecoder toMsg
 
 
 createArticle : String -> Token -> Article.CreateModel -> (Result Error Article.Model -> msg) -> Cmd msg

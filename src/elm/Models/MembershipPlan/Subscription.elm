@@ -30,6 +30,14 @@ type alias CreateModel =
     }
 
 
+createModel : Bool -> MembershipPlan.Model -> PaymentMethod.Model -> CreateModel
+createModel recurring membershipPlan paymentMethod =
+    { recurring = recurring
+    , membership_plan_rate_id = membershipPlan.current_rate_id
+    , payment_method_id = paymentMethod.id
+    }
+
+
 modelDecoder : JsonDecode.Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
@@ -42,6 +50,11 @@ modelDecoder =
         |> required "membership_plan" MembershipPlan.modelDecoder
         |> required "membership_plan_rate" MembershipPlanRate.modelDecoder
         |> required "payment_method" PaymentMethod.modelDecoder
+
+
+listDecoder : JsonDecode.Decoder (List Model)
+listDecoder =
+    JsonDecode.list modelDecoder
 
 
 toCreateJson : CreateModel -> JsonEncode.Value

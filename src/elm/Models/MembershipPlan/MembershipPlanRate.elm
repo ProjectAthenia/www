@@ -2,6 +2,7 @@ module Models.MembershipPlan.MembershipPlanRate exposing (..)
 
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
+import Utilities.ModelHelpers exposing (..)
 
 
 type alias Model =
@@ -15,4 +16,4 @@ modelDecoder : Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
         |> required "id" int
-        |> required "cost" float
+        |> required "cost" stringFloatDecoder

@@ -3,6 +3,7 @@ module Models.MembershipPlan.MembershipPlan exposing (..)
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Models.Page as Page
+import Utilities.ModelHelpers exposing (..)
 
 
 type alias Model =
@@ -31,14 +32,6 @@ modelDecoder =
         |> required "current_cost" stringFloatDecoder
         |> required "current_rate_id" int
 
-stringFloatDecoder : Decoder Float
-stringFloatDecoder =
-  (JsonDecode.string)
-      |> JsonDecode.andThen (\val ->
-          case String.toFloat val of
-              Just f -> JsonDecode.succeed f
-              _ -> JsonDecode.fail "Error transforming string encoded float to float"
-          )
 
 listDecoder : Decoder (List Model)
 listDecoder =

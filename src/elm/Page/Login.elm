@@ -328,6 +328,7 @@ login apiUrl (Trimmed model) =
             , name = ""
             , roles = []
             , payment_methods = []
+            , subscriptions = []
             }
         body =
             Http.jsonBody (User.toJson user)

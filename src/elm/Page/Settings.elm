@@ -5,6 +5,7 @@ import Api.Endpoint as Endpoint
 import Components.LoadingIndicator as LoadingIndicator
 import Models.Error as Error
 import Models.MembershipPlan.MembershipPlan as MembershipPlan
+import Models.MembershipPlan.Subscription as Subscription
 import Models.Payment.PaymentMethod as PaymentMethod
 import Models.User.User as User
 import Route as Route
@@ -251,6 +252,7 @@ type Msg
     | CompletedFormLoad (Result Api.Error User.Model)
     | CompletedSave (Result Api.Error User.Model)
     | CreatedPaymentMethod (Result Api.Error PaymentMethod.Model)
+    | CreatedSubscription (Result Api.Error Subscription.Model)
     | GotSession Session
     | TokenCreated String
     | StripeError String
@@ -272,6 +274,11 @@ update msg model =
                 | showLoading = False
                 , status = Loaded settingsForm
                 , maybeUser = Just user
+                , selectedPaymentMethod =
+                    if List.length user.payment_methods == 0 then
+                        (True, Nothing)
+                    else
+                        (False, Nothing)
             }
             , Stripe.initStripeForm "card-element"
             )
@@ -306,11 +313,20 @@ update msg model =
                     )
 
         SubmittedSubscriptionForm ->
-            ( { model
-                | showLoading = True
-            }
-            , Stripe.createPaymentToken "card-element"
-            )
+            case (model.selectedPaymentMethod, model.selectedMembershipPlan, model.maybeUser) of
+                ((True, maybePaymentMethod), Just membershipPlan, Just user) ->
+                    ( { model
+                        | showLoading = True
+                    }
+                    , case maybePaymentMethod of
+                        Just paymentMethod ->
+                            createSubscription model.apiUrl model.token user.id paymentMethod membershipPlan
+                        Nothing ->
+                            Stripe.createPaymentToken "card-element"
+                    )
+
+                _ ->
+                    (model, Cmd.none)
 
         TokenCreated stripeToken ->
             ( model
@@ -388,11 +404,26 @@ update msg model =
                     )
 
         CreatedPaymentMethod (Ok paymentMethod) ->
-            ( { model
-                | showLoading = False
-            }
-            , Cmd.none
-            )
+            let
+                updatedModel =
+                    { model
+                        | selectedPaymentMethod = (True, Just paymentMethod)
+                    }
+            in
+            case (model.maybeUser, model.selectedMembershipPlan) of
+                (Just user, Just membershipPlan) ->
+                    ( { updatedModel
+                        | showLoading = True
+                    }
+                    , createSubscription model.apiUrl model.token user.id paymentMethod membershipPlan
+                    )
+
+                _ ->
+                    ( { updatedModel
+                        | showLoading = False
+                    }
+                    , Cmd.none
+                    )
 
         CreatedPaymentMethod (Err error) ->
             case error of
@@ -405,6 +436,28 @@ update msg model =
                     ( model
                     , Cmd.none
                     )
+
+        CreatedSubscription (Ok subscription) ->
+            ( { model
+                | showLoading = False
+                , maybeUser =
+                    case model.maybeUser of
+                        Just user ->
+                            Just { user
+                                    | subscriptions = List.append user.subscriptions [subscription]
+                                }
+                        Nothing ->
+                            Nothing
+            }
+            , Cmd.none
+            )
+
+        CreatedSubscription (Err error) ->
+            ( { model
+                | showLoading = False
+            }
+            , Cmd.none
+            )
 
 
 
@@ -596,4 +649,15 @@ createPaymentMethod apiUrl token userId stripeToken =
                 [ ("token", Encode.string stripeToken)
                 ]
     in
-        Api.createUserPaymentMethod apiUrl token userId (Http.jsonBody encodedPaymentMethod) CreatedPaymentMethod
+    Api.createUserPaymentMethod apiUrl token userId (Http.jsonBody encodedPaymentMethod) CreatedPaymentMethod
+
+
+createSubscription : String -> Token -> Int -> PaymentMethod.Model -> MembershipPlan.Model -> Cmd Msg
+createSubscription apiUrl token userId paymentMethod membershipPlan =
+    let
+        createModel =
+            Subscription.createModel True membershipPlan paymentMethod
+        encodedSubscription =
+            Subscription.toCreateJson createModel
+    in
+    Api.createUserSubscription apiUrl token userId (Http.jsonBody encodedSubscription) CreatedSubscription

@@ -6,6 +6,7 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
 import Models.Role as Role
 import Models.Payment.PaymentMethod as PaymentMethod
+import Models.MembershipPlan.Subscription as Subscription
 
 
 type alias Model =
@@ -16,6 +17,7 @@ type alias Model =
     , stripe_customer_key: Maybe String
     , payment_methods: List PaymentMethod.Model
     , roles: List Role.Model
+    , subscriptions: List Subscription.Model
     }
 
 -- Role Helpers
@@ -77,6 +79,7 @@ modelDecoder =
         |> optional "stripe_customer_key" (maybe string) Nothing
         |> optional "payment_methods" PaymentMethod.listDecoder []
         |> optional "roles" Role.listDecoder []
+        |> optional "subscriptions" Subscription.listDecoder []
 
 
 listDecoder : Decoder (List Model)
