@@ -7,6 +7,7 @@ import Json.Encode as Encode
 import Models.Role as Role
 import Models.Payment.PaymentMethod as PaymentMethod
 import Models.MembershipPlan.Subscription as Subscription
+import Time exposing (..)
 
 
 type alias Model =
@@ -25,9 +26,22 @@ canViewArticles : Model -> Bool
 canViewArticles user =
     List.any (hasRole user) [Role.superAdmin, Role.articleViewer, Role.articleEditor]
 
+
 hasRole : Model -> Int -> Bool
 hasRole user roleId =
     List.any (\role -> roleId == role.id) user.roles
+
+
+-- Subscription Helpers
+getActiveSubscriptions : Posix -> Model -> List Subscription.Model
+getActiveSubscriptions now model =
+    List.filter (Subscription.isActive now) model.subscriptions
+
+
+getCurrentSubscription : Posix -> Model -> Maybe Subscription.Model
+getCurrentSubscription now model =
+    List.head
+        <| List.sortWith Subscription.compareExpiration (getActiveSubscriptions now model)
 
 
 -- Converts a user model into a JSON string

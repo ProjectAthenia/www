@@ -14,7 +14,7 @@ type alias Model =
     { id : Int
     , last_renewed_at : Posix
     , subscribed_at : Posix
-    , expires_at : Posix
+    , expires_at : Maybe Posix
     , canceled_at : Maybe Posix
     , recurring: Bool
     , membership_plan : MembershipPlan.Model
@@ -28,6 +28,30 @@ type alias CreateModel =
     , membership_plan_rate_id : Int
     , payment_method_id : Int
     }
+
+
+compareExpiration : Model -> Model -> Order
+compareExpiration subscriptionA subscriptionB =
+    case (subscriptionA.expires_at, subscriptionB.expires_at) of
+        (Nothing, _) ->
+            LT
+        (_, Nothing) ->
+            GT
+        (Just expiresA, Just expiresB) ->
+            if (posixToMillis expiresA < posixToMillis expiresB) then
+                LT
+            else
+                GT
+
+
+
+isActive : Posix -> Model -> Bool
+isActive now model =
+    case model.expires_at of
+        Nothing ->
+            True
+        Just expiresAt ->
+            (posixToMillis expiresAt) > (posixToMillis now)
 
 
 createModel : Bool -> MembershipPlan.Model -> PaymentMethod.Model -> CreateModel
@@ -44,7 +68,7 @@ modelDecoder =
         |> required "id" JsonDecode.int
         |> required "last_renewed_at" Iso8601.decoder
         |> required "subscribed_at" Iso8601.decoder
-        |> required "expires_at" Iso8601.decoder
+        |> required "expires_at" (JsonDecode.maybe Iso8601.decoder)
         |> required "canceled_at" (JsonDecode.maybe Iso8601.decoder)
         |> required "recurring" JsonDecode.bool
         |> required "membership_plan" MembershipPlan.modelDecoder

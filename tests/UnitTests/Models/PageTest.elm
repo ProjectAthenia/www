@@ -65,6 +65,7 @@ testModelDecoder =
                             , stripe_customer_key = Nothing
                             , roles = []
                             , payment_methods = []
+                            , subscriptions = []
                             }
                         ]
                         , current_page = 1

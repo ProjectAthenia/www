@@ -6,6 +6,7 @@ import Expect
 import Json.Decode as JsonDecode
 import Json.Encode as JsonEncode
 import Test exposing (..)
+import Time exposing (..)
 
 
 mockUser : String -> String -> String -> List Role.Model -> User.Model
@@ -17,7 +18,249 @@ mockUser name email password roles =
     , stripe_customer_key = Nothing
     , roles = roles
     , payment_methods = []
+    , subscriptions = []
     }
+
+
+testGetActiveSubscriptions : Test
+testGetActiveSubscriptions =
+    test "Makes sure that we can get the active subscriptions properly" <|
+        \() ->
+            let
+                model = mockUser "" "" "" []
+                readyModel =
+                    { model
+                        | subscriptions =
+                            [ { id = 342
+                              , last_renewed_at = millisToPosix 1000
+                              , subscribed_at = millisToPosix 2000
+                              , expires_at = Nothing
+                              , canceled_at = Nothing
+                              , recurring = False
+                              , membership_plan = { id = 453
+                                                  , name = "A membership plan"
+                                                  , duration = "yearly"
+                                                  , current_cost = 10.00
+                                                  , current_rate_id = 5
+                                                  }
+                              , membership_plan_rate = { id = 2
+                                                       , cost = 4.00
+                                                       }
+                              , payment_method = { id = 563
+                                                 , payment_method_key = "test_key"
+                                                 , payment_method_type = "stripe"
+                                                 , identifier = Nothing
+                                                 }
+                              }
+                            , { id = 435
+                              , last_renewed_at = millisToPosix 1000
+                              , subscribed_at = millisToPosix 2000
+                              , expires_at = Just (millisToPosix 5000)
+                              , canceled_at = Nothing
+                              , recurring = False
+                              , membership_plan = { id = 453
+                                                  , name = "A membership plan"
+                                                  , duration = "yearly"
+                                                  , current_cost = 10.00
+                                                  , current_rate_id = 5
+                                                  }
+                              , membership_plan_rate = { id = 2
+                                                       , cost = 4.00
+                                                       }
+                              , payment_method = { id = 563
+                                                 , payment_method_key = "test_key"
+                                                 , payment_method_type = "stripe"
+                                                 , identifier = Nothing
+                                                 }
+                              }
+                            , { id = 6342
+                              , last_renewed_at = millisToPosix 1000
+                              , subscribed_at = millisToPosix 2000
+                              , expires_at = Just (millisToPosix 1000)
+                              , canceled_at = Nothing
+                              , recurring = False
+                              , membership_plan = { id = 453
+                                                  , name = "A membership plan"
+                                                  , duration = "yearly"
+                                                  , current_cost = 10.00
+                                                  , current_rate_id = 5
+                                                  }
+                              , membership_plan_rate = { id = 2
+                                                       , cost = 4.00
+                                                       }
+                              , payment_method = { id = 563
+                                                 , payment_method_key = "test_key"
+                                                 , payment_method_type = "stripe"
+                                                 , identifier = Nothing
+                                                 }
+                              }
+                            ]
+                    }
+            in
+            Expect.equal
+                [ { id = 342
+                  , last_renewed_at = millisToPosix 1000
+                  , subscribed_at = millisToPosix 2000
+                  , expires_at = Nothing
+                  , canceled_at = Nothing
+                  , recurring = False
+                  , membership_plan = { id = 453
+                                      , name = "A membership plan"
+                                      , duration = "yearly"
+                                      , current_cost = 10.00
+                                      , current_rate_id = 5
+                                      }
+                  , membership_plan_rate = { id = 2
+                                           , cost = 4.00
+                                           }
+                  , payment_method = { id = 563
+                                     , payment_method_key = "test_key"
+                                     , payment_method_type = "stripe"
+                                     , identifier = Nothing
+                                     }
+                  }
+                , { id = 435
+                  , last_renewed_at = millisToPosix 1000
+                  , subscribed_at = millisToPosix 2000
+                  , expires_at = Just (millisToPosix 5000)
+                  , canceled_at = Nothing
+                  , recurring = False
+                  , membership_plan = { id = 453
+                                      , name = "A membership plan"
+                                      , duration = "yearly"
+                                      , current_cost = 10.00
+                                      , current_rate_id = 5
+                                      }
+                  , membership_plan_rate = { id = 2
+                                           , cost = 4.00
+                                           }
+                  , payment_method = { id = 563
+                                     , payment_method_key = "test_key"
+                                     , payment_method_type = "stripe"
+                                     , identifier = Nothing
+                                     }
+                  }
+                ]
+                <| User.getActiveSubscriptions (millisToPosix 2000) readyModel
+
+
+testGetCurrentSubscription : Test
+testGetCurrentSubscription =
+    let
+        model = mockUser "" "" "" []
+        lifetime =
+            { id = 342
+            , last_renewed_at = millisToPosix 1000
+            , subscribed_at = millisToPosix 2000
+            , expires_at = Nothing
+            , canceled_at = Nothing
+            , recurring = False
+            , membership_plan = { id = 453
+                                , name = "A membership plan"
+                                , duration = "yearly"
+                                , current_cost = 10.00
+                                , current_rate_id = 5
+                                }
+            , membership_plan_rate = { id = 2
+                                     , cost = 4.00
+                                     }
+            , payment_method = { id = 563
+                               , payment_method_key = "test_key"
+                               , payment_method_type = "stripe"
+                               , identifier = Nothing
+                               }
+            }
+        early =
+            { id = 342
+            , last_renewed_at = millisToPosix 1000
+            , subscribed_at = millisToPosix 2000
+            , expires_at = Just (millisToPosix 3000)
+            , canceled_at = Nothing
+            , recurring = False
+            , membership_plan = { id = 453
+                                , name = "A membership plan"
+                                , duration = "yearly"
+                                , current_cost = 10.00
+                                , current_rate_id = 5
+                                }
+            , membership_plan_rate = { id = 2
+                                     , cost = 4.00
+                                     }
+            , payment_method = { id = 563
+                               , payment_method_key = "test_key"
+                               , payment_method_type = "stripe"
+                               , identifier = Nothing
+                               }
+            }
+        later =
+            { id = 342
+            , last_renewed_at = millisToPosix 1000
+            , subscribed_at = millisToPosix 2000
+            , expires_at = Just (millisToPosix 5000)
+            , canceled_at = Nothing
+            , recurring = False
+            , membership_plan = { id = 453
+                                , name = "A membership plan"
+                                , duration = "yearly"
+                                , current_cost = 10.00
+                                , current_rate_id = 5
+                                }
+            , membership_plan_rate = { id = 2
+                                     , cost = 4.00
+                                     }
+            , payment_method = { id = 563
+                               , payment_method_key = "test_key"
+                               , payment_method_type = "stripe"
+                               , identifier = Nothing
+                               }
+            }
+    in
+    describe "Makes sure that we can get the current subscription properly"
+        [ test "Makes sure that we can get the lifetime one first" <|
+            \() ->
+                let
+                    readyUser =
+                        { model
+                            | subscriptions =
+                                [lifetime, early, later]
+                        }
+                in
+                Expect.equal (Just lifetime)
+                    <| User.getCurrentSubscription (millisToPosix 1000) readyUser
+        , test "Makes sure that we can get the earlier one" <|
+            \() ->
+                let
+                    readyUser =
+                        { model
+                            | subscriptions =
+                                [early, later]
+                        }
+                in
+                Expect.equal (Just early)
+                    <| User.getCurrentSubscription (millisToPosix 1000) readyUser
+        , test "Makes sure that we can get the later one" <|
+            \() ->
+                let
+                    readyUser =
+                        { model
+                            | subscriptions =
+                                [early, later]
+                        }
+                in
+                Expect.equal (Just later)
+                    <| User.getCurrentSubscription (millisToPosix 4000) readyUser
+        , test "Makes sure that nothing is returned" <|
+            \() ->
+                let
+                    readyUser =
+                        { model
+                            | subscriptions =
+                                [early]
+                        }
+                in
+                Expect.equal Nothing
+                    <| User.getCurrentSubscription (millisToPosix 4000) readyUser
+        ]
 
 
 testToJson : Test
@@ -74,6 +317,7 @@ testModelDecoder =
                                 , stripe_customer_key = Nothing
                                 , roles = []
                                 , payment_methods = []
+                                , subscriptions = []
                                 })
                     <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\"}"
         , test "Test decode with roles" <|
@@ -92,6 +336,7 @@ testModelDecoder =
                                     }
                                   ]
                                 , payment_methods = []
+                                , subscriptions = []
                                 })
                     <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"roles\":[{\"id\":2,\"name\":\"A Role\"},{\"id\":6,\"name\":\"A Different Role\"}]}"
         , test "Test decode with payment methods" <|
@@ -109,6 +354,7 @@ testModelDecoder =
                                     , identifier = Nothing
                                     }
                                   ]
+                                , subscriptions = []
                                 })
                     <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"stripe_customer_key\":\"test_key\",\"payment_methods\":[{\"id\":4354,\"payment_method_key\":\"Hi\",\"payment_method_type\":\"bye\"}]}"
         ]

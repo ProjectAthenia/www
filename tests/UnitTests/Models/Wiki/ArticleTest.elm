@@ -21,6 +21,7 @@ testToCreateJson =
                     , stripe_customer_key = Nothing
                     , roles = []
                     , payment_methods = []
+                    , subscriptions = []
                     }
                 model =
                     { baseModel
@@ -58,6 +59,7 @@ testModelDecoder =
                                         , stripe_customer_key = Nothing
                                         , roles = []
                                         , payment_methods = []
+                                        , subscriptions = []
                                         }
                                 , iterations =
                                     [ { id = 342
