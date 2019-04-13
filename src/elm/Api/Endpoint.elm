@@ -105,6 +105,10 @@ me apiUrl =
     url apiUrl [ "users", "me" ]
         [ (Builder.string "expand[roles]" "*")
         , (Builder.string "expand[paymentMethods]" "*")
+        , (Builder.string "expand[subscriptions]" "*")
+        , (Builder.string "expand[subscriptions.paymentMethod]" "*")
+        , (Builder.string "expand[subscriptions.membershipPlanRate]" "*")
+        , (Builder.string "expand[subscriptions.membershipPlanRate.membershipPlan]" "*")
         ]
 
 

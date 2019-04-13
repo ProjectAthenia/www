@@ -10,7 +10,6 @@ import Models.Payment.PaymentMethod as PaymentMethod
 import Models.User.User as User
 import Route as Route
 import Session as Session exposing (Session)
-import Utilities.Log as Log
 import Viewer as Viewer exposing (Viewer)
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
@@ -23,6 +22,9 @@ import Html.Events exposing (onSubmit, onCheck)
 import Http
 import Json.Encode as Encode
 import Ports.Stripe as Stripe
+import Time exposing (..)
+import Utilities.DateHelpers as DateHelpers
+import Utilities.Log as Log
 
 
 
@@ -33,6 +35,7 @@ type alias Model =
     { session : Session
     , showLoading : Bool
     , apiUrl : String
+    , currentTime : Time.Posix
     , token : Token
     , problems : List Problem
     , status : Status
@@ -40,6 +43,7 @@ type alias Model =
     , membershipPlans : List MembershipPlan.Model
     , selectedMembershipPlan : Maybe MembershipPlan.Model
     , selectedPaymentMethod : (Bool, Maybe PaymentMethod.Model)
+    , currentSubscription : Maybe Subscription.Model
     }
 
 
@@ -62,11 +66,12 @@ type Problem
     | ServerError Error.Model
 
 
-init : Session -> String -> Token -> ( Model, Cmd Msg )
-init session apiUrl token =
+init : Time.Posix -> Session -> String -> Token -> ( Model, Cmd Msg )
+init currentTime session apiUrl token =
     ( { session = session
       , showLoading = True
       , apiUrl = apiUrl
+      , currentTime = currentTime
       , token = token
       , problems = []
       , status = Loading
@@ -74,6 +79,7 @@ init session apiUrl token =
       , membershipPlans = []
       , selectedMembershipPlan = Nothing
       , selectedPaymentMethod = (False, Nothing)
+      , currentSubscription = Nothing
       }
     , Cmd.batch
         [ Api.get (Endpoint.me apiUrl) (Just token) User.modelDecoder CompletedFormLoad
@@ -135,24 +141,25 @@ view model =
 
 viewSubscriptionForm : Model -> User.Model -> Html Msg
 viewSubscriptionForm model user =
-    Form.form [ id "subscription-form", onSubmit (SubmittedSubscriptionForm) ]
-        [ h3 [] [text "Select a Membership Plan" ]
-        , div []
-            <| List.map (viewMembershipPlanOption model.selectedMembershipPlan) model.membershipPlans
-        , if List.length user.payment_methods == 0 then
-            viewStripeForm
-          else
+    case model.currentSubscription of
+        Just subscription ->
             div []
-                <| List.concat
-                    [ [ h3 [] [ text "Select A Payment Method" ] ]
-                    , List.map (viewPaymentMethod model.selectedPaymentMethod) user.payment_methods
-                    , [viewStripeOption model.selectedPaymentMethod]
+                [ h3 []
+                    [ text
+                        <| "Your " ++ subscription.membership_plan_rate.membership_plan.name ++ " subscription is " ++ (getSubscriptionStatusText model subscription)
                     ]
-        , Button.button
-            [ Button.primary
-            , Button.large
-            ] [ text "Submit Payment" ]
-        ]
+                ]
+        Nothing ->
+            Form.form [ id "subscription-form", onSubmit (SubmittedSubscriptionForm) ]
+                [ h3 [] [text "Select a Membership Plan" ]
+                , div []
+                    <| List.map (viewMembershipPlanOption model.selectedMembershipPlan) model.membershipPlans
+                , viewPaymentForm model user "Select A Payment Method"
+                , Button.button
+                    [ Button.primary
+                    , Button.large
+                    ] [ text "Submit Payment" ]
+                ]
 
 
 viewMembershipPlanOption : Maybe MembershipPlan.Model -> MembershipPlan.Model -> Html Msg
@@ -161,6 +168,40 @@ viewMembershipPlanOption selectedMembershipPlan membershipPlan =
         (isMembershipPlanSelected membershipPlan selectedMembershipPlan)
         [ Button.attrs [onCheck (SelectedMembershipPlan membershipPlan)]
         ] [ text (MembershipPlan.makeReadable membershipPlan) ]
+
+
+viewPaymentForm : Model -> User.Model -> String -> Html Msg
+viewPaymentForm model user formTitle   =
+    if List.length user.payment_methods == 0 then
+        viewStripeForm
+    else
+        div []
+            <| List.concat
+                [ [ h3 [] [ text formTitle ] ]
+                , List.map (viewPaymentMethod model.selectedPaymentMethod) user.payment_methods
+                , [viewStripeOption model.selectedPaymentMethod]
+                ]
+
+
+getSubscriptionStatusText : Model -> Subscription.Model -> String
+getSubscriptionStatusText model subscription =
+    case subscription.expires_at of
+        Nothing ->
+            "good for a lifetime!"
+        Just expiresAt ->
+            let
+                dayText =
+                    String.fromInt (toDay utc expiresAt)
+                formattedDate =
+                    if toMonth utc expiresAt /= toMonth utc model.currentTime then
+                        dayText ++ " of " ++ (DateHelpers.getMonthName (toMonth utc expiresAt))
+                    else
+                        dayText
+            in
+            if subscription.recurring then
+                "set to be auto-renewed on the " ++ formattedDate ++ "."
+            else
+                "set to expire on the " ++ formattedDate ++ "."
 
 
 viewStripeForm : Html Msg

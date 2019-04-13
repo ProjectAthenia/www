@@ -301,7 +301,7 @@ changeRouteToAuthenticatedRoute route model session token user =
                 |> updateWith (ArticleEditor articleId) GotArticleEditorMsg model
 
         Route.Settings ->
-            Settings.init session model.apiUrl token
+            Settings.init model.currentTime session model.apiUrl token
                 |> updateWith Settings GotSettingsMsg model
 
         Route.Home ->

@@ -12,5 +12,12 @@ testModelDecoder =
         \() ->
             Expect.equal (Ok { id = 342
                             , cost = 12.12
+                            , membership_plan =
+                                { id = 342
+                                , name = "Steve"
+                                , duration = "yearly"
+                                , current_cost = 12.12
+                                , current_rate_id = 345
+                                }
                             })
-                <| JsonDecode.decodeString MembershipPlanRate.modelDecoder "{\"id\":342,\"cost\":\"12.12\"}"
+                <| JsonDecode.decodeString MembershipPlanRate.modelDecoder "{\"id\":342,\"cost\":\"12.12\",\"membership_plan\":{\"id\":342,\"name\":\"Steve\",\"duration\":\"yearly\",\"current_cost\":\"12.12\",\"current_rate_id\":345}}"

@@ -17,7 +17,6 @@ type alias Model =
     , expires_at : Maybe Posix
     , canceled_at : Maybe Posix
     , recurring: Bool
-    , membership_plan : MembershipPlan.Model
     , membership_plan_rate : MembershipPlanRate.Model
     , payment_method : PaymentMethod.Model
     }
@@ -71,7 +70,6 @@ modelDecoder =
         |> required "expires_at" (JsonDecode.maybe Iso8601.decoder)
         |> required "canceled_at" (JsonDecode.maybe Iso8601.decoder)
         |> required "recurring" JsonDecode.bool
-        |> required "membership_plan" MembershipPlan.modelDecoder
         |> required "membership_plan_rate" MembershipPlanRate.modelDecoder
         |> required "payment_method" PaymentMethod.modelDecoder
 
@@ -90,15 +88,8 @@ toCreateJson model =
         ]
 
 
-toUpdateJson : Model -> JsonEncode.Value
-toUpdateJson model =
+recurringJson : Bool -> JsonEncode.Value
+recurringJson recurring =
     JsonEncode.object
-        [ ("recurring", JsonEncode.bool model.recurring)
-        ]
-
-
-cancelJson : JsonEncode.Value
-cancelJson =
-    JsonEncode.object
-        [ ("cancel", JsonEncode.bool True)
+        [ ("recurring", JsonEncode.bool recurring)
         ]

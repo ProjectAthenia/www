@@ -37,15 +37,17 @@ testGetActiveSubscriptions =
                               , expires_at = Nothing
                               , canceled_at = Nothing
                               , recurring = False
-                              , membership_plan = { id = 453
-                                                  , name = "A membership plan"
-                                                  , duration = "yearly"
-                                                  , current_cost = 10.00
-                                                  , current_rate_id = 5
-                                                  }
-                              , membership_plan_rate = { id = 2
-                                                       , cost = 4.00
-                                                       }
+                              , membership_plan_rate =
+                                  { id = 2
+                                  , cost = 4.00
+                                  , membership_plan =
+                                      { id = 453
+                                      , name = "A membership plan"
+                                      , duration = "yearly"
+                                      , current_cost = 10.00
+                                      , current_rate_id = 5
+                                      }
+                                  }
                               , payment_method = { id = 563
                                                  , payment_method_key = "test_key"
                                                  , payment_method_type = "stripe"
@@ -58,15 +60,17 @@ testGetActiveSubscriptions =
                               , expires_at = Just (millisToPosix 5000)
                               , canceled_at = Nothing
                               , recurring = False
-                              , membership_plan = { id = 453
-                                                  , name = "A membership plan"
-                                                  , duration = "yearly"
-                                                  , current_cost = 10.00
-                                                  , current_rate_id = 5
-                                                  }
-                              , membership_plan_rate = { id = 2
-                                                       , cost = 4.00
-                                                       }
+                              , membership_plan_rate =
+                                  { id = 2
+                                  , cost = 4.00
+                                  , membership_plan =
+                                      { id = 453
+                                      , name = "A membership plan"
+                                      , duration = "yearly"
+                                      , current_cost = 10.00
+                                      , current_rate_id = 5
+                                      }
+                                  }
                               , payment_method = { id = 563
                                                  , payment_method_key = "test_key"
                                                  , payment_method_type = "stripe"
@@ -79,15 +83,17 @@ testGetActiveSubscriptions =
                               , expires_at = Just (millisToPosix 1000)
                               , canceled_at = Nothing
                               , recurring = False
-                              , membership_plan = { id = 453
-                                                  , name = "A membership plan"
-                                                  , duration = "yearly"
-                                                  , current_cost = 10.00
-                                                  , current_rate_id = 5
-                                                  }
-                              , membership_plan_rate = { id = 2
-                                                       , cost = 4.00
-                                                       }
+                              , membership_plan_rate =
+                                  { id = 2
+                                  , cost = 4.00
+                                  , membership_plan =
+                                      { id = 453
+                                      , name = "A membership plan"
+                                      , duration = "yearly"
+                                      , current_cost = 10.00
+                                      , current_rate_id = 5
+                                      }
+                                  }
                               , payment_method = { id = 563
                                                  , payment_method_key = "test_key"
                                                  , payment_method_type = "stripe"
@@ -104,15 +110,17 @@ testGetActiveSubscriptions =
                   , expires_at = Nothing
                   , canceled_at = Nothing
                   , recurring = False
-                  , membership_plan = { id = 453
-                                      , name = "A membership plan"
-                                      , duration = "yearly"
-                                      , current_cost = 10.00
-                                      , current_rate_id = 5
-                                      }
-                  , membership_plan_rate = { id = 2
-                                           , cost = 4.00
-                                           }
+                  , membership_plan_rate =
+                      { id = 2
+                      , cost = 4.00
+                      , membership_plan =
+                          { id = 453
+                          , name = "A membership plan"
+                          , duration = "yearly"
+                          , current_cost = 10.00
+                          , current_rate_id = 5
+                          }
+                      }
                   , payment_method = { id = 563
                                      , payment_method_key = "test_key"
                                      , payment_method_type = "stripe"
@@ -125,15 +133,17 @@ testGetActiveSubscriptions =
                   , expires_at = Just (millisToPosix 5000)
                   , canceled_at = Nothing
                   , recurring = False
-                  , membership_plan = { id = 453
-                                      , name = "A membership plan"
-                                      , duration = "yearly"
-                                      , current_cost = 10.00
-                                      , current_rate_id = 5
-                                      }
-                  , membership_plan_rate = { id = 2
-                                           , cost = 4.00
-                                           }
+                  , membership_plan_rate =
+                      { id = 2
+                      , cost = 4.00
+                      , membership_plan =
+                          { id = 453
+                          , name = "A membership plan"
+                          , duration = "yearly"
+                          , current_cost = 10.00
+                          , current_rate_id = 5
+                          }
+                      }
                   , payment_method = { id = 563
                                      , payment_method_key = "test_key"
                                      , payment_method_type = "stripe"
@@ -155,15 +165,17 @@ testGetCurrentSubscription =
             , expires_at = Nothing
             , canceled_at = Nothing
             , recurring = False
-            , membership_plan = { id = 453
-                                , name = "A membership plan"
-                                , duration = "yearly"
-                                , current_cost = 10.00
-                                , current_rate_id = 5
-                                }
-            , membership_plan_rate = { id = 2
-                                     , cost = 4.00
-                                     }
+            , membership_plan_rate =
+                { id = 2
+                , cost = 4.00
+                , membership_plan =
+                    { id = 453
+                    , name = "A membership plan"
+                    , duration = "yearly"
+                    , current_cost = 10.00
+                    , current_rate_id = 5
+                    }
+                }
             , payment_method = { id = 563
                                , payment_method_key = "test_key"
                                , payment_method_type = "stripe"
@@ -177,15 +189,17 @@ testGetCurrentSubscription =
             , expires_at = Just (millisToPosix 3000)
             , canceled_at = Nothing
             , recurring = False
-            , membership_plan = { id = 453
-                                , name = "A membership plan"
-                                , duration = "yearly"
-                                , current_cost = 10.00
-                                , current_rate_id = 5
-                                }
-            , membership_plan_rate = { id = 2
-                                     , cost = 4.00
-                                     }
+            , membership_plan_rate =
+                { id = 2
+                , cost = 4.00
+                , membership_plan =
+                    { id = 453
+                    , name = "A membership plan"
+                    , duration = "yearly"
+                    , current_cost = 10.00
+                    , current_rate_id = 5
+                    }
+                }
             , payment_method = { id = 563
                                , payment_method_key = "test_key"
                                , payment_method_type = "stripe"
@@ -199,15 +213,17 @@ testGetCurrentSubscription =
             , expires_at = Just (millisToPosix 5000)
             , canceled_at = Nothing
             , recurring = False
-            , membership_plan = { id = 453
-                                , name = "A membership plan"
-                                , duration = "yearly"
-                                , current_cost = 10.00
-                                , current_rate_id = 5
-                                }
-            , membership_plan_rate = { id = 2
-                                     , cost = 4.00
-                                     }
+            , membership_plan_rate =
+                { id = 2
+                , cost = 4.00
+                , membership_plan =
+                    { id = 453
+                    , name = "A membership plan"
+                    , duration = "yearly"
+                    , current_cost = 10.00
+                    , current_rate_id = 5
+                    }
+                }
             , payment_method = { id = 563
                                , payment_method_key = "test_key"
                                , payment_method_type = "stripe"
