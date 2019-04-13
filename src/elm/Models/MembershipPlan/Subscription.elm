@@ -17,8 +17,8 @@ type alias Model =
     , expires_at : Maybe Posix
     , canceled_at : Maybe Posix
     , recurring: Bool
-    , membership_plan_rate : MembershipPlanRate.Model
-    , payment_method : PaymentMethod.Model
+    , membership_plan_rate : Maybe MembershipPlanRate.Model
+    , payment_method : Maybe PaymentMethod.Model
     }
 
 
@@ -70,8 +70,8 @@ modelDecoder =
         |> required "expires_at" (JsonDecode.maybe Iso8601.decoder)
         |> required "canceled_at" (JsonDecode.maybe Iso8601.decoder)
         |> required "recurring" JsonDecode.bool
-        |> required "membership_plan_rate" MembershipPlanRate.modelDecoder
-        |> required "payment_method" PaymentMethod.modelDecoder
+        |> optional "membership_plan_rate" (JsonDecode.maybe MembershipPlanRate.modelDecoder) Nothing
+        |> optional "payment_method" (JsonDecode.maybe PaymentMethod.modelDecoder) Nothing
 
 
 listDecoder : JsonDecode.Decoder (List Model)

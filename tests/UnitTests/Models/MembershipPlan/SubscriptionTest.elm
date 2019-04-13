@@ -18,7 +18,7 @@ testCompareExpiration =
             , expires_at = Nothing
             , canceled_at = Nothing
             , recurring = False
-            , membership_plan_rate =
+            , membership_plan_rate = Just
                 { id = 2
                 , cost = 4.00
                 , membership_plan =
@@ -29,7 +29,7 @@ testCompareExpiration =
                     , current_rate_id = 5
                     }
                 }
-            , payment_method = { id = 563
+            , payment_method = Just { id = 563
                                , payment_method_key = "test_key"
                                , payment_method_type = "stripe"
                                , identifier = Nothing
@@ -42,7 +42,7 @@ testCompareExpiration =
             , expires_at = Just (millisToPosix 5000)
             , canceled_at = Nothing
             , recurring = False
-            , membership_plan_rate =
+            , membership_plan_rate = Just
                 { id = 2
                 , cost = 4.00
                 , membership_plan =
@@ -53,7 +53,7 @@ testCompareExpiration =
                     , current_rate_id = 5
                     }
                 }
-            , payment_method = { id = 563
+            , payment_method = Just { id = 563
                                , payment_method_key = "test_key"
                                , payment_method_type = "stripe"
                                , identifier = Nothing
@@ -66,7 +66,7 @@ testCompareExpiration =
             , expires_at = Just (millisToPosix 1000)
             , canceled_at = Nothing
             , recurring = False
-            , membership_plan_rate =
+            , membership_plan_rate = Just
                 { id = 2
                 , cost = 4.00
                 , membership_plan =
@@ -77,7 +77,7 @@ testCompareExpiration =
                     , current_rate_id = 5
                     }
                 }
-            , payment_method = { id = 563
+            , payment_method = Just { id = 563
                                , payment_method_key = "test_key"
                                , payment_method_type = "stripe"
                                , identifier = Nothing
@@ -117,7 +117,7 @@ testIsActive =
                         , expires_at = Nothing
                         , canceled_at = Nothing
                         , recurring = False
-                        , membership_plan_rate =
+                        , membership_plan_rate = Just
                             { id = 2
                             , cost = 4.00
                             , membership_plan =
@@ -128,7 +128,7 @@ testIsActive =
                                 , current_rate_id = 5
                                 }
                             }
-                        , payment_method = { id = 563
+                        , payment_method = Just { id = 563
                                            , payment_method_key = "test_key"
                                            , payment_method_type = "stripe"
                                            , identifier = Nothing
@@ -144,7 +144,7 @@ testIsActive =
                         , expires_at = Just (millisToPosix 5000)
                         , canceled_at = Nothing
                         , recurring = False
-                        , membership_plan_rate =
+                        , membership_plan_rate = Just
                             { id = 2
                             , cost = 4.00
                             , membership_plan =
@@ -155,11 +155,12 @@ testIsActive =
                                 , current_rate_id = 5
                                 }
                             }
-                        , payment_method = { id = 563
-                                           , payment_method_key = "test_key"
-                                           , payment_method_type = "stripe"
-                                           , identifier = Nothing
-                                           }
+                        , payment_method = Just
+                            { id = 563
+                            , payment_method_key = "test_key"
+                            , payment_method_type = "stripe"
+                            , identifier = Nothing
+                            }
                         }
         , test "Test that a subscription is not active that has expired" <|
             \() ->
@@ -171,7 +172,7 @@ testIsActive =
                         , expires_at = Just (millisToPosix 1000)
                         , canceled_at = Nothing
                         , recurring = False
-                        , membership_plan_rate =
+                        , membership_plan_rate = Just
                             { id = 2
                             , cost = 4.00
                             , membership_plan =
@@ -182,11 +183,12 @@ testIsActive =
                                 , current_rate_id = 5
                                 }
                             }
-                        , payment_method = { id = 563
-                                           , payment_method_key = "test_key"
-                                           , payment_method_type = "stripe"
-                                           , identifier = Nothing
-                                           }
+                        , payment_method = Just
+                            { id = 563
+                            , payment_method_key = "test_key"
+                            , payment_method_type = "stripe"
+                            , identifier = Nothing
+                            }
                         }
         ]
 
@@ -201,7 +203,7 @@ testModelDecoder =
                                 , expires_at = Just (millisToPosix 4000)
                                 , canceled_at = Nothing
                                 , recurring = False
-                                , membership_plan_rate =
+                                , membership_plan_rate = Just
                                     { id = 2
                                     , cost = 4.00
                                     , membership_plan =
@@ -212,7 +214,7 @@ testModelDecoder =
                                         , current_rate_id = 5
                                         }
                                     }
-                                , payment_method = { id = 563
+                                , payment_method = Just { id = 563
                                                    , payment_method_key = "test_key"
                                                    , payment_method_type = "stripe"
                                                    , identifier = Nothing
@@ -227,7 +229,7 @@ testModelDecoder =
                                 , expires_at = Just (millisToPosix 4000)
                                 , canceled_at = Just (millisToPosix 5000)
                                 , recurring = False
-                                , membership_plan_rate =
+                                , membership_plan_rate = Just
                                     { id = 2
                                     , cost = 4.00
                                     , membership_plan =
@@ -238,7 +240,7 @@ testModelDecoder =
                                         , current_rate_id = 5
                                         }
                                     }
-                                , payment_method = { id = 563
+                                , payment_method = Just { id = 563
                                                    , payment_method_key = "test_key"
                                                    , payment_method_type = "stripe"
                                                    , identifier = Nothing

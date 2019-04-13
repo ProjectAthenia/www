@@ -16,7 +16,7 @@ import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
-import Html exposing (Html, div, fieldset, h1, h3, text)
+import Html exposing (Html, div, fieldset, h1, h3, p, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onSubmit, onCheck)
 import Http
@@ -143,11 +143,35 @@ viewSubscriptionForm : Model -> User.Model -> Html Msg
 viewSubscriptionForm model user =
     case model.currentSubscription of
         Just subscription ->
-            div []
-                [ h3 []
+            div [ id "existing-subscription" ]
+                [ p []
                     [ text
-                        <| "Your " ++ subscription.membership_plan_rate.membership_plan.name ++ " subscription is " ++ (getSubscriptionStatusText model subscription)
+                        <| case subscription.membership_plan_rate of
+                            Just membershipPlanRate ->
+                                "Your " ++ membershipPlanRate.membership_plan.name ++ " subscription is " ++ (getSubscriptionStatusText model subscription)
+                            Nothing ->
+                                "Your subscription is " ++ (getSubscriptionStatusText model subscription)
                     ]
+                , case subscription.expires_at of
+                    Nothing ->
+                        text ""
+                    Just _ ->
+                        if subscription.recurring then
+                            Button.button
+                                [ Button.primary
+                                , Button.large
+                                , Button.onClick CancelAutoRenewal
+                                ] [ text "Cancel Auto Renewal" ]
+                        else
+                            Button.button
+                                [ Button.primary
+                                , Button.large
+                                , Button.onClick EnableAutoRenewal
+                                ] [ text "Turn On Auto Renewal" ]
+                , if subscription.recurring then
+                    viewPaymentForm model user "Your Payment Methods"
+                  else
+                    text ""
                 ]
         Nothing ->
             Form.form [ id "subscription-form", onSubmit (SubmittedSubscriptionForm) ]
@@ -286,6 +310,8 @@ type Msg
     | SubmittedSubscriptionForm
     | SelectedMembershipPlan MembershipPlan.Model Bool
     | SelectedPaymentMethod (Maybe PaymentMethod.Model) Bool
+    | CancelAutoRenewal
+    | EnableAutoRenewal
     | EnteredName String
     | EnteredEmail String
     | EnteredPassword String
@@ -293,7 +319,8 @@ type Msg
     | CompletedFormLoad (Result Api.Error User.Model)
     | CompletedSave (Result Api.Error User.Model)
     | CreatedPaymentMethod (Result Api.Error PaymentMethod.Model)
-    | CreatedSubscription (Result Api.Error Subscription.Model)
+    | CreatedSubscription PaymentMethod.Model MembershipPlan.Model (Result Api.Error Subscription.Model)
+    | UpdatedSubscription Subscription.Model (Result Api.Error Subscription.Model)
     | GotSession Session
     | TokenCreated String
     | StripeError String
@@ -310,16 +337,24 @@ update msg model =
                     , email = user.email
                     , password = ""
                     }
+                currentSubscription = User.getCurrentSubscription model.currentTime user
+                selectedPaymentMethod =
+                    case currentSubscription of
+                        Just subscription ->
+                            subscription.payment_method
+                        Nothing ->
+                            Nothing
             in
             ( { model
                 | showLoading = False
                 , status = Loaded settingsForm
                 , maybeUser = Just user
+                , currentSubscription = currentSubscription
                 , selectedPaymentMethod =
-                    if List.length user.payment_methods == 0 then
-                        (True, Nothing)
+                    if List.length user.payment_methods == 0 || selectedPaymentMethod /= Nothing then
+                        (True, selectedPaymentMethod)
                     else
-                        (False, Nothing)
+                        (False, selectedPaymentMethod)
             }
             , Stripe.initStripeForm "card-element"
             )
@@ -352,6 +387,13 @@ update msg model =
                     ( { model | problems = problems }
                     , Cmd.none
                     )
+
+        CancelAutoRenewal ->
+            setSubscriptionRecurring model False
+
+        EnableAutoRenewal ->
+            setSubscriptionRecurring model True
+
 
         SubmittedSubscriptionForm ->
             case (model.selectedPaymentMethod, model.selectedMembershipPlan, model.maybeUser) of
@@ -478,9 +520,18 @@ update msg model =
                     , Cmd.none
                     )
 
-        CreatedSubscription (Ok subscription) ->
+        CreatedSubscription paymentMethod membershipPlan (Ok subscription) ->
             ( { model
                 | showLoading = False
+                , currentSubscription = Just
+                    { subscription
+                        | payment_method = Just paymentMethod
+                        , membership_plan_rate = Just
+                            { id = membershipPlan.current_rate_id
+                            , cost = membershipPlan.current_cost
+                            , membership_plan = membershipPlan
+                            }
+                    }
                 , maybeUser =
                     case model.maybeUser of
                         Just user ->
@@ -493,7 +544,25 @@ update msg model =
             , Cmd.none
             )
 
-        CreatedSubscription (Err error) ->
+        CreatedSubscription _ _ (Err error) ->
+            ( { model
+                | showLoading = False
+            }
+            , Cmd.none
+            )
+
+        UpdatedSubscription localSubscription (Ok subscription) ->
+            ( { model
+                | showLoading = False
+                , currentSubscription = Just
+                    { localSubscription
+                        | recurring = subscription.recurring
+                    }
+            }
+            , Cmd.none
+            )
+
+        UpdatedSubscription _ (Err error) ->
             ( { model
                 | showLoading = False
             }
@@ -514,6 +583,18 @@ updateForm transform model =
         _ ->
             ( model, Log.error )
 
+
+setSubscriptionRecurring : Model -> Bool -> (Model, Cmd Msg)
+setSubscriptionRecurring model recurring =
+    case (model.maybeUser, model.currentSubscription) of
+        (Just user, Just subscription) ->
+            ( { model
+                | showLoading = True
+            }
+            , updateSubscription model.apiUrl model.token user.id subscription (Subscription.recurringJson recurring)
+            )
+        _ ->
+            (model, Cmd.none)
 
 isMembershipPlanSelected : MembershipPlan.Model -> Maybe MembershipPlan.Model -> Bool
 isMembershipPlanSelected membershipPlan maybeSelectedMembershipPlan =
@@ -701,4 +782,9 @@ createSubscription apiUrl token userId paymentMethod membershipPlan =
         encodedSubscription =
             Subscription.toCreateJson createModel
     in
-    Api.createUserSubscription apiUrl token userId (Http.jsonBody encodedSubscription) CreatedSubscription
+    Api.createUserSubscription apiUrl token userId (Http.jsonBody encodedSubscription) (CreatedSubscription paymentMethod membershipPlan)
+
+
+updateSubscription : String -> Token -> Int -> Subscription.Model -> Encode.Value -> Cmd Msg
+updateSubscription apiUrl token userId subscription body =
+    Api.updateUserSubscription apiUrl token userId subscription.id (Http.jsonBody body) (UpdatedSubscription subscription)

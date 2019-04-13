@@ -5,7 +5,7 @@ module Api.Endpoint exposing
     , login, signUp, refresh
     , membershipPlans
     , user, userActivity, me
-    , userPaymentMethods, userSubscriptions
+    , userPaymentMethods, userSubscriptions, userSubscription
     )
 
 import Http
@@ -150,6 +150,11 @@ userPaymentMethods apiUrl userId =
 userSubscriptions : String -> Int -> Endpoint
 userSubscriptions apiUrl userId =
     url apiUrl [ "users", String.fromInt userId, "subscriptions" ] []
+
+
+userSubscription : String -> Int -> Int -> Endpoint
+userSubscription apiUrl userId subscriptionId =
+    url apiUrl [ "users", String.fromInt userId, "subscriptions", String.fromInt subscriptionId ] []
 
 
 userActivity : String -> Int -> Endpoint
