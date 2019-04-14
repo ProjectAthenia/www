@@ -568,7 +568,7 @@ update msg model =
                         Nothing ->
                             Nothing
             }
-            , Cmd.none
+            , Stripe.initStripeForm "card-element"
             )
 
         CreatedSubscription _ _ (Err error) ->
