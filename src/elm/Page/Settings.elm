@@ -169,7 +169,14 @@ viewSubscriptionForm model user =
                                 , Button.onClick EnableAutoRenewal
                                 ] [ text "Turn On Auto Renewal" ]
                 , if subscription.recurring then
-                    viewPaymentForm model user "Your Payment Methods"
+                    div []
+                        [viewPaymentForm model user "Your Payment Methods"
+                        , Button.button
+                            [ Button.primary
+                            , Button.large
+                            , Button.onClick UpdatePaymentMethod
+                            ] [ text "Update Payment Method" ]
+                        ]
                   else
                     text ""
                 ]
@@ -312,6 +319,7 @@ type Msg
     | SelectedPaymentMethod (Maybe PaymentMethod.Model) Bool
     | CancelAutoRenewal
     | EnableAutoRenewal
+    | UpdatePaymentMethod
     | EnteredName String
     | EnteredEmail String
     | EnteredPassword String
@@ -393,6 +401,22 @@ update msg model =
 
         EnableAutoRenewal ->
             setSubscriptionRecurring model True
+
+
+        UpdatePaymentMethod ->
+            case (model.maybeUser, model.currentSubscription, model.selectedPaymentMethod) of
+                (Just user, Just subscription, (_, Just paymentMethod)) ->
+                    updatePaymentMethod model user subscription paymentMethod
+
+                (_, _, (_, Nothing)) ->
+                    ( { model
+                        | showLoading = True
+                    }
+                    , Stripe.createPaymentToken "card-element"
+                    )
+
+                _ ->
+                    (model, Cmd.none)
 
 
         SubmittedSubscriptionForm ->
@@ -493,8 +517,11 @@ update msg model =
                         | selectedPaymentMethod = (True, Just paymentMethod)
                     }
             in
-            case (model.maybeUser, model.selectedMembershipPlan) of
-                (Just user, Just membershipPlan) ->
+            case (model.maybeUser, model.selectedMembershipPlan, model.currentSubscription) of
+                (Just user, _, Just subscription) ->
+                    updatePaymentMethod model user subscription paymentMethod
+
+                (Just user, Just membershipPlan, Nothing) ->
                     ( { updatedModel
                         | showLoading = True
                     }
@@ -595,6 +622,16 @@ setSubscriptionRecurring model recurring =
             )
         _ ->
             (model, Cmd.none)
+
+
+updatePaymentMethod : Model -> User.Model -> Subscription.Model -> PaymentMethod.Model -> (Model, Cmd Msg)
+updatePaymentMethod model user subscription paymentMethod =
+    ( { model
+        | showLoading = True
+    }
+    , updateSubscription model.apiUrl model.token user.id subscription (Subscription.paymentMethodChangedJson paymentMethod.id)
+    )
+
 
 isMembershipPlanSelected : MembershipPlan.Model -> Maybe MembershipPlan.Model -> Bool
 isMembershipPlanSelected membershipPlan maybeSelectedMembershipPlan =

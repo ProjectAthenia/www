@@ -93,3 +93,10 @@ recurringJson recurring =
     JsonEncode.object
         [ ("recurring", JsonEncode.bool recurring)
         ]
+
+
+paymentMethodChangedJson : Int -> JsonEncode.Value
+paymentMethodChangedJson paymentMethodId =
+    JsonEncode.object
+        [ ("payment_method_id", JsonEncode.int paymentMethodId)
+        ]
