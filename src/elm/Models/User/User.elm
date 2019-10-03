@@ -4,9 +4,11 @@ module Models.User.User exposing(..)
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
-import Models.Role as Role
-import Models.Payment.PaymentMethod as PaymentMethod
+import List.Extra as ListExtra
 import Models.MembershipPlan.Subscription as Subscription
+import Models.Page as Page
+import Models.Payment.PaymentMethod as PaymentMethod
+import Models.Role as Role
 import Time exposing (..)
 
 
@@ -30,6 +32,22 @@ canViewArticles user =
 hasRole : Model -> Int -> Bool
 hasRole user roleId =
     List.any (\role -> roleId == role.id) user.roles
+
+
+-- adds the passed in role to the user model
+addRole : Model -> Role.Model -> Model
+addRole user role =
+    { user
+        | roles = List.append user.roles [role]
+    }
+
+
+-- removes a role from a user model
+removeRole : Model -> Role.Model -> Model
+removeRole user role =
+    { user
+        | roles = ListExtra.remove role user.roles
+    }
 
 
 -- Subscription Helpers
@@ -99,3 +117,9 @@ modelDecoder =
 listDecoder : Decoder (List Model)
 listDecoder =
     JsonDecode.list modelDecoder
+
+
+
+pageDecoder : Decoder (Page.Model Model)
+pageDecoder =
+    Page.modelDecoder listDecoder

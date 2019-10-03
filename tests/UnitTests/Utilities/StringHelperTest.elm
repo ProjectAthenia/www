@@ -5,6 +5,28 @@ import Expect
 import Test exposing (..)
 
 
+testIsPunctuation : Test
+testIsPunctuation =
+    describe "Check to make sure that various characters pass the is puncuation test"
+        [ test "Makes sure a chinese character passes the test as false" <|
+            \() ->
+                Expect.false "" <|
+                    StringHelper.isPunctuation '冰'
+        , test "Makes sure a chinese punctuation character passes the test as true" <|
+            \() ->
+                Expect.true "" <|
+                    StringHelper.isPunctuation '。'
+        ]
+
+
+testTransformToIndexedList : Test
+testTransformToIndexedList =
+    test "Makes sure we can tranform a string properly" <|
+        \() ->
+            Expect.equal [(0, '我'), (1, '是'), (2, '肉'), (3, '。')] <|
+                StringHelper.transformToIndexedList "我是肉。"
+
+
 testIsCharTupleEqual: Test
 testIsCharTupleEqual =
     describe "Makes sure that the isCharTupleEqual comparison works"

@@ -309,6 +309,53 @@ testToJson =
         ]
 
 
+testHasRole : Test
+testHasRole =
+    describe "Makes sure that we can properly determine whether or not a user has a role"
+        [ test "Makes sure that we can determine that a user has a role" <|
+            \() ->
+                let
+                    role = {id = 5, name = "Something"}
+                    user = mockUser "" "" "" [role]
+                in
+                    Expect.true ""
+                        <| User.hasRole user role.id
+        , test "Makes sure that we can determine that a user does not have a role" <|
+            \() ->
+                let
+                    role = {id = 5, name = "Something"}
+                    user = mockUser "" "" "" []
+                in
+                    Expect.false ""
+                        <| User.hasRole user role.id
+        ]
+
+
+testAddRole : Test
+testAddRole =
+    test "Makes sure that we can properly add a role" <|
+        \() ->
+            let
+                role = {id = 5, name = "Something"}
+                user = mockUser "" "" "" []
+            in
+                Expect.equal [{id = 5, name = "Something"}]
+                    <| (User.addRole user role).roles
+
+
+testRemoveRole : Test
+testRemoveRole =
+    test "Makes sure that we can properly remove a role" <|
+        \() ->
+            let
+                role = {id = 5, name = "Something"}
+                user = mockUser "" "" "" [{id = 5, name = "Something"}, {id = 6, name = "Something"}]
+            in
+                Expect.equal [{id = 6, name = "Something"}]
+                    <| (User.removeRole user role).roles
+
+
+
 testCacheEncoder : Test
 testCacheEncoder =
    test "Makes sure that the cache encoder works properly" <|

@@ -1,5 +1,28 @@
 module Utilities.StringHelper exposing (..)
 
+import List.Extra as ListExtra
+
+
+punctuationChars : List Char
+punctuationChars =
+    [' ', '\n', '\r', '\t' -- Basic Spacing characters
+    , '.', ',', '(', ')', '\'', '"', '`', ';', ':', '!', '?', '·', '…', '…' -- Common punctuation
+    , '~', '\\', '/', '+', '=', '-', '_', '%', '*' -- Mostly math stuff
+    , '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+    , '￥', '$', '¢' -- Currency stuff
+    , '。', '，', '；', '：', '、', '《', '》', '【', '】', '）', '（', '「', '」', '﹁', '﹂', '？', '！' -- Chinese stuff
+    ]
+
+
+isPunctuation : Char -> Bool
+isPunctuation character =
+    List.member character punctuationChars
+
+
+transformToIndexedList : String -> List (Int, Char)
+transformToIndexedList content =
+    ListExtra.zip (List.range 0 (String.length content)) (String.toList content)
+
 
 isCharTupleEqual: (Char, Char) -> Bool
 isCharTupleEqual (charA, charB) =

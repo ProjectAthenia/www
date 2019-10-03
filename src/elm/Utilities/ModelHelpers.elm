@@ -1,6 +1,50 @@
 module Utilities.ModelHelpers exposing (..)
 
 import Json.Decode as JsonDecode exposing (..)
+import Json.Encode as Encode
+
+
+type alias GenericModel a =
+    { a | id: Maybe Int }
+
+
+-- Takes a list of models and converts them to a list of ids
+pluckIds : List (GenericModel a) -> List (Int)
+pluckIds models =
+    List.filterMap (\model -> model.id) models
+
+
+encodeIds : List (GenericModel a) -> List (Encode.Value)
+encodeIds models =
+    pluckIds models
+        |> List.map (\id -> Encode.int id)
+
+
+toKeyValuePairs : List (GenericModel a) -> List (Int, GenericModel a)
+toKeyValuePairs models =
+    List.filterMap keyValuePair models
+
+
+keyValuePair : GenericModel a -> Maybe (Int, GenericModel a)
+keyValuePair model =
+    case model.id of
+        Just id ->
+            Just (id, model)
+        Nothing ->
+            Nothing
+
+
+pullFromKeyValueById : Int -> List (Int, GenericModel a) -> Maybe (GenericModel a)
+pullFromKeyValueById id models =
+    List.head (List.filterMap (checkIfKeyValuePairMatchesID id) models)
+
+
+checkIfKeyValuePairMatchesID : Int -> (Int, GenericModel a) -> Maybe (GenericModel a)
+checkIfKeyValuePairMatchesID id (key, value) =
+    if id == key then
+        Just value
+    else
+        Nothing
 
 
 stringFloatDecoder : Decoder Float

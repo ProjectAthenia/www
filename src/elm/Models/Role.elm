@@ -3,6 +3,7 @@ module Models.Role exposing (..)
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as JsonEncode exposing (..)
+import Models.Page as Page exposing (..)
 
 
 appUser = 1
@@ -38,3 +39,8 @@ modelDecoder =
 listDecoder : Decoder (List Model)
 listDecoder =
     JsonDecode.list modelDecoder
+
+
+pageDecoder : Decoder (Page.Model Model)
+pageDecoder =
+    Page.modelDecoder listDecoder
