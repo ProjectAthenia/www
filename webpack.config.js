@@ -9,7 +9,6 @@ const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
 require('dotenv').config();
 
-
 const prod = 'production';
 const dev = 'development';
 
@@ -55,6 +54,7 @@ let commonConfig = {
             "SOCKET_URL",
             "FOOTER_MESSAGE",
             "STRIPE_PUBLISHABLE_KEY",
+            "STORAGE_KEY",
         ]),
     ]
 };
@@ -105,7 +105,7 @@ if (isProd === true) {
                 test: /\.sc?ss$/,
                 use: ExtractTextPlugin.extract({
                     fallback: 'style-loader',
-                        use: ['css-loader', 'sass-loader']
+                    use: ['css-loader', 'sass-loader']
                 })
             }]
         },
