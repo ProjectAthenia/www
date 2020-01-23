@@ -100,7 +100,7 @@ viewContent model =
                     [ viewTitle article
                     , viewHistoryButtons model.currentlyViewingIteration
                     , viewProblems problems
-                    , viewForm model.currentlyViewingIteration model.token form
+                    , viewForm model.currentlyViewingIteration form
                     ]
 
                 LoadingFailed ->
@@ -156,8 +156,8 @@ viewProblem problem =
     li [] [ text errorMessage ]
 
 
-viewForm : Maybe Iteration.Model -> Token -> Form -> Html Msg
-viewForm maybeIteration token fields =
+viewForm : Maybe Iteration.Model -> Form -> Html Msg
+viewForm maybeIteration fields =
     Form.form [ ]
         [ h2 [] [ text "Enter the article contents below." ]
         , Textarea.textarea
@@ -256,8 +256,8 @@ update msg model =
         CompletedLoadArticle (Ok article) ->
             let
                 form =
-                    { content = article.content
-                    , lastContentSnapshot = article.content
+                    { content = article.last_iteration_content
+                    , lastContentSnapshot = article.last_iteration_content
                     }
             in
             ( { model

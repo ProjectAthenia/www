@@ -13,6 +13,7 @@ type alias Model =
     { id : Int
     , title : String
     , content : String
+    , last_iteration_content : String
     , created_by : Maybe User.Model
     , iterations : List Iteration.Model
     }
@@ -52,6 +53,7 @@ modelDecoder =
         |> required "id" int
         |> required "title" string
         |> optional "content" string ""
+        |> optional "last_iteration_content" string ""
         |> optional "created_by" (maybe User.modelDecoder) Nothing
         |> optional "iterations" Iteration.listDecoder []
 
