@@ -8,17 +8,14 @@ This update is a pretty big update that adds a ton of utility functions. To star
 
 * src/elm/Models/Role.elm
 * src/elm/Models/User/User.elm
+* src/elm/Utilities/ModelHelpers.elm
+* src/elm/Utilities/StringHelper.elm
 * src/index.js
 * webpack.config.js
 * tests/UnitTests/Models/User/UserTest.elm
-
-Then copy over the following new files
-
-* src/elm/Utilities/ModelHelpers.elm
-* src/elm/Utilities/StringHelper.elm
-* src/ports/
-* tests/UnitTests/Utilities/ModelHelpersTest.elm
 * tests/UnitTests/Utilities/StringHelperTest.elm
+
+Then copy over the `src/ports/` directory, and `tests/UnitTests/Utilities/ModelHelpersTest.elm` test to finish the update.
 
 ## 0.2.1
 
