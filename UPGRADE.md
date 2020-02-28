@@ -2,6 +2,14 @@
 
 To upgrade from previous version of Athenia please check each version number listed below step by step.
 
+## 0.3.1
+
+This fixes a potential bug with the article editor displaying the incorrect iteration source. To finish this update simply copy over the following files.
+
+* src/elm/Models/Wiki/Article.elm
+* src/elm/Page/Article/Editor.elm
+* tests/UnitTests/Models/Wiki/ArticleTest.elm
+
 ## 0.3.0
 
 This update is a pretty big update that adds a ton of utility functions. To start, make sure that list extra `elm-community/list-extra` is installed. Then update the following files.
