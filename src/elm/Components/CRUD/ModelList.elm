@@ -1,6 +1,6 @@
 module Components.CRUD.ModelList exposing (..)
 
-import Api exposing (deleteModel, Token)
+import Api exposing (Token)
 import Api.Endpoint exposing (Endpoint)
 import Bootstrap.Button as Button
 import Bootstrap.Form.Input as Input
@@ -421,7 +421,7 @@ reload token model =
 
 runQuery: Token -> Model dataModel -> Int -> Cmd (Msg dataModel)
 runQuery token model currentPage =
-    LingwaveApi.genericQuery (createQuery model currentPage) token model.decoder NewDataResponse
+    Api.genericQuery (createQuery model currentPage) token model.decoder NewDataResponse
 
 
 createQuery: Model dataModel -> Int -> Endpoint

@@ -5,6 +5,7 @@ port module Api exposing
     , unwrapToken
     , decodeErrors
     , delete, get, post, put
+    , deleteModel, genericQuery, uploadFile, createModel, updateModel
     , login, logout, signUp, refresh
     , settings, me
     , createUserPaymentMethod
@@ -247,6 +248,8 @@ updateModel : Endpoint -> Token -> Http.Body -> Decoder dataModel -> (Result Err
 updateModel endpoint token body decoder toMsg =
     put endpoint token body decoder toMsg
 
+
+-- Specific functions used throughout the base app
 
 login : String -> Http.Body -> (Result Error Token -> msg) -> Cmd msg
 login apiUrl body toMsg =
