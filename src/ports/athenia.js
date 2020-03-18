@@ -1,5 +1,47 @@
 // Athenia root ports
 export default function(app, storageKey) {
+
+    app.ports.fileSelected.subscribe(initFileSelect);
+
+    function initFileSelect(id) {
+        var node = document.getElementById(id);
+        if (node === null) {
+            // When the user navigates to this page there are some issues with the CMD coming before the dom update
+            setTimeout(function () {
+                initFileSelect(id)
+            }, 1);
+        }
+
+        if (node.files.length === 0) {
+            return;
+        }
+        var file = node.files[0];
+        var reader = new FileReader();
+
+
+        // FileReader API is event based. Once a file is selected
+        // it fires events. We hook into the `onload` event for our reader.
+        reader.onload = (function(event) {
+            // The event carries the `target`. The `target` is the file
+            // that was selected. The result is base64 encoded contents of the file.
+            var base64encoded = event.target.result;
+            // We build up the `ImagePortData` object here that will be passed to our Elm
+            // runtime through the `fileContentRead` subscription.
+            var portData = {
+                contents: base64encoded,
+                filename: file.name,
+                fileUploaderId : id
+            };
+
+            // We call the `fileContentRead` port with the file data
+            // which will be sent to our Elm runtime via Subscriptions.
+            app.ports.fileContentRead.send(portData);
+        });
+
+        // Connect our FileReader with the file that was selected in our `input` node.
+        reader.readAsDataURL(file);
+    }
+
     var storage = localStorage.getItem(storageKey);
 
     app.ports.storeCache.subscribe(function(val) {
