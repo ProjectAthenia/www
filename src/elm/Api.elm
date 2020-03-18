@@ -22,11 +22,14 @@ It exposes an opaque Endpoint type which is guaranteed to point to the correct U
 
 -}
 
-import Api.Endpoint as Endpoint
+import Api.Endpoint as Endpoint exposing (Endpoint)
+import Models.Asset as Asset
 import Models.Error as Error
+import Models.FileUpload as FileUpload
 import Models.Payment.PaymentMethod as PaymentMethod
 import Models.MembershipPlan.MembershipPlan as MembershipPlan
 import Models.MembershipPlan.Subscription as Subscription
+import Models.Status as Status
 import Models.User.User as User
 import Models.Wiki.Article as Article
 import Models.Wiki.Iteration as Iteration
@@ -156,6 +159,8 @@ storageDecoder viewerDecoder =
 -- HTTP
 
 
+-- All http method utilities begin here
+
 get : Endpoint.Endpoint -> Maybe Token -> Decoder a -> (Result Error a -> msg) -> Cmd msg
 get url maybeToken decoder toMsg =
     Endpoint.request
@@ -204,16 +209,43 @@ post url maybeToken body decoder toMsg =
         }
 
 
-delete : Endpoint.Endpoint -> Token -> Body -> Decoder a -> (Result Error a -> msg) -> Cmd msg
-delete url token body decoder toMsg =
+delete : Endpoint.Endpoint -> Token -> Decoder a -> (Result Error a -> msg) -> Cmd msg
+delete url token decoder toMsg =
     Endpoint.request
         { method = "DELETE"
         , headers = [ authHeader token ]
         , url = url
         , expect = expectJson toMsg decoder
-        , body = body
+        , body = Http.emptyBody
         , timeout = Nothing
         }
+
+
+-- All of our generic functions start here
+
+deleteModel : Endpoint -> Token -> (Result Error Status.Model -> msg) -> Cmd msg
+deleteModel endpoint token toMsg =
+    delete endpoint token Status.decoder toMsg
+
+
+genericQuery : Endpoint -> Token -> Decoder pageModel -> (Result Error pageModel -> msg) -> Cmd msg
+genericQuery endpoint token decoder toMsg =
+    get endpoint (Just token) decoder toMsg
+
+
+uploadFile : Endpoint -> Token -> FileUpload.Model -> (Result Error Asset.Model -> msg) -> Cmd msg
+uploadFile endpoint token fileUpload toMsg =
+    post endpoint (Just token) (Http.jsonBody (FileUpload.toJson fileUpload)) Asset.modelDecoder toMsg
+
+
+createModel : Endpoint -> Token -> Http.Body -> Decoder dataModel -> (Result Error dataModel -> msg) -> Cmd msg
+createModel endpoint token body decoder toMsg =
+    post endpoint (Just token) body decoder toMsg
+
+
+updateModel : Endpoint -> Token -> Http.Body -> Decoder dataModel -> (Result Error dataModel -> msg) -> Cmd msg
+updateModel endpoint token body decoder toMsg =
+    put endpoint token body decoder toMsg
 
 
 login : String -> Http.Body -> (Result Error Token -> msg) -> Cmd msg
