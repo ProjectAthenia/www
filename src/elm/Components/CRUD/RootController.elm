@@ -129,7 +129,7 @@ changePage navKey token route model =
                         , currentState = IndexActive indexModel
                     }
                     , Cmd.map IndexMsg
-                        <| ModelList.reload token indexModel
+                        <| ModelList.reload token model.indexConfiguration indexModel
                     )
 
                 Nothing ->
@@ -158,7 +158,7 @@ update token msg model =
                 |> Tuple.mapSecond (Cmd.map FormMsg)
 
         (IndexMsg subMsg, IndexActive indexModel) ->
-            ModelList.update token subMsg indexModel
+            ModelList.update token model.indexConfiguration subMsg indexModel
                 |> Tuple.mapFirst (replaceIndexModel model)
                 |> Tuple.mapSecond (Cmd.map IndexMsg)
 
@@ -174,7 +174,7 @@ view model =
     case (model.currentState, model.currentRoute) of
         (IndexActive indexModel, Index) ->
             Html.map IndexMsg
-                <| ModelList.view indexModel
+                <| ModelList.view model.indexConfiguration indexModel
 
         (FormActive formModel, Create) ->
             Html.map FormMsg

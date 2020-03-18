@@ -18,6 +18,7 @@ import Models.Page as Page
 import Models.Status as Status
 import Url.Builder as UrlBuilder exposing (QueryParameter)
 import Utilities.Expands as Expands
+import Utilities.Order as Order
 import Utilities.SearchField as SearchField
 
 
@@ -53,6 +54,7 @@ type alias Configuration dataModel =
     , indexEndpoint: (List QueryParameter -> Endpoint)
     , resourceName: String
     , expandFields: List Expands.Expand
+    , orders: List Order.Order
     , decoder: Decoder (Page.Model dataModel)
     , dataProcessor: DataProcessor dataModel
     , columns: List (Column dataModel)
@@ -67,14 +69,6 @@ type alias Model dataModel =
     , columns: List (Column dataModel)
     , models: List (Int, dataModel)
     , page: Maybe (Page.Model dataModel)
-    , resourceName: String
-    , pageUrl: String
-    , expandFields: List Expands.Expand
-    , decoder: Decoder (Page.Model dataModel)
-    , dataProcessor: DataProcessor dataModel
-    , createDisabled: Bool
-    , indexEndpoint: List QueryParameter -> Endpoint
-    , deleteEndpoint: Maybe (Int -> Endpoint)
     , deleteModal: Maybe (ConfirmationModal.Model (Msg dataModel))
     , lastLoadedPage: Int
     }
@@ -86,13 +80,14 @@ type alias DataProcessor dataModel
 
 -- All configuration starts here
 
-configure: String -> (List QueryParameter -> Endpoint) -> String -> List Expands.Expand
+configure: String -> (List QueryParameter -> Endpoint) -> String -> List Expands.Expand -> List Order.Order
     -> Decoder (Page.Model dataModel) -> DataProcessor dataModel -> List (Column dataModel) -> Configuration dataModel
-configure pageUrl indexEndpoint resourceName expandFields decoder dataProcessor columns =
+configure pageUrl indexEndpoint resourceName expandFields orders decoder dataProcessor columns =
     { pageUrl = pageUrl
     , indexEndpoint = indexEndpoint
     , resourceName = resourceName
     , expandFields = expandFields
+    , orders = orders
     , decoder = decoder
     , dataProcessor = dataProcessor
     , columns = columns
@@ -134,25 +129,17 @@ initialState navigationKey token configuration =
             , columns = configuration.columns
             , models = []
             , page = Nothing
-            , resourceName = configuration.resourceName
-            , pageUrl = configuration.pageUrl
-            , expandFields = configuration.expandFields
-            , decoder = configuration.decoder
-            , dataProcessor = configuration.dataProcessor
-            , createDisabled = configuration.createDisabled
-            , indexEndpoint = configuration.indexEndpoint
-            , deleteEndpoint = configuration.deleteEndpoint
             , deleteModal = Nothing
             , lastLoadedPage = 1
             }
     in
     ( model
-    , runQuery token model 1
+    , runQuery token configuration model 1
     )
 
 
-update : Token -> Msg dataModel -> Model dataModel -> (Model dataModel, Cmd (Msg dataModel))
-update token msg model =
+update : Token -> Configuration dataModel -> Msg dataModel -> Model dataModel -> (Model dataModel, Cmd (Msg dataModel))
+update token configuration msg model =
     case msg of
         SetSearchFieldValue searchField value ->
             let
@@ -162,19 +149,19 @@ update token msg model =
                 ( { updatedModel
                     | loading = True
                 }
-                , runQuery token updatedModel 1
+                , runQuery token configuration updatedModel 1
                 )
 
         CreateNewRecord ->
             ( model
-            , Navigation.pushUrl model.navigationKey ("/admin/" ++ model.pageUrl ++  "/create")
+            , Navigation.pushUrl model.navigationKey ("/admin/" ++ configuration.pageUrl ++  "/create")
             )
 
         OpenDeleteModal endpoint ->
             ( { model
                 | deleteModal = Just
                     <| ConfirmationModal.showModal
-                    <| ConfirmationModal.initialState ("Are you sure you want to delete this " ++ model.resourceName ++ "?") "This could be a real pain in the ass to undo." (ConfirmDeletion endpoint) CancelDeletion
+                    <| ConfirmationModal.initialState ("Are you sure you want to delete this " ++ configuration.resourceName ++ "?") "This could be a real pain in the ass to undo." (ConfirmDeletion endpoint) CancelDeletion
             }
             , Cmd.none
             )
@@ -196,14 +183,14 @@ update token msg model =
 
         UpdateRecord id ->
             ( model
-            , Navigation.pushUrl model.navigationKey ("/admin/" ++ model.pageUrl ++  "/" ++ (String.fromInt id))
+            , Navigation.pushUrl model.navigationKey ("/admin/" ++ configuration.pageUrl ++  "/" ++ (String.fromInt id))
             )
 
         LoadPage pageNumber ->
             ( { model
                 | loading = True
             }
-            , runQuery token model pageNumber
+            , runQuery token configuration model pageNumber
             )
 
         NewDataResponse (Err _) ->
@@ -213,7 +200,7 @@ update token msg model =
         NewDataResponse (Ok dataPage) ->
             ( { model
                 | page = Just dataPage
-                , models = model.dataProcessor dataPage.data
+                , models = configuration.dataProcessor dataPage.data
                 , lastLoadedPage = dataPage.current_page
                 , loading = False
             }
@@ -231,9 +218,9 @@ update token msg model =
             }
             , case model.page of
                 Just currentPage ->
-                    runQuery token model currentPage.current_page
+                    runQuery token configuration model currentPage.current_page
                 Nothing ->
-                    runQuery token model 1
+                    runQuery token configuration model 1
             )
 
 
@@ -247,30 +234,30 @@ updateSearchField searchField value columns =
 -- All view stuff starts here
 
 
-view : Model dataModel -> Html (Msg dataModel)
-view model =
+view : Configuration dataModel -> Model dataModel -> Html (Msg dataModel)
+view configuration model =
     div []
         <| List.concat
             [
                 [ h2 []
-                    [ text ("Mange " ++ model.resourceName ++ "s")
-                    , if model.createDisabled == False then
+                    [ text ("Mange " ++ configuration.resourceName ++ "s")
+                    , if configuration.createDisabled == False then
                         Button.button
                             [ Button.primary
                             , Button.onClick CreateNewRecord
                             , Button.attrs [ class "create_btn" ]
                             ]
-                            [ text ("Add " ++ model.resourceName) ]
+                            [ text ("Add " ++ configuration.resourceName) ]
                     else
                         text ""
                     ]
                 , Table.table
                     { options = [ Table.bordered, Table.striped ]
                     , thead = Table.thead []
-                        [ Table.tr [] (builderHeader model)
+                        [ Table.tr [] (builderHeader configuration model)
                         ]
                     , tbody = Table.tbody []
-                        <| List.map (buildRow model) model.models
+                        <| List.map (buildRow configuration model) model.models
                     }
                 , div [ class "pagination" ] (buildPagination model.page)
                 ]
@@ -284,12 +271,12 @@ view model =
             ]
 
 
-builderHeader : Model dataModel -> List (Table.Cell (Msg dataModel))
-builderHeader model =
+builderHeader : Configuration dataModel -> Model dataModel -> List (Table.Cell (Msg dataModel))
+builderHeader configuration model =
     List.concat
         [ [ Table.th [] [ text "#" ] ]
         , List.map builderHeaderCell model.columns
-        , case model.deleteEndpoint of
+        , case configuration.deleteEndpoint of
             Just _ ->
                 [ Table.th [] []
                 , Table.th [] []
@@ -331,16 +318,16 @@ builderHeaderCell instance =
         ]
 
 
-buildRow : Model dataModel -> (Int, dataModel) -> Table.Row (Msg dataModel)
-buildRow indexModel (id, model) =
-    Table.tr [] (buildRowCells model id indexModel)
+buildRow : Configuration dataModel -> Model dataModel -> (Int, dataModel) -> Table.Row (Msg dataModel)
+buildRow configuration model (id, dataModel) =
+    Table.tr [] (buildRowCells dataModel id configuration model)
 
 
-buildRowCells : dataModel -> Int -> Model dataModel -> List (Table.Cell (Msg dataModel))
-buildRowCells model id itemsModel =
+buildRowCells : dataModel -> Int -> Configuration dataModel -> Model dataModel -> List (Table.Cell (Msg dataModel))
+buildRowCells dataModel id configuration listModel =
     List.concat
         [ [ Table.th [] [ text (String.fromInt id) ] ]
-        , List.map (buildCustomRowCell model) itemsModel.columns
+        , List.map (buildCustomRowCell dataModel) listModel.columns
         , List.concat
             [
                 [ Table.td [ ]
@@ -351,7 +338,7 @@ buildRowCells model id itemsModel =
                         [ text "Edit" ]
                     ]
                 ]
-                , case itemsModel.deleteEndpoint of
+                , case configuration.deleteEndpoint of
                     Just endpoint ->
                         [ Table.td [ ]
                             [ Button.button
@@ -415,20 +402,21 @@ createPageLinks current page currentLinks =
 
 -- HTTP stuff starts below
 
-reload: Token -> Model dataModel -> Cmd (Msg dataModel)
-reload token model =
-    runQuery token model model.lastLoadedPage
+reload: Token -> Configuration dataModel -> Model dataModel -> Cmd (Msg dataModel)
+reload token configuration model =
+    runQuery token configuration model model.lastLoadedPage
 
-runQuery: Token -> Model dataModel -> Int -> Cmd (Msg dataModel)
-runQuery token model currentPage =
-    Api.genericQuery (createQuery model currentPage) token model.decoder NewDataResponse
+runQuery: Token -> Configuration dataModel -> Model dataModel -> Int -> Cmd (Msg dataModel)
+runQuery token configuration model currentPage =
+    Api.genericQuery (createQuery configuration model currentPage) token configuration.decoder NewDataResponse
 
 
-createQuery: Model dataModel -> Int -> Endpoint
-createQuery model currentPage =
-    model.indexEndpoint
+createQuery: Configuration dataModel -> Model dataModel -> Int -> Endpoint
+createQuery configuration model currentPage =
+    configuration.indexEndpoint
         <| List.concat
-            [ Expands.toQueryParameters model.expandFields
+            [ Expands.toQueryParameters configuration.expandFields
             , List.filterMap (\field -> SearchField.buildSearchFieldQuery field.searchField) model.columns
             , [ UrlBuilder.int "page" currentPage ]
+            , Order.toQueryParameters configuration.orders
             ]
