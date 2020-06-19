@@ -19,6 +19,10 @@ type alias Model =
     }
 
 
+type alias Page =
+    Page.Model Model
+
+
 cacheEncoder : Model -> JsonEncode.Value
 cacheEncoder model =
     JsonEncode.object

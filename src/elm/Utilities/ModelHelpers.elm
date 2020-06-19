@@ -3,7 +3,6 @@ module Utilities.ModelHelpers exposing (..)
 import Json.Decode as JsonDecode exposing (..)
 import Json.Encode as Encode
 
-
 type alias GenericModel a =
     { a | id: Maybe Int }
 
@@ -14,10 +13,10 @@ pluckIds models =
     List.filterMap (\model -> model.id) models
 
 
-encodeIds : List (GenericModel a) -> List (Encode.Value)
+encodeIds : List (GenericModel a) -> Encode.Value
 encodeIds models =
-    pluckIds models
-        |> List.map (\id -> Encode.int id)
+    Encode.list Encode.int
+        <| pluckIds models
 
 
 toKeyValuePairs : List (GenericModel a) -> List (Int, GenericModel a)

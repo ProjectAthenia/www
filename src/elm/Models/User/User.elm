@@ -23,10 +23,33 @@ type alias Model =
     , subscriptions: List Subscription.Model
     }
 
+
+type alias Page =
+    Page.Model Model
+
+
+loginModel : String -> String -> Model
+loginModel email password =
+    { id = 0
+    , name = ""
+    , email = email
+    , password = password
+    , stripe_customer_key = Nothing
+    , payment_methods = []
+    , roles = []
+    , subscriptions = []
+    }
+
+
 -- Role Helpers
 canViewArticles : Model -> Bool
 canViewArticles user =
     List.any (hasRole user) [Role.superAdmin, Role.articleViewer, Role.articleEditor]
+
+
+isAdmin : Model -> Bool
+isAdmin user =
+    hasRole user Role.superAdmin
 
 
 hasRole : Model -> Int -> Bool
@@ -79,6 +102,10 @@ toJson model =
                 [ ("name", Encode.string model.name) ]
             else
                 []
+            , if List.length model.roles > 0 then
+                [ ("roles", Encode.list Encode.int  (List.map (\role -> role.id) model.roles)) ]
+            else
+                []
             ]
 
 
@@ -119,7 +146,6 @@ listDecoder =
     JsonDecode.list modelDecoder
 
 
-
-pageDecoder : Decoder (Page.Model Model)
+pageDecoder : Decoder Page
 pageDecoder =
     Page.modelDecoder listDecoder

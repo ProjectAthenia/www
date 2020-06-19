@@ -306,6 +306,14 @@ testToJson =
                     Expect.equal "{\"email\":\"test@test.com\",\"password\":\"secret\",\"name\":\"Hello\"}"
                         <| JsonEncode.encode 0
                             <| User.toJson model
+        , test "Makes sure that we can encode a full user properly with roles" <|
+            \() ->
+                let
+                    model = mockUser "Hello" "test@test.com" "secret" [{id = 34, name = "Something"},{id = 25, name = "Something"}]
+                in
+                    Expect.equal "{\"email\":\"test@test.com\",\"password\":\"secret\",\"name\":\"Hello\",\"roles\":[34,25]}"
+                        <| JsonEncode.encode 0
+                            <| User.toJson model
         ]
 
 
@@ -353,7 +361,6 @@ testRemoveRole =
             in
                 Expect.equal [{id = 6, name = "Something"}]
                     <| (User.removeRole user role).roles
-
 
 
 testCacheEncoder : Test

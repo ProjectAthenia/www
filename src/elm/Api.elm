@@ -15,6 +15,7 @@ port module Api exposing
     , getMembershipPlans
     , storeCredWith
     , viewerChanges
+    , createErrorText
     )
 
 {-| This module is responsible for communicating to the Conduit API.
@@ -369,3 +370,22 @@ decodeErrors body =
     body
         |> decodeString Error.decoder
         |> Result.withDefault Error.unknownErrorResponse
+
+
+createErrorText : String -> Error -> String
+createErrorText title error =
+    case error of
+        BadStatus status model ->
+            title ++ "\n" ++ "Status Code - " ++ String.fromInt status ++ "\n" ++ Error.readError model
+
+        Timeout ->
+            title ++ "\nThe requested timed out, please try again."
+
+        BadUrl _ ->
+            title ++ "\nBad URL."
+
+        NetworkError ->
+            title ++ "\nNetwork Error. Please check your WiFi connection."
+
+        BadBody message ->
+            title ++ "\n" ++ message
