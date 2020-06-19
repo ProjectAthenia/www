@@ -2,6 +2,17 @@
 
 To upgrade from previous version of Athenia please check each version number listed below step by step.
 
+## 0.5.0
+
+This is a minor little update that simply adds some more helper functions that you can use within your apps. To complete this update update the following files.
+
+* src/elm/Api.elm - New Helper function that makes it easier to display errors from an error model.
+* src/elm/Models/Role.elm - Added a new Page type
+* src/elm/Models/User/User.elm - Added a new page type, a login model, a function to help determine if a user is an administrator, and encoded roles if they are set.
+* src/elm/Utilities/ModelHelpers.elm - Updated the encode ids function to return a completely encoded value.
+* tests/UnitTests/Models/User/UserTest.elm - Added a new test to make sure that roles were encoded properly.
+* webpack.config.js - Updated build location settings
+
 ## 0.4.0
 
 CRUD! This adds a huge new feature that will allow you to quickly add CRUD modules that will allow someone the ability to manage data in any Athenia based API. Most of this is brand new functionality, but there are a few updates made to existing files that will need to be made as well. This update also officially upgrades the core from elm 0.19.0 to 0.19.1, so make sure to update both the elm.json and the package.json.
