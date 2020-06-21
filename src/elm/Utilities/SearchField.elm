@@ -8,6 +8,7 @@ type SearchFieldType
     = Text
     | Number
     | Equals
+    | None
     | Select (List (String, String))
 
 
@@ -41,6 +42,8 @@ buildSearchFieldQueryKey instance =
 buildSearchFieldQueryValue : Model -> String
 buildSearchFieldQueryValue instance =
     case instance.type_ of
+        None ->
+            ""
         Text ->
             if String.length instance.value == 0 then "" else "like,*" ++ instance.value ++ "*"
         Number ->

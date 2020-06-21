@@ -310,6 +310,9 @@ builderHeaderCell instance =
                     , Input.onInput (SetSearchFieldValue instance.searchField)
                     ]
 
+             SearchField.None ->
+                  text ""
+
              SearchField.Select options ->
                 Select.select
                     [ Select.onChange (SetSearchFieldValue instance.searchField)

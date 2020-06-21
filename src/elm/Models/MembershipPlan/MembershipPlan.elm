@@ -7,7 +7,7 @@ import Utilities.ModelHelpers exposing (..)
 
 
 type alias Model =
-    { id: Int
+    { id: Maybe Int
     , name: String
     , duration: String
     , current_cost: Float
@@ -26,7 +26,7 @@ makeReadable model =
 modelDecoder : Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
-        |> required "id" int
+        |> required "id" (maybe int)
         |> required "name" string
         |> required "duration" string
         |> required "current_cost" stringFloatDecoder
