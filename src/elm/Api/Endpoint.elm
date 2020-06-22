@@ -1,8 +1,9 @@
 module Api.Endpoint exposing
-    ( Endpoint, request
+    ( Endpoint, request, url
     , baseArticle, viewArticle, viewArticles
     , viewArticleIterations
     , login, signUp, refresh
+    , roles
     , membershipPlans
     , user, userActivity, me
     , userPaymentMethods, userSubscriptions, userSubscription
@@ -115,6 +116,11 @@ me apiUrl =
 refresh : String -> Endpoint
 refresh apiUrl =
     url apiUrl [ "auth", "refresh" ] []
+
+
+roles : String -> Endpoint
+roles apiUrl =
+    url apiUrl [ "roles" ] []
 
 
 login : String -> Endpoint

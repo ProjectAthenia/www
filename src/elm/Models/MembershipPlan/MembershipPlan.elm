@@ -1,5 +1,6 @@
 module Models.MembershipPlan.MembershipPlan exposing (..)
 
+import Api.Group exposing (RouteGroup, baseGroup)
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Models.Page as Page
@@ -41,3 +42,8 @@ listDecoder =
 pageDecoder : Decoder Page
 pageDecoder =
     Page.modelDecoder listDecoder
+
+
+routeGroup: String -> RouteGroup
+routeGroup =
+    baseGroup "membership-plans"

@@ -1,5 +1,4 @@
 module Page.Admin.MembershipPlans.Index exposing (..)
-import Api.Endpoints.Concept as ConceptEndpoint
 import Html exposing (..)
 import Models.MembershipPlan.MembershipPlan as MembershipPlan
 import Components.CRUD.ModelList as ModelList
@@ -14,7 +13,7 @@ indexConfiguration : List Expands.Expand -> String -> (ModelList.Configuration M
 indexConfiguration expands apiUrl =
     let
         configuration =
-            ModelList.configure "concepts" (ConceptEndpoint.concepts apiUrl) "Concept" expands [] MembershipPlan.pageDecoder processDataResponse
+            ModelList.configure "concepts" (MembershipPlan.routeGroup apiUrl) "Concept" expands [] MembershipPlan.pageDecoder processDataResponse
                 <|  [ ModelList.column "Name" rowName "name" SearchField.Text
                     , ModelList.column "Duration" rowDuration "duration"
                         <| SearchField.Select
@@ -25,7 +24,7 @@ indexConfiguration expands apiUrl =
                     , ModelList.column "Current Cost" rowDuration "duration" SearchField.None
                     ]
     in
-        ModelList.enableDelete configuration (ConceptEndpoint.existing apiUrl [])
+    ModelList.enableDelete configuration
 
 
 processDataResponse : List MembershipPlan.Model -> List (Int, MembershipPlan.Model)

@@ -11,7 +11,6 @@ import Components.LoadingIndicator as LoadingIndicator
 import Html exposing (..)
 import Html.Attributes as Attributes exposing (..)
 import Html.Events exposing (onClick)
-import Json.Decode exposing (..)
 import List.Extra as ListExtra
 import Modals.Confirmation as ConfirmationModal
 import Models.Page as Page
@@ -51,15 +50,12 @@ type alias Column dataModel =
 
 type alias Configuration dataModel =
     { pageUrl: String
-    , indexEndpoint: (List QueryParameter -> Endpoint)
     , resourceName: String
-    , expandFields: List Expands.Expand
     , orders: List Order.Order
-    , decoder: Decoder (Page.Model dataModel)
     , dataProcessor: DataProcessor dataModel
     , columns: List (Column dataModel)
     , createDisabled: Bool
-    , deleteEndpoint: Maybe (Int -> Endpoint)
+    , deleteEnabled: Bool
     }
 
 
@@ -80,19 +76,15 @@ type alias DataProcessor dataModel
 
 -- All configuration starts here
 
-configure: String -> (List QueryParameter -> Endpoint) -> String -> List Expands.Expand -> List Order.Order
+configure: List Order.Order
     -> Decoder (Page.Model dataModel) -> DataProcessor dataModel -> List (Column dataModel) -> Configuration dataModel
-configure pageUrl indexEndpoint resourceName expandFields orders decoder dataProcessor columns =
-    { pageUrl = pageUrl
-    , indexEndpoint = indexEndpoint
-    , resourceName = resourceName
-    , expandFields = expandFields
-    , orders = orders
+configure orders decoder dataProcessor columns =
+    { orders = orders
     , decoder = decoder
     , dataProcessor = dataProcessor
     , columns = columns
     , createDisabled = False
-    , deleteEndpoint = Nothing
+    , deleteEnabled = False
     }
 
 
@@ -103,10 +95,10 @@ disableCreate model =
     }
 
 
-enableDelete : Configuration dataModel -> (Int -> Endpoint) -> Configuration dataModel
-enableDelete model endpoint =
+enableDelete : Configuration dataModel -> Configuration dataModel
+enableDelete model =
     { model
-        | deleteEndpoint = Just endpoint
+        | deleteEnabled = True
     }
 
 
@@ -276,14 +268,8 @@ builderHeader configuration model =
     List.concat
         [ [ Table.th [] [ text "#" ] ]
         , List.map builderHeaderCell model.columns
-        , case configuration.deleteEndpoint of
-            Just _ ->
-                [ Table.th [] []
-                , Table.th [] []
-                ]
-            Nothing ->
-                [ Table.th [] []
-                ]
+        , [ Table.th [] [] ]
+        , if configuration.deleteEnabled then [Table.th [] []] else []
         ]
 
 
@@ -341,18 +327,17 @@ buildRowCells dataModel id configuration listModel =
                         [ text "Edit" ]
                     ]
                 ]
-                , case configuration.deleteEndpoint of
-                    Just endpoint ->
-                        [ Table.td [ ]
-                            [ Button.button
-                                [ Button.danger
-                                , Button.onClick (OpenDeleteModal (endpoint id))
-                                ]
-                                [ text "Delete" ]
+                , if configuration.deleteEnabled then
+                    [ Table.td [ ]
+                        [ Button.button
+                            [ Button.danger
+                            , Button.onClick (OpenDeleteModal (configuration.routeGroup.existing [] id))
                             ]
+                            [ text "Delete" ]
                         ]
-                    Nothing ->
-                        []
+                    ]
+                else
+                    []
             ]
         ]
 
@@ -416,7 +401,7 @@ runQuery token configuration model currentPage =
 
 createQuery: Configuration dataModel -> Model dataModel -> Int -> Endpoint
 createQuery configuration model currentPage =
-    configuration.indexEndpoint
+    configuration.routeGroup.index
         <| List.concat
             [ Expands.toQueryParameters configuration.expandFields
             , List.filterMap (\field -> SearchField.buildSearchFieldQuery field.searchField) model.columns

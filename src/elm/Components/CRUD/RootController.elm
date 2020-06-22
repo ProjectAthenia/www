@@ -1,10 +1,15 @@
 module Components.CRUD.RootController exposing (..)
 
 import Api exposing (Token)
+import Api.Group exposing (..)
 import Browser.Navigation as Navigation
-import Html exposing (..)
+import Components.CRUD.ModelForm as ModelForm
 import Components.CRUD.ModelList as ModelList
+import Components.Toast as Toast
+import Html exposing (..)
+import Json.Decode exposing (..)
 import Url.Parser as Parser exposing ((</>), Parser, int)
+import Utilities.Expands as Expands
 
 
 type Route
@@ -13,15 +18,16 @@ type Route
     | Update Int
 
 
-type State formModel dataModel
+type State dataModel
     = Inactive
     | IndexActive (ModelList.Model dataModel)
-    | FormActive formModel
+    | FormActive (ModelForm.Model dataModel)
 
 
 type Msg formMsg dataModel
     = FormMsg formMsg
     | IndexMsg (ModelList.Msg dataModel)
+    | RemoveToast Toast.Model
 
 
 -- The init function format that must return our form model, and any needed commands
@@ -39,16 +45,26 @@ type alias FormView formModel formMsg =
     String -> formModel -> Html formMsg
 
 
-type alias Model formMsg formModel dataModel =
-    { currentRoute: Route
-    , currentState: State formModel dataModel
+type alias Configuration formMsg formModel dataModel =
+    { apiUrl : String
+    , decoder: Decoder dataModel
+    , expands : List Expands.Expand
+    , indexConfiguration: ModelList.Configuration dataModel
     , resourceName: String
+    , routeGroup: RouteGroup
     , formInit: FormInit formModel formMsg
     , formUpdate: FormUpdate formMsg formModel
     , formView: FormView formModel formMsg
-    , indexModel: Maybe (ModelList.Model dataModel)
-    , indexConfiguration: ModelList.Configuration dataModel
     }
+
+
+type alias Model dataModel =
+    { currentRoute: Route
+    , currentState: State dataModel
+    , indexModel: Maybe (ModelList.Model dataModel)
+    , toasts : List Toast.Model
+    }
+
 
 -- Routing
 
@@ -79,7 +95,7 @@ routeToString name route =
 -- State manipulation below
 
 initialState : String -> FormInit formModel formMsg -> FormUpdate formMsg formModel -> FormView formModel formMsg
-    -> ModelList.Configuration dataModel -> Model formMsg formModel dataModel
+    -> ModelList.Configuration dataModel -> Configuration formMsg formModel dataModel
 initialState resourceName formInit formUpdate formView indexConfiguration =
     { currentRoute = Index
     , currentState = Inactive
@@ -92,14 +108,14 @@ initialState resourceName formInit formUpdate formView indexConfiguration =
     }
 
 
-replaceFormModel: Model formMsg formModel dataModel -> formModel -> Model formMsg formModel dataModel
+replaceFormModel: Configuration formMsg formModel dataModel -> formModel -> Configuration formMsg formModel dataModel
 replaceFormModel model formModel =
     { model
         | currentState = FormActive formModel
     }
 
 
-replaceIndexModel: Model formMsg formModel dataModel -> ModelList.Model dataModel -> Model formMsg formModel dataModel
+replaceIndexModel: Configuration formMsg formModel dataModel -> ModelList.Model dataModel -> Configuration formMsg formModel dataModel
 replaceIndexModel model indexModel =
     { model
         | indexModel = Just indexModel
