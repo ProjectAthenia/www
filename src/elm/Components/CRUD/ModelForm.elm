@@ -27,7 +27,11 @@ type Msg dataModel childMsg
 
 
 type alias ModelEncoder dataModel
-    = dataModel -> Encode.Value
+    = GenericModel dataModel -> Encode.Value
+
+
+type alias ValidateModel dataModel
+    = GenericModel dataModel -> Result String (GenericModel dataModel)
 
 
 -- The init function format that must return our form model, and any needed commands
@@ -44,15 +48,20 @@ type alias ChildUpdate dataModel childModel childMsg =
 type alias ChildView dataModel childModel childMsg =
     GenericModel dataModel -> childModel -> Html childMsg
 
+
 type alias ChildAction dataModel childModel childMsg =
     Token -> (GenericModel dataModel) -> childModel -> (childModel, Cmd childMsg)
+
 
 type alias Field childModel childMsg =
     childModel -> Html childMsg
 
+
 type alias Configuration dataModel childModel childMsg =
-    { createEncoder: ModelEncoder (GenericModel dataModel)
-    , updateEncoder: ModelEncoder (GenericModel dataModel)
+    { createEncoder: ModelEncoder dataModel
+    , updateEncoder: ModelEncoder dataModel
+    , decoder: Decoder (GenericModel dataModel)
+    , routeGroup: RouteGroup
     , childInit: ChildInit childModel childMsg
     , childUpdate: ChildUpdate dataModel childModel childMsg
     , childView: ChildView dataModel childModel childMsg
@@ -60,30 +69,28 @@ type alias Configuration dataModel childModel childMsg =
     , modelCreated: ChildAction dataModel childModel childMsg
     , modelUpdated: ChildAction dataModel childModel childMsg
     , newModel: GenericModel dataModel
+    , validateModel: ValidateModel dataModel
     , title: String
     , fields: List (Field childModel childMsg)
     }
 
+
 type alias Model dataModel childModel =
     { loading : Bool
-    , decoder: Decoder (GenericModel dataModel)
-    , routeGroup: RouteGroup
     , dataModel : (GenericModel dataModel)
     , childModel: childModel
     , toasts: List Toast.Model
     }
 
 
-initialState : Configuration dataModel childModel childMsg -> RouteGroup -> List Expands.Expand -> Decoder (GenericModel dataModel) -> String -> Token -> Maybe Int
+initialState : Configuration dataModel childModel childMsg -> List Expands.Expand -> String -> Token -> Maybe Int
     -> (Model dataModel childModel, Cmd (Msg dataModel childMsg))
-initialState configuration routeGroup expandFields decoder apiUrl token maybeId =
+initialState configuration expandFields apiUrl token maybeId =
     let
         (childModel, childCmd) =
             configuration.childInit apiUrl token
     in
     ( { loading = maybeId /= Nothing
-      , decoder = decoder
-      , routeGroup = routeGroup
       , dataModel = configuration.newModel
       , childModel = childModel
       , toasts = []
@@ -91,7 +98,7 @@ initialState configuration routeGroup expandFields decoder apiUrl token maybeId 
     , Cmd.batch
         [ case maybeId of
             Just id ->
-                getModel token routeGroup.existing expandFields id decoder
+                getModel token configuration.routeGroup.existing expandFields id configuration.decoder
             Nothing ->
                 Cmd.none
         , Cmd.map ChildMsg childCmd
@@ -119,7 +126,7 @@ update token configuration msg model =
     case msg of
         ModelCreatedResponse (Ok dataModel) ->
             case dataModel.id of
-                Just id ->
+                Just _ ->
                     let
                         (updatedModel, toastCmd) =
                             Toast.appendToast
@@ -193,7 +200,22 @@ update token configuration msg model =
             )
 
         Save ->
-            (model, Cmd.none)
+            case configuration.validateModel model.dataModel of
+                Err errorMessage ->
+                    Toast.appendToast
+                        (Toast.createToast Toast.Error RemoveToast errorMessage)
+                        model
+
+                Ok dataModel ->
+                    ( { model
+                        | loading = True
+                    }
+                    , case dataModel.id of
+                        Just id ->
+                            updateModel token configuration.routeGroup.existing id configuration.decoder configuration.updateEncoder dataModel
+                        Nothing ->
+                            createModel token configuration.routeGroup.new configuration.decoder configuration.createEncoder dataModel
+                    )
 
 
 noAction: ChildAction dataModel childModel childMsg
@@ -233,12 +255,12 @@ submitButton loading =
         [ text "Save" ]
 
 
-createModel : Token -> NewEndpoint -> Decoder (GenericModel dataModel) -> ModelEncoder (GenericModel dataModel) -> (GenericModel dataModel) -> Cmd (Msg dataModel childMsg)
+createModel : Token -> NewEndpoint -> Decoder (GenericModel dataModel) -> ModelEncoder dataModel -> GenericModel dataModel -> Cmd (Msg dataModel childMsg)
 createModel token newEndpoint decoder createEncoder model =
     Api.createModel newEndpoint token (Http.jsonBody (createEncoder model)) decoder ModelCreatedResponse
 
 
-updateModel : Token -> ExistingEndpoint -> Int -> Decoder (GenericModel dataModel) -> ModelEncoder dataModel -> dataModel -> Cmd (Msg dataModel childMsg)
+updateModel : Token -> ExistingEndpoint -> Int -> Decoder (GenericModel dataModel) -> ModelEncoder dataModel -> GenericModel dataModel -> Cmd (Msg dataModel childMsg)
 updateModel token existingEndpoint id decoder updateEncoder model =
     Api.updateModel (existingEndpoint [] id) token (Http.jsonBody (updateEncoder model)) decoder ModelUpdatedResponse
 
