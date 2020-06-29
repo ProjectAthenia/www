@@ -83,6 +83,59 @@ type alias Model dataModel childModel =
     }
 
 
+configure: String -> ModelEncoder dataModel -> ModelEncoder dataModel -> Decoder (GenericModel dataModel) -> RouteGroup
+    -> ChildInit childModel childMsg -> ChildUpdate dataModel childModel childMsg -> ChildView dataModel childModel childMsg
+    -> GenericModel dataModel -> ValidateModel dataModel
+    -> Configuration dataModel childModel childMsg
+configure title createEncoder updateEncoder decoder routeGroup childInit childUpdate childView newModel validateModel =
+    { createEncoder = createEncoder
+    , updateEncoder = updateEncoder
+    , decoder = decoder
+    , routeGroup = routeGroup
+    , childInit = childInit
+    , childUpdate = childUpdate
+    , childView = childView
+    , setModel = noAction
+    , modelCreated = noAction
+    , modelUpdated = noAction
+    , newModel = newModel
+    , validateModel = validateModel
+    , title = title
+    , fields = []
+    }
+
+
+configureSetModelAction: Configuration dataModel childModel childMsg -> ChildAction dataModel childModel childMsg
+    -> Configuration dataModel childModel childMsg
+configureSetModelAction configuration setModelAction =
+    { configuration
+        | setModel = setModelAction
+    }
+
+
+configureModelCreatedAction: Configuration dataModel childModel childMsg -> ChildAction dataModel childModel childMsg
+    -> Configuration dataModel childModel childMsg
+configureModelCreatedAction configuration modelCreated =
+    { configuration
+        | modelCreated = modelCreated
+    }
+
+
+configureModelUpdatedAction: Configuration dataModel childModel childMsg -> ChildAction dataModel childModel childMsg
+    -> Configuration dataModel childModel childMsg
+configureModelUpdatedAction configuration modelUpdated =
+    { configuration
+        | modelUpdated = modelUpdated
+    }
+
+
+addField: Configuration dataModel childModel childMsg -> Field childModel childMsg -> Configuration dataModel childModel childMsg
+addField configuration field =
+    { configuration
+        | fields = List.append configuration.fields [field]
+    }
+
+
 initialState : Configuration dataModel childModel childMsg -> List Expands.Expand -> String -> Token -> Maybe Int
     -> (Model dataModel childModel, Cmd (Msg dataModel childMsg))
 initialState configuration expandFields apiUrl token maybeId =
