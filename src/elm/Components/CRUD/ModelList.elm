@@ -11,14 +11,20 @@ import Components.LoadingIndicator as LoadingIndicator
 import Html exposing (..)
 import Html.Attributes as Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Json.Decode as Decode exposing (Decoder)
 import List.Extra as ListExtra
 import Modals.Confirmation as ConfirmationModal
 import Models.Page as Page
 import Models.Status as Status
 import Url.Builder as UrlBuilder exposing (QueryParameter)
 import Utilities.Expands as Expands
+import Utilities.ModelHelpers as ModelHelpers exposing (GenericModel)
 import Utilities.Order as Order
 import Utilities.SearchField as SearchField
+
+
+type alias DataPage dataModel =
+    Page.Model (GenericModel dataModel)
 
 
 type alias DeleteResult =
@@ -26,7 +32,7 @@ type alias DeleteResult =
 
 
 type alias QueryResult dataModel =
-    Result Api.Error (Page.Model dataModel)
+    Result Api.Error (DataPage dataModel)
 
 
 type Msg dataModel
@@ -49,10 +55,7 @@ type alias Column dataModel =
 
 
 type alias Configuration dataModel =
-    { pageUrl: String
-    , resourceName: String
-    , orders: List Order.Order
-    , dataProcessor: DataProcessor dataModel
+    { orders: List Order.Order
     , columns: List (Column dataModel)
     , createDisabled: Bool
     , deleteEnabled: Bool
@@ -63,25 +66,22 @@ type alias Model dataModel =
     { navigationKey: Navigation.Key
     , loading: Bool
     , columns: List (Column dataModel)
-    , models: List (Int, dataModel)
-    , page: Maybe (Page.Model dataModel)
+    , models: List (Int, GenericModel dataModel)
+    , page: Maybe (DataPage dataModel)
     , deleteModal: Maybe (ConfirmationModal.Model (Msg dataModel))
     , lastLoadedPage: Int
     }
 
 
-type alias DataProcessor dataModel
-    = (List dataModel -> List (Int, dataModel))
-
-
 -- All configuration starts here
 
 configure: List Order.Order
-    -> Decoder (Page.Model dataModel) -> DataProcessor dataModel -> List (Column dataModel) -> Configuration dataModel
-configure orders decoder dataProcessor columns =
-    { orders = orders
+    -> Decoder (Page.Model dataModel) -> List (Column dataModel) -> Configuration dataModel
+configure orders decoder columns =
+    { pageUrl = pageUrl
+    , resourceName = resourceName
+    , orders = orders
     , decoder = decoder
-    , dataProcessor = dataProcessor
     , columns = columns
     , createDisabled = False
     , deleteEnabled = False

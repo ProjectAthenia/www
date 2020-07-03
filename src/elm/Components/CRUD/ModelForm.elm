@@ -53,54 +53,59 @@ type alias ChildAction dataModel childModel childMsg =
     Token -> (GenericModel dataModel) -> childModel -> (childModel, Cmd childMsg)
 
 
-type alias Field childModel childMsg =
-    childModel -> Html childMsg
-
-
+-- This configuration model is everything that needs to be specifically configured for the form
 type alias Configuration dataModel childModel childMsg =
     { createEncoder: ModelEncoder dataModel
     , updateEncoder: ModelEncoder dataModel
-    , decoder: Decoder (GenericModel dataModel)
-    , routeGroup: RouteGroup
+    , newModel: GenericModel dataModel
+    , validateModel: ValidateModel dataModel
     , childInit: ChildInit childModel childMsg
     , childUpdate: ChildUpdate dataModel childModel childMsg
     , childView: ChildView dataModel childModel childMsg
     , setModel: ChildAction dataModel childModel childMsg
     , modelCreated: ChildAction dataModel childModel childMsg
     , modelUpdated: ChildAction dataModel childModel childMsg
-    , newModel: GenericModel dataModel
-    , validateModel: ValidateModel dataModel
-    , title: String
     , fields: List (Field childModel childMsg)
     }
 
 
+type alias Field childModel childMsg =
+    childModel -> Html childMsg
+
+
+-- This configuration model is generated from the root controller using configuration variables used for both the form and list
+type alias RootConfiguration dataModel =
+    { resourceName: String
+    , apiUrl: String
+    , routeGroup: RouteGroup
+    , decoder: Decoder (GenericModel dataModel)
+    , expands: List Expands.Expand
+    }
+
+
 type alias Model dataModel childModel =
-    { loading : Bool
-    , dataModel : (GenericModel dataModel)
+    { rootConfiguration: RootConfiguration dataModel
+    , loading: Bool
+    , dataModel: (GenericModel dataModel)
     , childModel: childModel
     , toasts: List Toast.Model
     }
 
 
-configure: String -> ModelEncoder dataModel -> ModelEncoder dataModel -> Decoder (GenericModel dataModel) -> RouteGroup
+configure: ModelEncoder dataModel -> ModelEncoder dataModel-> GenericModel dataModel -> ValidateModel dataModel
     -> ChildInit childModel childMsg -> ChildUpdate dataModel childModel childMsg -> ChildView dataModel childModel childMsg
-    -> GenericModel dataModel -> ValidateModel dataModel
     -> Configuration dataModel childModel childMsg
-configure title createEncoder updateEncoder decoder routeGroup childInit childUpdate childView newModel validateModel =
+configure createEncoder updateEncoder newModel validateModel childInit childUpdate childView =
     { createEncoder = createEncoder
     , updateEncoder = updateEncoder
-    , decoder = decoder
-    , routeGroup = routeGroup
+    , newModel = newModel
+    , validateModel = validateModel
     , childInit = childInit
     , childUpdate = childUpdate
     , childView = childView
     , setModel = noAction
     , modelCreated = noAction
     , modelUpdated = noAction
-    , newModel = newModel
-    , validateModel = validateModel
-    , title = title
     , fields = []
     }
 
@@ -136,14 +141,25 @@ addField configuration field =
     }
 
 
-initialState : Configuration dataModel childModel childMsg -> List Expands.Expand -> String -> Token -> Maybe Int
+configureRoot: String -> String -> RouteGroup -> Decoder (GenericModel dataModel) -> List Expands.Expand -> RootConfiguration dataModel
+configureRoot resourceName apiUrl routeGroup decoder expands =
+    { resourceName = resourceName
+    , apiUrl = apiUrl
+    , routeGroup = routeGroup
+    , decoder = decoder
+    , expands = expands
+    }
+
+
+initialState : Configuration dataModel childModel childMsg -> RootConfiguration dataModel -> Token -> Maybe Int
     -> (Model dataModel childModel, Cmd (Msg dataModel childMsg))
-initialState configuration expandFields apiUrl token maybeId =
+initialState configuration rootConfiguration token maybeId =
     let
         (childModel, childCmd) =
-            configuration.childInit apiUrl token
+            configuration.childInit rootConfiguration.apiUrl token
     in
-    ( { loading = maybeId /= Nothing
+    ( { rootConfiguration = rootConfiguration
+      , loading = maybeId /= Nothing
       , dataModel = configuration.newModel
       , childModel = childModel
       , toasts = []
@@ -151,7 +167,7 @@ initialState configuration expandFields apiUrl token maybeId =
     , Cmd.batch
         [ case maybeId of
             Just id ->
-                getModel token configuration.routeGroup.existing expandFields id configuration.decoder
+                getModel token rootConfiguration.routeGroup.existing rootConfiguration.expands id rootConfiguration.decoder
             Nothing ->
                 Cmd.none
         , Cmd.map ChildMsg childCmd
@@ -265,14 +281,14 @@ update token configuration msg model =
                     }
                     , case dataModel.id of
                         Just id ->
-                            updateModel token configuration.routeGroup.existing id configuration.decoder configuration.updateEncoder dataModel
+                            updateModel token model.rootConfiguration.routeGroup.existing id model.rootConfiguration.decoder configuration.updateEncoder dataModel
                         Nothing ->
-                            createModel token configuration.routeGroup.new configuration.decoder configuration.createEncoder dataModel
+                            createModel token model.rootConfiguration.routeGroup.new model.rootConfiguration.decoder configuration.createEncoder dataModel
                     )
 
 
 noAction: ChildAction dataModel childModel childMsg
-noAction token model childModel =
+noAction _ _ childModel =
     ( childModel, Cmd.none )
 
 
@@ -283,10 +299,10 @@ setChildModel model childModel =
     }
 
 
-view : Configuration dataModel childModel childMsg -> Model dataModel childModel -> List (Html msg) -> Html (Msg dataModel childMsg)
-view configuration model fields =
+view : String -> Configuration dataModel childModel childMsg -> Model dataModel childModel -> Html (Msg dataModel childMsg)
+view actionName configuration model =
     div [ class "model_form" ]
-        [ h1 [] [ text configuration.title ]
+        [ h1 [] [ text actionName ++ " " ++ model.rootConfiguration.resourceName ]
         , Form.form
             [ onSubmit Save ]
                 <| List.concat

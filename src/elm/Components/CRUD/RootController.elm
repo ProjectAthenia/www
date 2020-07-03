@@ -10,6 +10,7 @@ import Html exposing (..)
 import Json.Decode exposing (..)
 import Url.Parser as Parser exposing ((</>), Parser, int)
 import Utilities.Expands as Expands
+import Utilities.ModelHelpers exposing (GenericModel)
 
 
 type Route
@@ -18,16 +19,15 @@ type Route
     | Update Int
 
 
-type State dataModel
+type State dataModel formModel
     = Inactive
     | IndexActive (ModelList.Model dataModel)
-    | FormActive (ModelForm.Model dataModel)
+    | FormActive (ModelForm.Model dataModel formModel)
 
 
-type Msg formMsg dataModel
-    = FormMsg formMsg
+type Msg dataModel formMsg
+    = FormMsg (ModelForm.Msg dataModel formMsg)
     | IndexMsg (ModelList.Msg dataModel)
-    | RemoveToast Toast.Model
 
 
 -- The init function format that must return our form model, and any needed commands
@@ -45,29 +45,27 @@ type alias FormView formModel formMsg =
     String -> formModel -> Html formMsg
 
 
-type alias Configuration formMsg formModel dataModel =
-    { apiUrl : String
-    , decoder: Decoder dataModel
+type alias Configuration dataModel formModel formMsg =
+    { resourceName: String
+    , apiUrl : String
+    , routeGroup: RouteGroup
+    , decoder: Decoder (GenericModel dataModel)
     , expands : List Expands.Expand
     , indexConfiguration: ModelList.Configuration dataModel
-    , resourceName: String
-    , routeGroup: RouteGroup
-    , formInit: FormInit formModel formMsg
-    , formUpdate: FormUpdate formMsg formModel
-    , formView: FormView formModel formMsg
+    , formConfiguration: ModelForm.Configuration dataModel formModel formMsg
     }
 
 
-type alias Model dataModel =
-    { currentRoute: Route
-    , currentState: State dataModel
+type alias Model dataModel formModel formMsg =
+    { config: Configuration dataModel formModel formMsg
+    , currentRoute: Route
+    , currentState: State dataModel formModel
     , indexModel: Maybe (ModelList.Model dataModel)
     , toasts : List Toast.Model
     }
 
 
 -- Routing
-
 crudRoutes: String -> Parser (Route -> parentRoutes) parentRoutes
 crudRoutes name =
     Parser.oneOf
@@ -92,30 +90,45 @@ routeToString name route =
             [ name, String.fromInt id ]
 
 
--- State manipulation below
-
-initialState : String -> FormInit formModel formMsg -> FormUpdate formMsg formModel -> FormView formModel formMsg
-    -> ModelList.Configuration dataModel -> Configuration formMsg formModel dataModel
-initialState resourceName formInit formUpdate formView indexConfiguration =
-    { currentRoute = Index
-    , currentState = Inactive
-    , resourceName = resourceName
-    , formInit = formInit
-    , formUpdate = formUpdate
-    , formView = formView
-    , indexModel = Nothing
+configure: String -> String -> RouteGroup -> Decoder (GenericModel dataModel) -> List Expands.Expand
+    -> ModelList.Configuration dataModel -> ModelForm.Configuration dataModel formModel formMsg
+    -> Configuration dataModel formModel formMsg
+configure resourceName apiUrl routeGroup decoder expands indexConfiguration formConfiguration =
+    { resourceName = resourceName
+    , apiUrl = apiUrl
+    , routeGroup = routeGroup
+    , decoder = decoder
+    , expands = expands
     , indexConfiguration = indexConfiguration
+    , formConfiguration = formConfiguration
     }
 
 
-replaceFormModel: Configuration formMsg formModel dataModel -> formModel -> Configuration formMsg formModel dataModel
+formRootConfiguration: Configuration dataModel formModel formMsg -> ModelForm.RootConfiguration dataModel
+formRootConfiguration configuration =
+    ModelForm.configureRoot configuration.resourceName configuration.apiUrl configuration.routeGroup configuration.decoder configuration.expands
+
+
+-- State manipulation below
+
+initialState : Configuration dataModel formModel formMsg -> Model dataModel formModel formMsg
+initialState config  =
+    { config = config
+    , currentRoute = Index
+    , currentState = Inactive
+    , indexModel = Nothing
+    , toasts = []
+    }
+
+
+replaceFormModel: Model formMsg formModel dataModel -> ModelForm.Model dataModel formModel -> Model formMsg formModel dataModel
 replaceFormModel model formModel =
     { model
         | currentState = FormActive formModel
     }
 
 
-replaceIndexModel: Configuration formMsg formModel dataModel -> ModelList.Model dataModel -> Configuration formMsg formModel dataModel
+replaceIndexModel: Model dataModel formModel formMsg -> ModelList.Model dataModel -> Model dataModel formModel formMsg
 replaceIndexModel model indexModel =
     { model
         | indexModel = Just indexModel
@@ -123,15 +136,17 @@ replaceIndexModel model indexModel =
     }
 
 
-replaceRoute: Model formMsg formModel dataModel -> Route -> Model formMsg formModel dataModel
+replaceRoute: Model dataModel formModel formMsg -> Route -> Model dataModel formModel formMsg
 replaceRoute model currentRoute =
     { model
         | currentRoute = currentRoute
     }
 
 
-changePage : Navigation.Key -> Token -> Route -> Model formMsg formModel dataModel -> (Model formMsg formModel dataModel, Cmd (Msg formMsg dataModel))
-changePage navKey token route model =
+changePage : Navigation.Key -> Token -> Route
+    -> Model dataModel formModel formMsg -> Configuration dataModel formModel formMsg
+    -> (Model dataModel formModel formMsg, Cmd (Msg dataModel formMsg))
+changePage navKey token route model configuration =
     let
         modelWithRoute = replaceRoute model route
     in
@@ -145,36 +160,36 @@ changePage navKey token route model =
                         , currentState = IndexActive indexModel
                     }
                     , Cmd.map IndexMsg
-                        <| ModelList.reload token model.indexConfiguration indexModel
+                        <| ModelList.reload token model.config.indexConfiguration indexModel
                     )
 
                 Nothing ->
-                    ModelList.initialState navKey token modelWithRoute.indexConfiguration
+                    ModelList.initialState navKey token modelWithRoute.config.indexConfiguration
                         |> Tuple.mapFirst (replaceIndexModel model)
                         |> Tuple.mapSecond (Cmd.map IndexMsg)
 
         Update id ->
-            modelWithRoute.formInit token (Just id)
+            ModelForm.initialState configuration.formConfiguration (formRootConfiguration configuration) token (Just id)
                 |> Tuple.mapFirst (replaceFormModel modelWithRoute)
                 |> Tuple.mapSecond (Cmd.map FormMsg)
 
         Create ->
-            modelWithRoute.formInit token Nothing
+            ModelForm.initialState configuration.formConfiguration (formRootConfiguration configuration) token Nothing
                 |> Tuple.mapFirst (replaceFormModel modelWithRoute)
                 |> Tuple.mapSecond (Cmd.map FormMsg)
 
 
-update: Token -> Msg formMsg dataModel -> Model formMsg formModel dataModel
-        -> (Model formMsg formModel dataModel, Cmd (Msg formMsg dataModel))
+update: Token -> Msg dataModel formMsg -> Model dataModel formModel formMsg
+        -> (Model dataModel formModel formMsg, Cmd (Msg dataModel formMsg))
 update token msg model =
     case ( msg, model.currentState ) of
         (FormMsg subMsg, FormActive formModel) ->
-            model.formUpdate token subMsg formModel
+            ModelForm.update token model.config.formConfiguration subMsg formModel
                 |> Tuple.mapFirst (replaceFormModel model)
                 |> Tuple.mapSecond (Cmd.map FormMsg)
 
         (IndexMsg subMsg, IndexActive indexModel) ->
-            ModelList.update token model.indexConfiguration subMsg indexModel
+            ModelList.update token model.config.indexConfiguration subMsg indexModel
                 |> Tuple.mapFirst (replaceIndexModel model)
                 |> Tuple.mapSecond (Cmd.map IndexMsg)
 
@@ -185,20 +200,20 @@ update token msg model =
 
 -- View functions
 
-view : Model formMsg formModel dataModel -> Html (Msg formMsg dataModel)
+view : Model dataModel formModel formMsg -> Html (Msg dataModel formMsg)
 view model =
     case (model.currentState, model.currentRoute) of
         (IndexActive indexModel, Index) ->
             Html.map IndexMsg
-                <| ModelList.view model.indexConfiguration indexModel
+                <| ModelList.view model.config.indexConfiguration indexModel
 
         (FormActive formModel, Create) ->
             Html.map FormMsg
-                <| model.formView ("Create " ++ model.resourceName) formModel
+                <| ModelForm.view "Create" model.config.formConfiguration formModel
 
         (FormActive formModel, Update _) ->
             Html.map FormMsg
-                <| model.formView ("Update " ++ model.resourceName) formModel
+                <| ModelForm.view "Update" model.config.formConfiguration formModel
 
         _ ->
             Html.div []
