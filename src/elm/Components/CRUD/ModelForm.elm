@@ -4,6 +4,8 @@ import Api exposing (Error, Token)
 import Api.Group exposing (..)
 import Bootstrap.Button as Button
 import Bootstrap.Form as Form
+import Browser.Navigation as Navigation
+import Components.CRUD.SharedConfiguration as SharedConfiguration
 import Components.LoadingIndicator as LoadingIndicator
 import Components.Toast as Toast
 import Html exposing (..)
@@ -73,18 +75,10 @@ type alias Field childModel childMsg =
     childModel -> Html childMsg
 
 
--- This configuration model is generated from the root controller using configuration variables used for both the form and list
-type alias RootConfiguration dataModel =
-    { resourceName: String
-    , apiUrl: String
-    , routeGroup: RouteGroup
-    , decoder: Decoder (GenericModel dataModel)
-    , expands: List Expands.Expand
-    }
-
-
-type alias Model dataModel childModel =
-    { rootConfiguration: RootConfiguration dataModel
+type alias Model dataModel childModel childMsg =
+    { sharedConfiguration: SharedConfiguration.Configuration dataModel
+    , configuration: Configuration dataModel childModel childMsg
+    , navigationKey: Navigation.Key
     , loading: Bool
     , dataModel: (GenericModel dataModel)
     , childModel: childModel
@@ -141,24 +135,16 @@ addField configuration field =
     }
 
 
-configureRoot: String -> String -> RouteGroup -> Decoder (GenericModel dataModel) -> List Expands.Expand -> RootConfiguration dataModel
-configureRoot resourceName apiUrl routeGroup decoder expands =
-    { resourceName = resourceName
-    , apiUrl = apiUrl
-    , routeGroup = routeGroup
-    , decoder = decoder
-    , expands = expands
-    }
-
-
-initialState : Configuration dataModel childModel childMsg -> RootConfiguration dataModel -> Token -> Maybe Int
-    -> (Model dataModel childModel, Cmd (Msg dataModel childMsg))
-initialState configuration rootConfiguration token maybeId =
+initialState :  SharedConfiguration.Configuration dataModel -> Configuration dataModel childModel childMsg -> Navigation.Key -> Token -> Maybe Int
+    -> (Model dataModel childModel childMsg, Cmd (Msg dataModel childMsg))
+initialState sharedConfiguration configuration navigationKey token maybeId =
     let
         (childModel, childCmd) =
-            configuration.childInit rootConfiguration.apiUrl token
+            configuration.childInit sharedConfiguration.apiUrl token
     in
-    ( { rootConfiguration = rootConfiguration
+    ( { sharedConfiguration = sharedConfiguration
+      , configuration = configuration
+      , navigationKey = navigationKey
       , loading = maybeId /= Nothing
       , dataModel = configuration.newModel
       , childModel = childModel
@@ -167,7 +153,7 @@ initialState configuration rootConfiguration token maybeId =
     , Cmd.batch
         [ case maybeId of
             Just id ->
-                getModel token rootConfiguration.routeGroup.existing rootConfiguration.expands id rootConfiguration.decoder
+                getModel token sharedConfiguration.routeGroup.existing sharedConfiguration.expands id sharedConfiguration.decoder
             Nothing ->
                 Cmd.none
         , Cmd.map ChildMsg childCmd
@@ -175,11 +161,11 @@ initialState configuration rootConfiguration token maybeId =
     )
 
 
-setModel : Token -> Configuration dataModel childModel childMsg -> Model dataModel childModel -> (GenericModel dataModel) -> Bool -> (Model dataModel childModel, Cmd (Msg dataModel childMsg))
-setModel token configuration model dataModel loading =
+setModel : Token -> Model dataModel childModel childMsg -> (GenericModel dataModel) -> Bool -> (Model dataModel childModel childMsg, Cmd (Msg dataModel childMsg))
+setModel token model dataModel loading =
     let
         (childModel, childMsg) =
-            configuration.setModel token dataModel model.childModel
+            model.configuration.setModel token dataModel model.childModel
     in
     ( { model
         | loading = loading
@@ -190,12 +176,12 @@ setModel token configuration model dataModel loading =
     )
 
 
-update : Token -> Configuration dataModel childModel childMsg -> Msg dataModel childMsg -> Model dataModel childModel -> (Model dataModel childModel, Cmd (Msg dataModel childMsg))
-update token configuration msg model =
+update : Token -> Msg dataModel childMsg -> Model dataModel childModel childMsg -> (Model dataModel childModel childMsg, Cmd (Msg dataModel childMsg))
+update token msg model =
     case msg of
         ModelCreatedResponse (Ok dataModel) ->
             case dataModel.id of
-                Just _ ->
+                Just id ->
                     let
                         (updatedModel, toastCmd) =
                             Toast.appendToast
@@ -203,7 +189,7 @@ update token configuration msg model =
                                 model
 
                         (childModel, childMsg) =
-                            configuration.modelCreated token dataModel model.childModel
+                            model.configuration.modelCreated token dataModel model.childModel
                     in
                     ( { updatedModel
                         | childModel = childModel
@@ -211,6 +197,7 @@ update token configuration msg model =
                     , Cmd.batch
                         [ toastCmd
                         , Cmd.map ChildMsg childMsg
+                        , Navigation.pushUrl model.navigationKey ("/admin/" ++ model.sharedConfiguration.pageUrl ++  "/" ++ (String.fromInt id))
                         ]
                     )
 
@@ -232,7 +219,7 @@ update token configuration msg model =
                         model
 
                 (childModel, childMsg) =
-                    configuration.modelUpdated token dataModel model.childModel
+                    model.configuration.modelUpdated token dataModel model.childModel
             in
             ( { updatedModel
                 | childModel = childModel
@@ -250,7 +237,7 @@ update token configuration msg model =
                 { model | loading = False }
 
         ModelLoadedResponse (Ok dataModel) ->
-            setModel token configuration model dataModel False
+            setModel token model dataModel False
 
         ModelLoadedResponse (Err error) ->
             Toast.appendToast
@@ -259,7 +246,7 @@ update token configuration msg model =
 
         ChildMsg childMsg ->
             Tuple.mapBoth (setChildModel model) (Cmd.map ChildMsg)
-                <| configuration.childUpdate token model.dataModel childMsg model.childModel
+                <| model.configuration.childUpdate token model.dataModel childMsg model.childModel
 
         RemoveToast toast ->
             ( { model
@@ -269,7 +256,7 @@ update token configuration msg model =
             )
 
         Save ->
-            case configuration.validateModel model.dataModel of
+            case model.configuration.validateModel model.dataModel of
                 Err errorMessage ->
                     Toast.appendToast
                         (Toast.createToast Toast.Error RemoveToast errorMessage)
@@ -281,9 +268,9 @@ update token configuration msg model =
                     }
                     , case dataModel.id of
                         Just id ->
-                            updateModel token model.rootConfiguration.routeGroup.existing id model.rootConfiguration.decoder configuration.updateEncoder dataModel
+                            updateModel token model.sharedConfiguration.routeGroup.existing id model.sharedConfiguration.decoder model.configuration.updateEncoder dataModel
                         Nothing ->
-                            createModel token model.rootConfiguration.routeGroup.new model.rootConfiguration.decoder configuration.createEncoder dataModel
+                            createModel token model.sharedConfiguration.routeGroup.new model.sharedConfiguration.decoder model.configuration.createEncoder dataModel
                     )
 
 
@@ -292,21 +279,21 @@ noAction _ _ childModel =
     ( childModel, Cmd.none )
 
 
-setChildModel: Model dataModel childModel -> childModel -> Model dataModel childModel
+setChildModel: Model dataModel childModel childMsg -> childModel -> Model dataModel childModel childMsg
 setChildModel model childModel =
     { model
         | childModel = childModel
     }
 
 
-view : String -> Configuration dataModel childModel childMsg -> Model dataModel childModel -> Html (Msg dataModel childMsg)
-view actionName configuration model =
+view : String -> Model dataModel childModel childMsg -> Html (Msg dataModel childMsg)
+view actionName model =
     div [ class "model_form" ]
-        [ h1 [] [ text actionName ++ " " ++ model.rootConfiguration.resourceName ]
+        [ h1 [] [ text (actionName ++ " " ++ model.sharedConfiguration.resourceName) ]
         , Form.form
             [ onSubmit Save ]
                 <| List.concat
-                    [ (List.map (\field -> Html.map ChildMsg <| field model.childModel) configuration.fields)
+                    [ (List.map (\field -> Html.map ChildMsg <| field model.childModel) model.configuration.fields)
                     , [submitButton model.loading]
                     ]
         , LoadingIndicator.view model.loading
