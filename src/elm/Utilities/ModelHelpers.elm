@@ -1,7 +1,12 @@
 module Utilities.ModelHelpers exposing (..)
 
 import Json.Decode as JsonDecode exposing (..)
+import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
+
+type alias BaseRecord =
+    { id: Maybe Int
+    }
 
 type alias GenericModel a =
     { a | id: Maybe Int }
@@ -44,6 +49,12 @@ checkIfKeyValuePairMatchesID id (key, value) =
         Just value
     else
         Nothing
+
+
+baseRecordDecoder: Decoder BaseRecord
+baseRecordDecoder =
+    JsonDecode.succeed BaseRecord
+        |> required "id" (maybe int)
 
 
 stringFloatDecoder : Decoder Float
