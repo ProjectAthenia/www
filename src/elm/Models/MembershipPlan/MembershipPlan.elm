@@ -5,7 +5,6 @@ import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Models.Page as Page
 import Utilities.ModelHelpers exposing (..)
-import Html
 
 type alias Record
     = { name: String , duration: String , current_cost: Float , current_rate_id: Int}

@@ -10,7 +10,7 @@ testModelDecoder : Test
 testModelDecoder =
     test "Test decode" <|
         \() ->
-            Expect.equal (Ok { id = 342
+            Expect.equal (Ok { id = Just 342
                             , name = "Steve"
                             , duration = "yearly"
                             , current_cost = 12.12
