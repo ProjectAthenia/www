@@ -32,8 +32,8 @@ type alias ModelEncoder dataModel
     = GenericModel dataModel -> Encode.Value
 
 
-type alias ValidateModel dataModel
-    = GenericModel dataModel -> Result String (GenericModel dataModel)
+type alias ValidateModel dataModel childModel
+    = GenericModel dataModel -> childModel -> Result String (GenericModel dataModel)
 
 
 -- The init function format that must return our form model, and any needed commands
@@ -43,7 +43,7 @@ type alias ChildInit childModel childMsg =
 
 -- The update function format for any form update calls
 type alias ChildUpdate dataModel childModel childMsg =
-    Token -> (GenericModel dataModel) -> childMsg -> childModel -> (childModel, Cmd childMsg)
+    Token -> GenericModel dataModel -> childMsg -> childModel -> (childModel, Cmd childMsg)
 
 
 -- An alias to our form view function that all of our forms must pass in
@@ -52,7 +52,7 @@ type alias ChildView dataModel childModel childMsg =
 
 
 type alias ChildAction dataModel childModel childMsg =
-    Token -> (GenericModel dataModel) -> childModel -> (childModel, Cmd childMsg)
+    Token -> GenericModel dataModel -> childModel -> (childModel, Cmd childMsg)
 
 
 -- This configuration model is everything that needs to be specifically configured for the form
@@ -60,10 +60,9 @@ type alias Configuration dataModel childModel childMsg =
     { createEncoder: ModelEncoder dataModel
     , updateEncoder: ModelEncoder dataModel
     , newModel: GenericModel dataModel
-    , validateModel: ValidateModel dataModel
+    , validateModel: ValidateModel dataModel childModel
     , childInit: ChildInit childModel childMsg
     , childUpdate: ChildUpdate dataModel childModel childMsg
-    , childView: ChildView dataModel childModel childMsg
     , setModel: ChildAction dataModel childModel childMsg
     , modelCreated: ChildAction dataModel childModel childMsg
     , modelUpdated: ChildAction dataModel childModel childMsg
@@ -72,7 +71,7 @@ type alias Configuration dataModel childModel childMsg =
 
 
 type alias Field childModel childMsg =
-    childModel -> Html childMsg
+    Bool -> childModel -> Html childMsg
 
 
 type alias Model dataModel childModel childMsg =
@@ -86,17 +85,16 @@ type alias Model dataModel childModel childMsg =
     }
 
 
-configure: ModelEncoder dataModel -> ModelEncoder dataModel-> GenericModel dataModel -> ValidateModel dataModel
-    -> ChildInit childModel childMsg -> ChildUpdate dataModel childModel childMsg -> ChildView dataModel childModel childMsg
+configure: ModelEncoder dataModel -> ModelEncoder dataModel-> GenericModel dataModel -> ValidateModel dataModel childModel
+    -> ChildInit childModel childMsg -> ChildUpdate dataModel childModel childMsg
     -> Configuration dataModel childModel childMsg
-configure createEncoder updateEncoder newModel validateModel childInit childUpdate childView =
+configure createEncoder updateEncoder newModel validateModel childInit childUpdate =
     { createEncoder = createEncoder
     , updateEncoder = updateEncoder
     , newModel = newModel
     , validateModel = validateModel
     , childInit = childInit
     , childUpdate = childUpdate
-    , childView = childView
     , setModel = noAction
     , modelCreated = noAction
     , modelUpdated = noAction
@@ -104,17 +102,17 @@ configure createEncoder updateEncoder newModel validateModel childInit childUpda
     }
 
 
-configureSetModelAction: Configuration dataModel childModel childMsg -> ChildAction dataModel childModel childMsg
+configureSetModelAction: ChildAction dataModel childModel childMsg -> Configuration dataModel childModel childMsg
     -> Configuration dataModel childModel childMsg
-configureSetModelAction configuration setModelAction =
+configureSetModelAction setModelAction configuration =
     { configuration
         | setModel = setModelAction
     }
 
 
-configureModelCreatedAction: Configuration dataModel childModel childMsg -> ChildAction dataModel childModel childMsg
+configureModelCreatedAction: ChildAction dataModel childModel childMsg -> Configuration dataModel childModel childMsg
     -> Configuration dataModel childModel childMsg
-configureModelCreatedAction configuration modelCreated =
+configureModelCreatedAction modelCreated configuration =
     { configuration
         | modelCreated = modelCreated
     }
@@ -128,11 +126,16 @@ configureModelUpdatedAction configuration modelUpdated =
     }
 
 
+addFields: Configuration dataModel childModel childMsg -> List (Field childModel childMsg) -> Configuration dataModel childModel childMsg
+addFields configuration fields =
+    { configuration
+        | fields = List.append configuration.fields fields
+    }
+
+
 addField: Configuration dataModel childModel childMsg -> Field childModel childMsg -> Configuration dataModel childModel childMsg
 addField configuration field =
-    { configuration
-        | fields = List.append configuration.fields [field]
-    }
+    addFields configuration [field]
 
 
 initialState :  SharedConfiguration.Configuration dataModel -> Configuration dataModel childModel childMsg -> Navigation.Key -> Token -> Maybe Int
@@ -256,7 +259,7 @@ update token msg model =
             )
 
         Save ->
-            case model.configuration.validateModel model.dataModel of
+            case model.configuration.validateModel model.dataModel model.childModel of
                 Err errorMessage ->
                     Toast.appendToast
                         (Toast.createToast Toast.Error RemoveToast errorMessage)
@@ -265,6 +268,7 @@ update token msg model =
                 Ok dataModel ->
                     ( { model
                         | loading = True
+                        , dataModel = dataModel
                     }
                     , case dataModel.id of
                         Just id ->
@@ -293,7 +297,7 @@ view actionName model =
         , Form.form
             [ onSubmit Save ]
                 <| List.concat
-                    [ (List.map (\field -> Html.map ChildMsg <| field model.childModel) model.configuration.fields)
+                    [ (List.map (\field -> Html.map ChildMsg <| field model.loading model.childModel) model.configuration.fields)
                     , [submitButton model.loading]
                     ]
         , LoadingIndicator.view model.loading

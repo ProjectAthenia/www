@@ -11,8 +11,8 @@ type alias Model =
 
 
 -- Builds the initial state model for this number field
-initialState : Bool -> String -> String -> Model
-initialState required label name =
+configure : Bool -> String -> String -> Model
+configure required label name =
     { required = required
     , label = label
     , name = name

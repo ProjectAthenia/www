@@ -3,6 +3,7 @@ module Models.MembershipPlan.MembershipPlan exposing (..)
 import Api.Group exposing (RouteGroup, baseGroup)
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
+import Json.Encode as Encode
 import Models.Page as Page
 import Utilities.ModelHelpers exposing (..)
 
@@ -15,9 +16,21 @@ type alias Model =
 type alias Page
     = Page.Model Model
 
+
+newModel: Model
+newModel =
+    { id = Nothing
+    , name = ""
+    , duration = ""
+    , current_cost = 0.00
+    , current_rate_id = 0
+    }
+
+
 makeReadable : Model -> String
 makeReadable model =
     model.name ++ " ($" ++ String.fromFloat model.current_cost ++ ")"
+
 
 recordDecoder: Decoder Record
 recordDecoder =
@@ -51,6 +64,16 @@ listDecoder =
 pageDecoder : Decoder Page
 pageDecoder =
     Page.modelDecoder listDecoder
+
+
+-- Converts a user model into a JSON string
+toJson : GenericModel Model -> Encode.Value
+toJson model =
+    Encode.object
+        [ ("name", Encode.string model.name)
+        , ("duration", Encode.string model.duration)
+        , ("current_cost", Encode.float model.current_cost)
+        ]
 
 
 routeGroup: String -> RouteGroup

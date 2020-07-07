@@ -1,17 +1,13 @@
 module Components.CRUD.RootController exposing (..)
 
 import Api exposing (Token)
-import Api.Group exposing (..)
 import Browser.Navigation as Navigation
 import Components.CRUD.ModelForm as ModelForm
 import Components.CRUD.ModelList as ModelList
 import Components.CRUD.SharedConfiguration as SharedConfiguration
 import Components.Toast as Toast
 import Html exposing (..)
-import Json.Decode exposing (..)
 import Url.Parser as Parser exposing ((</>), Parser, int)
-import Utilities.Expands as Expands
-import Utilities.ModelHelpers exposing (GenericModel)
 
 
 type Route
