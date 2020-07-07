@@ -7,7 +7,7 @@ import Components.CRUD.ModelList as ModelList
 import Components.CRUD.SharedConfiguration as SharedConfiguration
 import Components.Toast as Toast
 import Html exposing (..)
-import Url.Parser as Parser exposing ((</>), Parser, int)
+import Url.Parser as Parser exposing ((</>), Parser)
 
 
 type Route
@@ -70,17 +70,17 @@ crudRoutes name =
 
 
 -- Transforms a route into a full string
-routeToString: String -> Route -> List String
+routeToString: String -> Route -> String
 routeToString name route =
     case route of
         Index ->
-            [ name ]
+            name
 
         Create ->
-            [ name, "create" ]
+            name ++ "/create"
 
         Update id ->
-            [ name, String.fromInt id ]
+            name ++ "/" ++ String.fromInt id
 
 
 configure: SharedConfiguration.Configuration dataModel -> ModelList.Configuration dataModel
@@ -126,10 +126,9 @@ replaceRoute model currentRoute =
     }
 
 
-changePage : Navigation.Key -> Token -> Route
-    -> Model dataModel formModel formMsg -> Configuration dataModel formModel formMsg
+changePage : Navigation.Key -> Token -> Route -> Model dataModel formModel formMsg
     -> (Model dataModel formModel formMsg, Cmd (Msg dataModel formMsg))
-changePage navKey token route model configuration =
+changePage navKey token route model =
     let
         modelWithRoute = replaceRoute model route
     in
@@ -153,12 +152,12 @@ changePage navKey token route model configuration =
 
         Update id ->
             -- TODO check to see if we can maintain the current state from a create form
-            ModelForm.initialState configuration.sharedConfiguration configuration.formConfiguration navKey token (Just id)
+            ModelForm.initialState model.config.sharedConfiguration model.config.formConfiguration navKey token (Just id)
                 |> Tuple.mapFirst (replaceFormModel modelWithRoute)
                 |> Tuple.mapSecond (Cmd.map FormMsg)
 
         Create ->
-            ModelForm.initialState configuration.sharedConfiguration configuration.formConfiguration navKey token Nothing
+            ModelForm.initialState model.config.sharedConfiguration model.config.formConfiguration navKey token Nothing
                 |> Tuple.mapFirst (replaceFormModel modelWithRoute)
                 |> Tuple.mapSecond (Cmd.map FormMsg)
 

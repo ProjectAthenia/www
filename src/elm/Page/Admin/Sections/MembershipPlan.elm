@@ -15,6 +15,14 @@ import Utilities.SearchField exposing (SearchFieldType(..))
 import Utilities.ModelHelpers exposing (..)
 
 
+type alias Model =
+    RootController.Model MembershipPlan.Model FormModel FormMsg
+
+
+type alias Msg =
+    RootController.Msg MembershipPlan.Model FormMsg
+
+
 type alias FormModel =
     { name: String
     , duration: String
@@ -163,7 +171,12 @@ formConfiguration =
         ]
 
 
-
 configuration: String -> RootController.Configuration MembershipPlan.Model FormModel FormMsg
 configuration apiUrl =
     RootController.configure (sharedConfiguration apiUrl) indexConfiguration formConfiguration
+
+
+initialModel: String -> RootController.Model MembershipPlan.Model FormModel FormMsg
+initialModel apiUrl =
+    RootController.initialState
+        <| configuration apiUrl
