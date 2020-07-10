@@ -24,6 +24,7 @@ type Page
     | Login
     | Profile Int
     | Article
+    | Admin
 
 
 {-| Take a page's Html and frames it with a header and footer.

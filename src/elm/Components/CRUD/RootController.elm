@@ -70,17 +70,17 @@ crudRoutes name =
 
 
 -- Transforms a route into a full string
-routeToString: String -> Route -> String
+routeToString: String -> Route -> List String
 routeToString name route =
     case route of
         Index ->
-            name
+            [ name ]
 
         Create ->
-            name ++ "/create"
+            [ name, "create" ]
 
         Update id ->
-            name ++ "/" ++ String.fromInt id
+            [ name, String.fromInt id ]
 
 
 configure: SharedConfiguration.Configuration dataModel -> ModelList.Configuration dataModel

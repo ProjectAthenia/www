@@ -11,6 +11,7 @@ import Json.Decode as Decode exposing (Value)
 import Json.Decode.Pipeline as Pipeline
 import Models.User.User as User
 import Page as Page
+import Page.Admin.Root as Admin
 import Page.Article.Editor as ArticleEditor
 import Page.Article.Index as ArticleIndex
 import Page.Article.Viewer as ArticleViewer
@@ -44,6 +45,7 @@ type CurrentState
     | ArticleIndex ArticleIndex.Model
     | ArticleEditor Int ArticleEditor.Model
     | ArticleViewer Int ArticleViewer.Model
+    | Admin Session Admin.Model
 
 
 type alias Model =
@@ -54,6 +56,7 @@ type alias Model =
     , currentState : CurrentState
     , currentTime : Time.Posix
     , refreshingToken : Bool
+    , admin: Admin.Model
     }
 
 
@@ -80,6 +83,12 @@ appInit flags url navKey =
             Navbar.initialState NavBarStateChange
         maybeToken =
             Viewer.maybeToken flags.maybeViewer
+        apiUrlString =
+            case Configuration.fetchConfigVariable flags.config "API_URL" of
+                 Just apiUrl ->
+                     apiUrl
+                 Nothing ->
+                     ""
         initialModel =
             { navBarState = navBarState
             , navBarConfig = AppNavBar.config flags.config NavBarStateChange (Route.href Route.Home)
@@ -93,12 +102,8 @@ appInit flags url navKey =
 
             , currentTime = Time.millisToPosix 0
             , configuration = flags.config
-            , apiUrl
-                = case Configuration.fetchConfigVariable flags.config "API_URL" of
-                    Just apiUrl ->
-                        apiUrl
-                    Nothing ->
-                        ""
+            , apiUrl = apiUrlString
+            , admin = Admin.initialState apiUrlString
             , refreshingToken = False
             }
         (readyModel, initialCmd) =
@@ -192,6 +197,10 @@ view model =
         ArticleEditor _ article ->
             viewPage (ArticleEditor.view article) GotArticleEditorMsg
 
+        Admin _ admin ->
+            viewPage (Admin.view admin) GotAdminMsg
+
+
 
 type Msg
     = Ignored
@@ -206,6 +215,7 @@ type Msg
     | GotArticleIndexMsg ArticleIndex.Msg
     | GotArticleViewerMsg ArticleViewer.Msg
     | GotArticleEditorMsg ArticleEditor.Msg
+    | GotAdminMsg Admin.Msg
     | NavBarStateChange Navbar.State
     | GotSession Session
     | CompletedTokenRefresh (Result Api.Error Api.Token)
@@ -250,6 +260,9 @@ toSession page =
 
         ArticleEditor _ editor ->
             ArticleEditor.toSession editor
+
+        Admin session _ ->
+            session
 
 
 changeRouteTo : Maybe Route -> Model -> ( Model, Cmd Msg )
@@ -319,6 +332,10 @@ changeRouteToAuthenticatedRoute route model session token user =
         Route.Article articleId ->
             ArticleViewer.init session model.apiUrl token articleId
                 |> updateWith (ArticleViewer articleId) GotArticleViewerMsg model
+
+        Route.Admin subRoute ->
+            Admin.changePage (Session.navKey session) token subRoute model.admin
+                |> updateWith (Admin session) GotAdminMsg model
 
         _ ->
             (model, Cmd.none)
@@ -524,6 +541,9 @@ subscriptions model =
 
             ArticleEditor _ editor ->
                 Sub.map GotArticleEditorMsg (ArticleEditor.subscriptions editor)
+
+            Admin _ _ ->
+                Sub.map GotAdminMsg Admin.subscriptions
         , Navbar.subscriptions model.navBarState NavBarStateChange
         , Time.every 1000 Tick
         ]

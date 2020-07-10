@@ -8,6 +8,7 @@ module Route exposing
 import Browser.Navigation as Nav
 import Html exposing (Attribute)
 import Html.Attributes as Attr
+import Page.Admin.Root as Admin
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser, oneOf, s, int, string)
 
@@ -26,6 +27,7 @@ type Route
     | Article Int
     | Profile Int
     | EditArticle Int
+    | Admin Admin.Route
 
 
 parser : Parser (Route -> a) a
@@ -40,6 +42,7 @@ parser =
         , Parser.map Articles (s "articles")
         , Parser.map Article (s "articles" </> int)
         , Parser.map EditArticle (s "editor" </> int)
+        , Parser.map Admin Admin.routes
         ]
 
 
@@ -100,5 +103,8 @@ routeToString page =
 
                 EditArticle articleId ->
                     [ "editor", String.fromInt articleId ]
+
+                Admin subRoute ->
+                    Admin.routeToString subRoute
     in
     "/" ++ String.join "/" pieces
