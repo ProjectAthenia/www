@@ -15,7 +15,7 @@
     "setup": "npm i"
   },
   "dependencies": {
-    "autoprefixer": "^9.8.4",
+    "autoprefixer": "^9.8.5",
     "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^2.1.1",
     "dotenv": "^7.0.0",
