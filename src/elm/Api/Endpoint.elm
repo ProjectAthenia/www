@@ -57,7 +57,7 @@ url apiUrl paths queryParams =
     -- NOTE: Url.Builder takes care of percent-encoding special URL characters.
     -- See https://package.elm-lang.org/packages/elm/url/latest/Url#percentEncode
     Builder.crossOrigin apiUrl
-        ("v1" :: paths)
+        (paths)
         queryParams
         |> Endpoint
 

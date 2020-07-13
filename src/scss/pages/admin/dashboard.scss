@@ -1,0 +1,12 @@
+#admin_wrapper {
+  display: flex;
+  flex-grow: 1;
+  flex-wrap: wrap;
+  padding: 25px;
+  flex-direction: column;
+
+  .card {
+    max-width: 250px;
+    margin: 0 10px 20px 0;
+  }
+}

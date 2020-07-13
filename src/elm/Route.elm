@@ -42,7 +42,7 @@ parser =
         , Parser.map Articles (s "articles")
         , Parser.map Article (s "articles" </> int)
         , Parser.map EditArticle (s "editor" </> int)
-        , Parser.map Admin Admin.routes
+        , Parser.map Admin (s "admin" </> Admin.routes)
         ]
 
 
@@ -105,6 +105,6 @@ routeToString page =
                     [ "editor", String.fromInt articleId ]
 
                 Admin subRoute ->
-                    Admin.routeToString subRoute
+                    List.append ["admin"] (Admin.routeToString subRoute)
     in
     "/" ++ String.join "/" pieces

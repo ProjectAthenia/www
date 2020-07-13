@@ -37,7 +37,7 @@ type FormMsg
 
 sharedConfiguration: String -> SharedConfiguration.Configuration MembershipPlan.Model
 sharedConfiguration apiUrl =
-    SharedConfiguration.configure "Membership Plans" "membership-plans" (MembershipPlan.routeGroup apiUrl) MembershipPlan.modelDecoder []
+    SharedConfiguration.configure "Membership Plan" "membership-plans" (MembershipPlan.routeGroup apiUrl) MembershipPlan.modelDecoder []
 
 
 nameColumn: ModelList.Column MembershipPlan.Model

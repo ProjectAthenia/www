@@ -290,18 +290,17 @@ setChildModel model childModel =
     }
 
 
-view : String -> Model dataModel childModel childMsg -> Html (Msg dataModel childMsg)
+view : String -> Model dataModel childModel childMsg -> List (Html (Msg dataModel childMsg))
 view actionName model =
-    div [ class "model_form" ]
-        [ h1 [] [ text (actionName ++ " " ++ model.sharedConfiguration.resourceName) ]
-        , Form.form
-            [ onSubmit Save ]
-                <| List.concat
-                    [ (List.map (\field -> Html.map ChildMsg <| field model.loading model.childModel) model.configuration.fields)
-                    , [submitButton model.loading]
-                    ]
-        , LoadingIndicator.view model.loading
-        ]
+    [ h1 [] [ text (actionName ++ " " ++ model.sharedConfiguration.resourceName) ]
+    , Form.form
+        [ onSubmit Save, class "model_form" ]
+            <| List.concat
+                [ (List.map (\field -> Html.map ChildMsg <| field model.loading model.childModel) model.configuration.fields)
+                , [submitButton model.loading]
+                ]
+    , LoadingIndicator.view model.loading
+    ]
 
 
 submitButton : Bool -> Html msg

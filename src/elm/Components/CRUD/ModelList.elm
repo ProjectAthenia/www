@@ -38,9 +38,7 @@ type alias QueryResult dataModel =
 
 
 type Msg dataModel
-    = CreateNewRecord
-    | OpenDeleteModal Endpoint
-    | UpdateRecord Int
+    = OpenDeleteModal Endpoint
     | LoadPage Int
     | SetSearchFieldValue SearchField.Model String
     | ConfirmDeletion Endpoint
@@ -146,11 +144,6 @@ update token msg model =
                 , runQuery token updatedModel 1
                 )
 
-        CreateNewRecord ->
-            ( model
-            , Navigation.pushUrl model.navigationKey ("/admin/" ++ model.sharedConfiguration.pageUrl ++  "/create")
-            )
-
         OpenDeleteModal endpoint ->
             ( { model
                 | deleteModal = Just
@@ -173,11 +166,6 @@ update token msg model =
                 , loading = True
             }
             , Api.deleteModel endpoint token DeleteSuccess
-            )
-
-        UpdateRecord id ->
-            ( model
-            , Navigation.pushUrl model.navigationKey ("/admin/" ++ model.sharedConfiguration.pageUrl ++  "/" ++ (String.fromInt id))
             )
 
         LoadPage pageNumber ->
@@ -228,41 +216,42 @@ updateSearchField searchField value columns =
 -- All view stuff starts here
 
 
-view : Model dataModel -> Html (Msg dataModel)
+view : Model dataModel -> List (Html (Msg dataModel))
 view model =
-    div []
-        <| List.concat
-            [
-                [ h2 []
-                    [ text ("Mange " ++ model.sharedConfiguration.resourceName ++ "s")
-                    , if model.configuration.createDisabled == False then
-                        Button.button
-                            [ Button.primary
-                            , Button.onClick CreateNewRecord
-                            , Button.attrs [ class "create_btn" ]
+    List.concat
+        [
+            [ h2 []
+                [ text ("Mange " ++ model.sharedConfiguration.resourceName ++ "s")
+                , if model.configuration.createDisabled == False then
+                    Button.linkButton
+                        [ Button.primary
+                        , Button.attrs
+                            [ class "create_btn"
+                            , href ("/admin/" ++ model.sharedConfiguration.pageUrl ++ "/create")
                             ]
-                            [ text ("Add " ++ model.sharedConfiguration.resourceName) ]
-                    else
-                        text ""
-                    ]
-                , Table.table
-                    { options = [ Table.bordered, Table.striped ]
-                    , thead = Table.thead []
-                        [ Table.tr [] (builderHeader model)
                         ]
-                    , tbody = Table.tbody []
-                        <| List.map (buildRow model) model.models
-                    }
-                , div [ class "pagination" ] (buildPagination model.page)
+                        [ text ("Add " ++ model.sharedConfiguration.resourceName) ]
+                else
+                    text ""
                 ]
-                , case model.deleteModal of
-                    Just modal ->
-                        [ ConfirmationModal.view modal
-                        ]
-                    Nothing ->
-                        []
-                , [ LoadingIndicator.view model.loading ]
+            , Table.table
+                { options = [ Table.bordered, Table.striped ]
+                , thead = Table.thead []
+                    [ Table.tr [] (builderHeader model)
+                    ]
+                , tbody = Table.tbody []
+                    <| List.map (buildRow model) model.models
+                }
+            , div [ class "pagination" ] (buildPagination model.page)
             ]
+            , case model.deleteModal of
+                Just modal ->
+                    [ ConfirmationModal.view modal
+                    ]
+                Nothing ->
+                    []
+            , [ LoadingIndicator.view model.loading ]
+        ]
 
 
 builderHeader : Model dataModel -> List (Table.Cell (Msg dataModel))
@@ -322,9 +311,11 @@ buildRowCells dataModel id model =
         , List.concat
             [
                 [ Table.td [ ]
-                    [ Button.button
+                    [ Button.linkButton
                         [ Button.info
-                        , Button.onClick (UpdateRecord id)
+                        , Button.attrs
+                            [ href <| "/admin/" ++ model.sharedConfiguration.pageUrl ++ "/" ++ (String.fromInt id)
+                            ]
                         ]
                         [ text "Edit" ]
                     ]

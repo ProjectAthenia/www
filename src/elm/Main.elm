@@ -45,7 +45,7 @@ type CurrentState
     | ArticleIndex ArticleIndex.Model
     | ArticleEditor Int ArticleEditor.Model
     | ArticleViewer Int ArticleViewer.Model
-    | Admin Session Admin.Model
+    | Admin Admin.Model
 
 
 type alias Model =
@@ -56,7 +56,7 @@ type alias Model =
     , currentState : CurrentState
     , currentTime : Time.Posix
     , refreshingToken : Bool
-    , admin: Admin.Model
+    , admin: Maybe Admin.Model
     }
 
 
@@ -103,7 +103,7 @@ appInit flags url navKey =
             , currentTime = Time.millisToPosix 0
             , configuration = flags.config
             , apiUrl = apiUrlString
-            , admin = Admin.initialState apiUrlString
+            , admin = Nothing
             , refreshingToken = False
             }
         (readyModel, initialCmd) =
@@ -143,6 +143,7 @@ getNavItems maybeToken maybeUser =
                     Nothing ->
                         []
                 , [ ("Settings", Route.href Route.Settings)
+                  , ("Admin", Route.href (Route.Admin Admin.Dashboard))
                   , ("Log Out", Route.href Route.Logout)
                   ]
                 ]
@@ -151,7 +152,6 @@ getNavItems maybeToken maybeUser =
             [ ("Sign In", Route.href  Route.Login)
             , ("Sign Up", Route.href  Route.SignUp)
             ]
-
 
 
 view : Model -> Document Msg
@@ -197,7 +197,7 @@ view model =
         ArticleEditor _ article ->
             viewPage (ArticleEditor.view article) GotArticleEditorMsg
 
-        Admin _ admin ->
+        Admin admin ->
             viewPage (Admin.view admin) GotAdminMsg
 
 
@@ -261,8 +261,8 @@ toSession page =
         ArticleEditor _ editor ->
             ArticleEditor.toSession editor
 
-        Admin session _ ->
-            session
+        Admin admin ->
+            Admin.toSession admin
 
 
 changeRouteTo : Maybe Route -> Model -> ( Model, Cmd Msg )
@@ -334,8 +334,15 @@ changeRouteToAuthenticatedRoute route model session token user =
                 |> updateWith (ArticleViewer articleId) GotArticleViewerMsg model
 
         Route.Admin subRoute ->
-            Admin.changePage (Session.navKey session) token subRoute model.admin
-                |> updateWith (Admin session) GotAdminMsg model
+            let
+                adminState = case model.admin of
+                    Just admin ->
+                        admin
+                    Nothing ->
+                        Admin.initialState session model.apiUrl token
+            in
+            Admin.changePage (Session.navKey session) token subRoute adminState
+                |> updateWith Admin GotAdminMsg model
 
         _ ->
             (model, Cmd.none)
@@ -481,6 +488,11 @@ update msg model =
             ArticleEditor.update subMsg editor
                 |> updateWith (ArticleEditor articleId) GotArticleEditorMsg model
 
+        ( GotAdminMsg subMsg, Admin admin ) ->
+            Admin.update subMsg admin
+                |> updateWith Admin GotAdminMsg model
+
+
         ( GotSession session, Redirect _ ) ->
             ( { model | currentState = Redirect session }
             , Route.replaceUrl (Session.navKey session) Route.Home
@@ -542,8 +554,8 @@ subscriptions model =
             ArticleEditor _ editor ->
                 Sub.map GotArticleEditorMsg (ArticleEditor.subscriptions editor)
 
-            Admin _ _ ->
-                Sub.map GotAdminMsg Admin.subscriptions
+            Admin admin ->
+                Sub.map GotAdminMsg (Admin.subscriptions admin)
         , Navbar.subscriptions model.navBarState NavBarStateChange
         , Time.every 1000 Tick
         ]

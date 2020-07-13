@@ -3,10 +3,15 @@
 
 @import "components/loading_indicator";
 
+@import "components/crud/index";
+@import "components/crud/model_form";
+@import "components/crud/file_uploader";
+
 @import "pages/home";
 @import "pages/login";
 @import "pages/sign-up";
 @import "pages/settings";
 @import "pages/profile";
+@import "pages/admin/dashboard";
 @import "pages/article/viewer";
 @import "pages/article/editor";

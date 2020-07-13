@@ -8,9 +8,10 @@ import Browser.Navigation as Navigation
 import Components.CRUD.RootController as RootController
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
 import Page.Admin.Sections.MembershipPlan as MembershipPlan
+import Session exposing (Session)
 import Url.Parser as Parser exposing ((</>), Parser, top)
+import Viewer
 
 
 type Route
@@ -19,19 +20,24 @@ type Route
 
 
 type Msg
-    = MembershipPlanMsg MembershipPlan.Msg
+    = GotSession Session
+    | MembershipPlanMsg MembershipPlan.Msg
 
 
 type alias Model =
-    { currentPage: Route
+    { session : Session
+    , currentPage: Route
+    , token : Token
     , history: List (Route)
     , membershipPlanModel: MembershipPlan.Model
     }
 
 
-initialState: String -> Model
-initialState apiUrl =
-    { currentPage = Dashboard
+initialState: Session -> String -> Token -> Model
+initialState session apiUrl token =
+    { session = session
+    , currentPage = Dashboard
+    , token = token
     , history = []
     , membershipPlanModel = MembershipPlan.initialModel apiUrl
     }
@@ -47,7 +53,7 @@ routes =
 
 routeToHref: Route -> String
 routeToHref route =
-    "/" ++ (String.join "/" (routeToString route))
+    "/admin/" ++ (String.join "/" (routeToString route))
 
 -- Transforms a route into a full string
 routeToString: Route -> List String
@@ -82,42 +88,54 @@ changePage navKey token route model =
 
 
 -- Handles all ui actions from the user. Returns a new model, msg, maybe a toast, a list of requests, and a boolean for whether or not to log out
-update : Token -> Msg -> Model -> (Model, Cmd Msg)
-update token msg model =
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
     case msg of
         MembershipPlanMsg subMsg ->
             let
                 (membershipPlanModel, membershipPlanMsg) =
-                    RootController.update token subMsg model.membershipPlanModel
+                    RootController.update model.token subMsg model.membershipPlanModel
             in
             ( { model | membershipPlanModel = membershipPlanModel }
             , Cmd.map MembershipPlanMsg membershipPlanMsg
             )
 
+        GotSession session ->
+            case Viewer.maybeToken (Session.viewer session) of
+                Just token ->
+                    ( { model
+                        | session = session
+                        , token = token
+                    }
+                    , Cmd.none
+                    )
+                Nothing ->
+                    ( model
+                    , Navigation.replaceUrl (Session.navKey session) "/login"
+                    )
+
 
 view : Model -> { title : String, content : Html Msg }
 view model =
     { title = "Admin"
-    , content = div []
-        [ case model.currentPage of
+    , content = div [ id "admin_wrapper" ]
+        <| case model.currentPage of
             Dashboard ->
                 dashboard
 
             MembershipPlanRoute subRoute ->
-                Html.map MembershipPlanMsg
+                List.map (Html.map MembershipPlanMsg)
                     <| RootController.view model.membershipPlanModel
-        ]
     }
 
 -- Creates the main view for the dashboard view
-dashboard : Html Msg
+dashboard : List (Html Msg)
 dashboard =
-    div []
-        [ h1 [] [ text "Dashboard" ]
-        , div [ class "dash-squares" ]
-            [ buildDataCard "Manage Membership Plans" "Create, edit, delete, and membership plan data." MembershipPlanRoute
-            ]
+    [ h1 [] [ text "Admin" ]
+    , div [ class "dash-squares" ]
+        [ buildDataCard "Manage Membership Plan" "Create, edit, delete, and membership plan data." MembershipPlanRoute
         ]
+    ]
 
 
 buildDataCard : String -> String -> (RootController.Route -> Route) -> Html Msg
@@ -134,8 +152,15 @@ buildDataCard title information route =
         |> Card.view
 
 
-subscriptions : Sub Msg
-subscriptions =
+subscriptions : Model -> Sub Msg
+subscriptions model =
     Sub.batch
-        [
+        [ Session.changes GotSession (Session.navKey model.session)
         ]
+
+
+-- EXPORT
+
+toSession : Model -> Session
+toSession model =
+    model.session

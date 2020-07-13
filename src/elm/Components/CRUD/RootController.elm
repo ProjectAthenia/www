@@ -180,26 +180,24 @@ update token msg model =
             (model, Cmd.none)
 
 
-
 -- View functions
 
-view : Model dataModel formModel formMsg -> Html (Msg dataModel formMsg)
+view : Model dataModel formModel formMsg -> List (Html (Msg dataModel formMsg))
 view model =
     case (model.currentState, model.currentRoute) of
         (IndexActive indexModel, Index) ->
-            Html.map IndexMsg
+            List.map (Html.map IndexMsg)
                 <| ModelList.view indexModel
 
         (FormActive formModel, Create) ->
-            Html.map FormMsg
+            List.map (Html.map FormMsg)
                 <| ModelForm.view "Create" formModel
 
         (FormActive formModel, Update _) ->
-            Html.map FormMsg
+            List.map (Html.map FormMsg)
                 <| ModelForm.view "Update" formModel
 
         _ ->
-            Html.div []
-                [ Html.h1 [] [text "Inactive State"]
-                , Html.p [] [text "Tell Bryce, and try refreshing the page"]
-                ]
+            [ Html.h1 [] [text "Inactive State"]
+            , Html.p [] [text "Tell Bryce, and try refreshing the page"]
+            ]
