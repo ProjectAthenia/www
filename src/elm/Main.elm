@@ -342,7 +342,7 @@ changeRouteToAuthenticatedRoute route model session token user =
                         Admin.initialState session model.apiUrl token
             in
             Admin.changePage (Session.navKey session) token subRoute adminState
-                |> updateWith Admin GotAdminMsg model
+                |> updateWith Admin GotAdminMsg { model | admin = Just adminState }
 
         _ ->
             (model, Cmd.none)
@@ -489,9 +489,16 @@ update msg model =
                 |> updateWith (ArticleEditor articleId) GotArticleEditorMsg model
 
         ( GotAdminMsg subMsg, Admin admin ) ->
-            Admin.update subMsg admin
-                |> updateWith Admin GotAdminMsg model
-
+            let
+                (updatedAdmin, adminMsg) =
+                    Admin.update subMsg admin
+            in
+            ( { model
+                | currentState = Admin updatedAdmin
+                , admin = Just updatedAdmin
+            }
+            , Cmd.map GotAdminMsg adminMsg
+            )
 
         ( GotSession session, Redirect _ ) ->
             ( { model | currentState = Redirect session }

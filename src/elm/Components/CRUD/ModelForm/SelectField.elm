@@ -2,7 +2,7 @@ module Components.CRUD.ModelForm.SelectField exposing (..)
 
 import Bootstrap.Form.Select as Select
 import Html exposing (..)
-import Html.Attributes as Attributes
+import Html.Attributes as Attributes exposing (..)
 
 
 type alias Model =
@@ -24,11 +24,16 @@ configure options name label required =
 
 view: Model -> String -> (String -> msg) -> Bool -> Html msg
 view model value msg isDisabled =
-    Select.select
-        [ Select.onChange msg
-        , Select.disabled isDisabled
+    div [ class "field" ]
+        [ label []
+            [ text model.label
+            , Select.select
+                [ Select.onChange msg
+                , Select.disabled isDisabled
+                ]
+                (List.map (viewOption value) model.options)
+            ]
         ]
-        (List.map (viewOption value) model.options)
 
 
 viewOption: String -> (String, String) -> Select.Item msg

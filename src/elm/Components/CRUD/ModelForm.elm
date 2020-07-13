@@ -308,7 +308,6 @@ submitButton loading =
     Button.button
         [ Button.success
         , Button.large
-        , Button.block
         , Button.attrs [ disabled loading ]
         ]
         [ text "Save" ]

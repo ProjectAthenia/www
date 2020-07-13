@@ -8,9 +8,8 @@ import Components.CRUD.ModelForm.Input as Input
 
 view : Input.Model -> String -> (String -> msg) -> Bool -> Html msg
 view model value msg isDisabled =
-    div []
-        [
-            label []
+    div [ class "field" ]
+        [ label []
             [ text model.label
             , BootstrapInput.text
                 [ BootstrapInput.large

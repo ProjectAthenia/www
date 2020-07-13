@@ -82,7 +82,16 @@ indexConfiguration =
 
 validateForm: MembershipPlan.Model -> FormModel -> Result String MembershipPlan.Model
 validateForm model form =
-    Ok model
+    if String.length form.name < 1 then
+        Err "Please enter the membership plan name"
+    else if String.length form.duration < 1 then
+        Err "Please select a duration"
+    else
+        Ok { model
+            | name = form.name
+            , duration = form.duration
+            , current_cost = form.current_cost
+           }
 
 
 initForm: Token -> (FormModel, Cmd FormMsg)
