@@ -9,7 +9,7 @@ import Utilities.ModelHelpers exposing (..)
 type alias Model =
     { id: Int
     , cost: Float
-    , membership_plan: MembershipPlan.Model
+    , membership_plan: Maybe MembershipPlan.Model
     }
 
 
@@ -19,4 +19,4 @@ modelDecoder =
     JsonDecode.succeed Model
         |> required "id" int
         |> required "cost" stringFloatDecoder
-        |> required "membership_plan" MembershipPlan.modelDecoder
+        |> optional "membership_plan" (maybe MembershipPlan.modelDecoder) Nothing

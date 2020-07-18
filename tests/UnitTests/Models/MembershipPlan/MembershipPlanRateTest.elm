@@ -12,7 +12,7 @@ testModelDecoder =
         \() ->
             Expect.equal (Ok { id = 342
                             , cost = 12.12
-                            , membership_plan =
+                            , membership_plan = Just
                                 { id = Just 342
                                 , name = "Steve"
                                 , duration = "yearly"

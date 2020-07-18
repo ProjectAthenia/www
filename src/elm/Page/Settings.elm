@@ -148,7 +148,12 @@ viewSubscriptionForm model user =
                     [ text
                         <| case subscription.membership_plan_rate of
                             Just membershipPlanRate ->
-                                "Your " ++ membershipPlanRate.membership_plan.name ++ " subscription is " ++ (getSubscriptionStatusText model subscription)
+                                case membershipPlanRate.membership_plan of
+                                    Just membershipPlan ->
+                                        "Your " ++ membershipPlan.name ++ " subscription is " ++ (getSubscriptionStatusText model subscription)
+                                    Nothing ->
+                                        "Your subscription is " ++ (getSubscriptionStatusText model subscription)
+
                             Nothing ->
                                 "Your subscription is " ++ (getSubscriptionStatusText model subscription)
                     ]
@@ -556,7 +561,7 @@ update msg model =
                         , membership_plan_rate = Just
                             { id = membershipPlan.current_rate_id
                             , cost = membershipPlan.current_cost
-                            , membership_plan = membershipPlan
+                            , membership_plan = Just membershipPlan
                             }
                     }
                 , maybeUser =
