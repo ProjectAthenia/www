@@ -1,10 +1,8 @@
-module Page.Admin.Sections.MembershipPlan exposing (..)
+module Page.Admin.Sections.User exposing (..)
 
 import Api exposing (Token)
 import Components.CRUD.ModelForm.Input as Input
-import Components.CRUD.ModelForm.NumberField as NumberField
 import Components.CRUD.ModelForm.TextField as TextField
-import Components.CRUD.ModelForm.SelectField as SelectField
 import Components.CRUD.ModelForm as ModelForm
 import Components.CRUD.ModelList as ModelList
 import Components.CRUD.RootController as RootController
@@ -24,54 +22,55 @@ type alias Msg =
 
 
 type alias FormModel =
-    { name: String
-    , duration: String
-    , current_cost: Float
+    { first_name: String
+    , last_name: String
+    , email: String
+    , password: String
     }
 
 type FormMsg
-    = SetName String
-    | SetDuration String
-    | SetCurrentCost String
+    = SetFirstName String
+    | SetLastName String
+    | SetEmail String
+    | SetPassword String
 
 
 sharedConfiguration: String -> SharedConfiguration.Configuration User.Model
 sharedConfiguration apiUrl =
-    SharedConfiguration.configure "Membership Plan" "membership-plans" (User.routeGroup apiUrl) User.modelDecoder []
+    SharedConfiguration.configure "User" "users" (User.routeGroup apiUrl) User.modelDecoder []
 
 
-nameColumn: ModelList.Column User.Model
-nameColumn =
+firstNameColumn: ModelList.Column User.Model
+firstNameColumn =
      ModelList.column
-        "Name"
-        (\membershipPlan -> Html.text membershipPlan.name)
-        "name"
+        "First Name"
+        (\user -> Html.text user.first_name)
+        "first_name"
+        Text
+
+lastNameColumn: ModelList.Column User.Model
+lastNameColumn =
+     ModelList.column
+        "Last Name"
+        (\user -> Html.text user.last_name)
+        "last_name"
         Text
 
 
-durationColumn: ModelList.Column User.Model
-durationColumn =
+emailColumn: ModelList.Column User.Model
+emailColumn =
      ModelList.column
-        "Duration"
-        (\membershipPlan -> Html.text membershipPlan.duration)
-        "duration"
-        (Select [("lifetime", "Lifetime"), ("monthly", "Monthly"), ("yearly", "Yearly")])
-
-
-currentCostColumn: ModelList.Column User.Model
-currentCostColumn =
-     ModelList.column
-        "Current Cost"
-        (\membershipPlan -> Html.text (String.fromFloat membershipPlan.current_cost))
-        ""
-        None
+        "Email"
+        (\user -> Html.text user.email)
+        "email"
+        Text
 
 
 indexColumns: List (ModelList.Column User.Model)
 indexColumns =
-    [ nameColumn
-    , durationColumn
-    , currentCostColumn
+    [ firstNameColumn
+    , lastNameColumn
+    , emailColumn
     ]
 
 
@@ -82,23 +81,23 @@ indexConfiguration =
 
 validateForm: User.Model -> FormModel -> Result String User.Model
 validateForm model form =
-    if String.length form.name < 1 then
-        Err "Please enter the membership plan name"
-    else if String.length form.duration < 1 then
-        Err "Please select a duration"
+    if String.length form.email < 1 then
+        Err "Please enter users email address"
     else
         Ok { model
-            | name = form.name
-            , duration = form.duration
-            , current_cost = form.current_cost
+            | first_name = form.first_name
+            , last_name = form.last_name
+            , email = form.email
+            , password = form.password
            }
 
 
 initForm: Token -> (FormModel, Cmd FormMsg)
 initForm token =
-    ( { name = ""
-      , duration = ""
-      , current_cost = 0.0
+    ( { first_name = ""
+      , last_name = ""
+      , email = ""
+      , password = ""
     }
     , Cmd.none
     )
@@ -107,29 +106,31 @@ initForm token =
 updateForm: Token -> User.Model -> FormMsg -> FormModel -> (FormModel, Cmd FormMsg)
 updateForm token dataModel msg model =
     case msg of
-        SetName name ->
+        SetFirstName firstName ->
             ( { model
-                | name = name
+                | first_name = firstName
             }
             , Cmd.none
             )
 
-        SetDuration duration ->
+        SetLastName lastName ->
             ( { model
-                | duration = duration
+                | last_name = lastName
             }
             , Cmd.none
             )
 
-        SetCurrentCost currentCost ->
-            ( case String.toFloat currentCost of
-                Just cost ->
-                    { model
-                        | current_cost = cost
-                    }
+        SetEmail email ->
+            ( { model
+                | email = email
+            }
+            , Cmd.none
+            )
 
-                Nothing ->
-                    model
+        SetPassword password ->
+            ( { model
+                | password = password
+            }
             , Cmd.none
             )
 
@@ -137,46 +138,47 @@ updateForm token dataModel msg model =
 setModel: Token -> GenericModel User.Model -> FormModel -> (FormModel, Cmd FormMsg)
 setModel token dataModel model =
     ( { model
-      | name = dataModel.name
-      , duration = dataModel.duration
-      , current_cost = dataModel.current_cost
+      | first_name = dataModel.first_name
+      , last_name = dataModel.last_name
+      , email = dataModel.email
     }
     , Cmd.none
     )
 
 
-nameInput: Bool -> FormModel -> Html FormMsg
-nameInput isLoading model =
-    TextField.view (Input.configure True "Name" "name") model.name SetName isLoading
+firstNameInput: Bool -> FormModel -> Html FormMsg
+firstNameInput isLoading model =
+    TextField.view (Input.configure True "First Name" "first_name") model.first_name SetFirstName isLoading
 
 
-durationOptions: List (String, String)
-durationOptions =
-    [ ("lifetime", "Lifetime")
-    , ("yearly", "Yearly")
-    , ("monthly", "Monthly")
-    ]
+lastNameInput: Bool -> FormModel -> Html FormMsg
+lastNameInput isLoading model =
+    TextField.view (Input.configure True "Last Name" "last_name") model.last_name SetLastName isLoading
 
 
-durationSelect: Bool -> FormModel -> Html FormMsg
-durationSelect isLoading model =
-    SelectField.view (SelectField.configure durationOptions "duration" "Duration" True) model.duration SetDuration isLoading
+emailInput: Bool -> FormModel -> Html FormMsg
+emailInput isLoading model =
+    TextField.view (Input.configure True "Email" "email") model.email SetEmail isLoading
 
 
-currentCostInput: Bool -> FormModel -> Html FormMsg
-currentCostInput isLoading model =
-    NumberField.view (Input.configure True "Current Cost" "current_cost") model.current_cost SetCurrentCost isLoading
+passwordInput: Bool -> FormModel -> Html FormMsg
+passwordInput isLoading model =
+    TextField.view (Input.configure True "Password (leave blank to keep current password)" "password") model.password SetPassword isLoading
+
+
+
+baseFormConfig: ModelForm.Configuration User.Model FormModel FormMsg
+baseFormConfig =
+    ModelForm.configure User.toJson User.toJson User.newModel validateForm initForm updateForm
 
 
 formConfiguration: ModelForm.Configuration User.Model FormModel FormMsg
 formConfiguration =
-    let
-        baseConfig = ModelForm.configure User.toJson User.toJson User.newModel validateForm initForm updateForm
-    in
-    ModelForm.addFields (ModelForm.configureSetModelAction setModel baseConfig)
-        [ nameInput
-        , durationSelect
-        , currentCostInput
+    ModelForm.addFields (ModelForm.configureSetModelAction setModel baseFormConfig)
+        [ firstNameInput
+        , lastNameInput
+        , emailInput
+        , passwordInput
         ]
 
 

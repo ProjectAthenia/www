@@ -1,6 +1,7 @@
 -- Module for the user model
 module Models.User.User exposing(..)
 
+import Api.Group exposing (RouteGroup, baseGroup)
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
@@ -96,7 +97,7 @@ getCurrentSubscription now model =
 
 
 -- Converts a user model into a JSON string
-toJson : Model -> Encode.Value
+toJson : GenericModel Model -> Encode.Value
 toJson model =
     Encode.object
         <| List.concat
@@ -187,3 +188,8 @@ listDecoder =
 pageDecoder : Decoder Page
 pageDecoder =
     Page.modelDecoder listDecoder
+
+
+routeGroup: String -> RouteGroup
+routeGroup =
+    baseGroup "users"

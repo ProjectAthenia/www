@@ -9,6 +9,7 @@ import Components.CRUD.RootController as RootController
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Page.Admin.Sections.MembershipPlan as MembershipPlan
+import Page.Admin.Sections.User as User
 import Session exposing (Session)
 import Url.Parser as Parser exposing ((</>), Parser, top)
 import Viewer
@@ -17,11 +18,13 @@ import Viewer
 type Route
     = Dashboard
     | MembershipPlanRoute RootController.Route
+    | UserRoute RootController.Route
 
 
 type Msg
     = GotSession Session
     | MembershipPlanMsg MembershipPlan.Msg
+    | UserMsg User.Msg
 
 
 type alias Model =
@@ -30,6 +33,7 @@ type alias Model =
     , token : Token
     , history: List (Route)
     , membershipPlanModel: MembershipPlan.Model
+    , userModel: User.Model
     }
 
 
@@ -40,6 +44,7 @@ initialState session apiUrl token =
     , token = token
     , history = []
     , membershipPlanModel = MembershipPlan.initialModel apiUrl
+    , userModel = User.initialModel apiUrl
     }
 
 
@@ -48,6 +53,7 @@ routes =
     Parser.oneOf
         [ Parser.map Dashboard (top)
         , Parser.map MembershipPlanRoute (RootController.crudRoutes "membership-plans")
+        , Parser.map UserRoute (RootController.crudRoutes "users")
         ]
 
 
@@ -64,6 +70,9 @@ routeToString route =
 
         MembershipPlanRoute subRoute ->
             RootController.routeToString "membership-plans" subRoute
+
+        UserRoute subRoute ->
+            RootController.routeToString "users" subRoute
 
 
 changePage : Navigation.Key -> Token -> Route -> Model -> (Model, Cmd Msg)
@@ -86,6 +95,18 @@ changePage navKey token route model =
             , Cmd.map MembershipPlanMsg membershipPlanCmd
             )
 
+        UserRoute subRoute ->
+            let
+                (userModel, userCmd) =
+                    RootController.changePage navKey token subRoute model.userModel
+            in
+            ( { model
+                | userModel = userModel
+                , currentPage = UserRoute subRoute
+            }
+            , Cmd.map UserMsg userCmd
+            )
+
 
 -- Handles all ui actions from the user. Returns a new model, msg, maybe a toast, a list of requests, and a boolean for whether or not to log out
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -98,6 +119,15 @@ update msg model =
             in
             ( { model | membershipPlanModel = membershipPlanModel }
             , Cmd.map MembershipPlanMsg membershipPlanMsg
+            )
+
+        UserMsg subMsg ->
+            let
+                (userModel, userMsg) =
+                    RootController.update model.token subMsg model.userModel
+            in
+            ( { model | userModel = userModel }
+            , Cmd.map UserMsg userMsg
             )
 
         GotSession session ->
@@ -123,9 +153,13 @@ view model =
             Dashboard ->
                 dashboard
 
-            MembershipPlanRoute subRoute ->
+            MembershipPlanRoute _ ->
                 List.map (Html.map MembershipPlanMsg)
                     <| RootController.view model.membershipPlanModel
+
+            UserRoute _ ->
+                List.map (Html.map UserMsg)
+                    <| RootController.view model.userModel
     }
 
 -- Creates the main view for the dashboard view
@@ -133,7 +167,8 @@ dashboard : List (Html Msg)
 dashboard =
     [ h1 [] [ text "Admin" ]
     , div [ class "dash-squares" ]
-        [ buildDataCard "Manage Membership Plan" "Create, edit, delete, and membership plan data." MembershipPlanRoute
+        [ buildDataCard "Manage Membership Plans" "Create, edit, delete, and browse membership plan data." MembershipPlanRoute
+        , buildDataCard "Manage Users" "Create, edit, delete, and browse user data." UserRoute
         ]
     ]
 

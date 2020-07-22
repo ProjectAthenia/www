@@ -99,7 +99,7 @@ update msg model =
                     )
                 Nothing ->
                     ( model
-                    , Route.replaceUrl (Session.navKey session) Route.Login
+                    , Cmd.none
                     )
 
 

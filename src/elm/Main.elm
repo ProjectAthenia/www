@@ -217,7 +217,7 @@ type Msg
     | GotArticleEditorMsg ArticleEditor.Msg
     | GotAdminMsg Admin.Msg
     | NavBarStateChange Navbar.State
-    | GotSession Session
+ --   | GotSession Session
     | CompletedTokenRefresh (Result Api.Error Api.Token)
     | Tick Time.Posix
 
@@ -499,11 +499,11 @@ update msg model =
             }
             , Cmd.map GotAdminMsg adminMsg
             )
-
-        ( GotSession session, Redirect _ ) ->
-            ( { model | currentState = Redirect session }
-            , Route.replaceUrl (Session.navKey session) Route.Home
-            )
+        --
+        --( GotSession session, Redirect _ ) ->
+        --    ( { model | currentState = Redirect session }
+        --    , Route.replaceUrl (Session.navKey session) Route.Home
+        --    )
 
         ( _, _ ) ->
             -- Disregard messages that arrived for the wrong page.
@@ -535,7 +535,7 @@ subscriptions model =
                 Sub.none
 
             Redirect _ ->
-                Session.changes GotSession (Session.navKey (toSession model))
+                Sub.none
 
             Settings settings ->
                 Sub.map GotSettingsMsg (Settings.subscriptions settings)
