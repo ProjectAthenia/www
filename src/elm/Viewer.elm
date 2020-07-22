@@ -6,11 +6,9 @@ impossible to have a Viewer if you aren't logged in.
 -}
 
 import Api as Api exposing (Token)
-import Avatar exposing (Avatar)
 import Models.User.User as User
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (custom, required)
-import Json.Encode as Encode exposing (Value)
+import Json.Decode.Pipeline exposing (custom)
 
 
 -- TYPES

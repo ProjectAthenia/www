@@ -96,12 +96,17 @@ viewArticleMeta article =
     List.append
         (case article.created_by of
             Just user ->
-                [ p []
-                    [ text "Created by "
-                    , a [ Route.href (Route.Profile user.id) ]
-                        [ text user.name ]
-                    ]
-                ]
+                case user.id of
+                    Just id ->
+                        [ p []
+                            [ text "Created by "
+                            , a [ Route.href (Route.Profile id) ]
+                                [ text user.name ]
+                            ]
+                        ]
+                    Nothing ->
+                        []
+
             Nothing ->
                 []
         ) [ editButton article ]

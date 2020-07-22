@@ -14,7 +14,7 @@ testToCreateJson =
         \() ->
             let
                 baseModel = Article.initCreateModel <|
-                    { id = 123
+                    { id = Just 123
                     , name = ""
                     , email = ""
                     , password = ""
@@ -54,7 +54,7 @@ testModelDecoder =
                                 , content = "Some Content"
                                 , last_iteration_content = "Some Content"
                                 , created_by =
-                                    Just { id = 53
+                                    Just { id = Just 53
                                         , name = "Barry Manilow"
                                         , email = "butts@butts.com"
                                         , password  = ""

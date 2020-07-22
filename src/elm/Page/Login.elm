@@ -321,7 +321,7 @@ login : String -> TrimmedForm -> Cmd Msg
 login apiUrl (Trimmed model) =
     let
         user =
-            { id = 0
+            { id = Nothing
             , email = model.email
             , password = model.password
             , stripe_customer_key = Nothing

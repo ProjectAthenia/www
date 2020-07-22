@@ -339,13 +339,13 @@ type Msg
     | StripeError String
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        CompletedFormLoad (Ok user) ->
+completeFormLoad : Model -> User.Model -> (Model, Cmd Msg)
+completeFormLoad model user =
+    case user.id of
+        Just id ->
             let
                 settingsForm =
-                    { id = user.id
+                    { id = id
                     , name = user.name
                     , email = user.email
                     , password = ""
@@ -371,6 +371,16 @@ update msg model =
             }
             , Stripe.initStripeForm "card-element"
             )
+
+        Nothing ->
+            (model, Cmd.none)
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        CompletedFormLoad (Ok user) ->
+            completeFormLoad model user
 
         CompletedFormLoad (Err _) ->
             ( { model | showLoading = False, status = Failed }
@@ -432,7 +442,7 @@ update msg model =
                     }
                     , case maybePaymentMethod of
                         Just paymentMethod ->
-                            createSubscription model.apiUrl model.token user.id paymentMethod membershipPlan
+                            createSubscription model.apiUrl model.token user paymentMethod membershipPlan
                         Nothing ->
                             Stripe.createPaymentToken "card-element"
                     )
@@ -444,7 +454,7 @@ update msg model =
             ( model
             , case model.maybeUser of
                 Just user ->
-                    createPaymentMethod model.apiUrl model.token user.id stripeToken
+                    createPaymentMethod model.apiUrl model.token user stripeToken
                 Nothing ->
                     Cmd.none
             )
@@ -530,7 +540,7 @@ update msg model =
                     ( { updatedModel
                         | showLoading = True
                     }
-                    , createSubscription model.apiUrl model.token user.id paymentMethod membershipPlan
+                    , createSubscription model.apiUrl model.token user paymentMethod membershipPlan
                     )
 
                 _ ->
@@ -623,7 +633,7 @@ setSubscriptionRecurring model recurring =
             ( { model
                 | showLoading = True
             }
-            , updateSubscription model.apiUrl model.token user.id subscription (Subscription.recurringJson recurring)
+            , updateSubscription model.apiUrl model.token user subscription (Subscription.recurringJson recurring)
             )
         _ ->
             (model, Cmd.none)
@@ -634,7 +644,7 @@ updatePaymentMethod model user subscription paymentMethod =
     ( { model
         | showLoading = True
     }
-    , updateSubscription model.apiUrl model.token user.id subscription (Subscription.paymentMethodChangedJson paymentMethod.id)
+    , updateSubscription model.apiUrl model.token user subscription (Subscription.paymentMethodChangedJson paymentMethod.id)
     )
 
 
@@ -805,28 +815,41 @@ viewMembershipPlans apiUrl token =
     Api.getMembershipPlans apiUrl token CompletedMembershipPlansLoad
 
 
-createPaymentMethod : String -> Token -> Int -> String -> Cmd Msg
-createPaymentMethod apiUrl token userId stripeToken =
+createPaymentMethod : String -> Token -> User.Model -> String -> Cmd Msg
+createPaymentMethod apiUrl token user stripeToken =
     let
         encodedPaymentMethod =
             Encode.object
                 [ ("token", Encode.string stripeToken)
                 ]
     in
-    Api.createUserPaymentMethod apiUrl token userId (Http.jsonBody encodedPaymentMethod) CreatedPaymentMethod
+    case user.id of
+        Just id ->
+            Api.createUserPaymentMethod apiUrl token id (Http.jsonBody encodedPaymentMethod) CreatedPaymentMethod
+
+        Nothing ->
+            Cmd.none
 
 
-createSubscription : String -> Token -> Int -> PaymentMethod.Model -> MembershipPlan.Model -> Cmd Msg
-createSubscription apiUrl token userId paymentMethod membershipPlan =
+createSubscription : String -> Token -> User.Model -> PaymentMethod.Model -> MembershipPlan.Model -> Cmd Msg
+createSubscription apiUrl token user paymentMethod membershipPlan =
     let
-        createModel =
-            Subscription.createModel True membershipPlan paymentMethod
         encodedSubscription =
-            Subscription.toCreateJson createModel
+            Subscription.toCreateJson
+                <| Subscription.createModel True membershipPlan paymentMethod
     in
-    Api.createUserSubscription apiUrl token userId (Http.jsonBody encodedSubscription) (CreatedSubscription paymentMethod membershipPlan)
+    case user.id of
+        Just id ->
+            Api.createUserSubscription apiUrl token id (Http.jsonBody encodedSubscription) (CreatedSubscription paymentMethod membershipPlan)
+
+        Nothing ->
+            Cmd.none
 
 
-updateSubscription : String -> Token -> Int -> Subscription.Model -> Encode.Value -> Cmd Msg
-updateSubscription apiUrl token userId subscription body =
-    Api.updateUserSubscription apiUrl token userId subscription.id (Http.jsonBody body) (UpdatedSubscription subscription)
+updateSubscription : String -> Token -> User.Model -> Subscription.Model -> Encode.Value -> Cmd Msg
+updateSubscription apiUrl token user subscription body =
+    case user.id of
+        Just id ->
+            Api.updateUserSubscription apiUrl token id subscription.id (Http.jsonBody body) (UpdatedSubscription subscription)
+        Nothing ->
+            Cmd.none

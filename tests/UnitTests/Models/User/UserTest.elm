@@ -11,7 +11,7 @@ import Time exposing (..)
 
 mockUser : String -> String -> String -> List Role.Model -> User.Model
 mockUser name email password roles =
-    { id = 543
+    { id = Just 543
     , name = name
     , email = email
     , password = password
@@ -380,7 +380,7 @@ testModelDecoder =
     describe "Tests multiple decode possibilities to make sure it works"
         [ test "Test minimal decode" <|
             \() ->
-                Expect.equal (Ok { id = 342
+                Expect.equal (Ok { id = Just 342
                                 , name = "Steve"
                                 , email = "test@test.com"
                                 , password = ""
@@ -392,7 +392,7 @@ testModelDecoder =
                     <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\"}"
         , test "Test decode with roles" <|
             \() ->
-                Expect.equal (Ok { id = 342
+                Expect.equal (Ok { id = Just 342
                                 , name = "Steve"
                                 , email = "test@test.com"
                                 , password = ""
@@ -411,7 +411,7 @@ testModelDecoder =
                     <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"roles\":[{\"id\":2,\"name\":\"A Role\"},{\"id\":6,\"name\":\"A Different Role\"}]}"
         , test "Test decode with payment methods" <|
             \() ->
-                Expect.equal (Ok { id = 342
+                Expect.equal (Ok { id = Just 342
                                 , name = "Steve"
                                 , email = "test@test.com"
                                 , password = ""
@@ -429,7 +429,7 @@ testModelDecoder =
                     <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"stripe_customer_key\":\"test_key\",\"payment_methods\":[{\"id\":4354,\"payment_method_key\":\"Hi\",\"payment_method_type\":\"bye\"}]}"
         , test "Test decode with subscriptions" <|
             \() ->
-                Expect.equal (Ok { id = 342
+                Expect.equal (Ok { id = Just 342
                                 , name = "Steve"
                                 , email = "test@test.com"
                                 , password = ""

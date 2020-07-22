@@ -41,10 +41,15 @@ initCreateModel user =
 toCreateJson : CreateModel -> Encode.Value
 toCreateJson model =
     Encode.object
-        [ ("title", Encode.string model.title)
-        , ("created_by_id", Encode.int model.created_by.id)
-        ]
-
+        <| List.concat
+            <| [
+                [ ("title", Encode.string model.title) ]
+                , case model.created_by.id of
+                    Just id ->
+                        [ ("created_by_id", Encode.int id) ]
+                    Nothing ->
+                        []
+            ]
 
 -- Decodes a article model retrieved through the API
 modelDecoder : Decoder Model

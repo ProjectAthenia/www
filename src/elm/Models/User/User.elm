@@ -10,11 +10,11 @@ import Models.Page as Page
 import Models.Payment.PaymentMethod as PaymentMethod
 import Models.Role as Role
 import Time exposing (..)
+import Utilities.ModelHelpers exposing (BaseRecord, GenericModel, baseRecordDecoder)
 
 
-type alias Model =
-    { id: Int
-    , name: String
+type alias Record =
+    { name: String
     , email: String
     , password: String
     , stripe_customer_key: Maybe String
@@ -23,6 +23,9 @@ type alias Model =
     , subscriptions: List Subscription.Model
     }
 
+type alias Model =
+    GenericModel Record
+
 
 type alias Page =
     Page.Model Model
@@ -30,7 +33,7 @@ type alias Page =
 
 loginModel : String -> String -> Model
 loginModel email password =
-    { id = 0
+    { id = Nothing
     , name = ""
     , email = email
     , password = password
@@ -113,8 +116,13 @@ cacheEncoder : Model -> Encode.Value
 cacheEncoder model =
     Encode.object <| List.concat
         [
-          [ ( "id" , Encode.int model.id)
-          , ("name", Encode.string model.name)
+          case model.id of
+            Just id ->
+                [ ( "id" , Encode.int id) ]
+            Nothing ->
+                []
+
+        , [ ("name", Encode.string model.name)
           , ("email", Encode.string model.email)
           ]
         , case model.stripe_customer_key of
@@ -128,10 +136,9 @@ cacheEncoder model =
 
 
 -- Decodes a user model retrieved through the API
-modelDecoder : Decoder Model
-modelDecoder =
-    JsonDecode.succeed Model
-        |> required "id" int
+recordDecoder: Decoder Record
+recordDecoder =
+    JsonDecode.succeed Record
         |> required "name" string
         |> required "email" string
         |> hardcoded ""
@@ -140,6 +147,23 @@ modelDecoder =
         |> optional "roles" Role.listDecoder []
         |> optional "subscriptions" Subscription.listDecoder []
 
+
+mergeModels: BaseRecord -> Record -> Model
+mergeModels baseRecord record =
+    { id = baseRecord.id
+    , name = record.name
+    , email = record.email
+    , password = record.password
+    , stripe_customer_key = record.stripe_customer_key
+    , payment_methods = record.payment_methods
+    , roles = record.roles
+    , subscriptions = record.subscriptions
+    }
+
+
+modelDecoder: Decoder (GenericModel Model)
+modelDecoder =
+    map2 mergeModels baseRecordDecoder recordDecoder
 
 listDecoder : Decoder (List Model)
 listDecoder =
