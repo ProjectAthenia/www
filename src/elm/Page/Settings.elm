@@ -346,7 +346,7 @@ completeFormLoad model user =
             let
                 settingsForm =
                     { id = id
-                    , name = user.name
+                    , name = user.first_name
                     , email = user.email
                     , password = ""
                     }

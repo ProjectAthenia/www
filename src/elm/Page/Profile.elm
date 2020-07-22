@@ -96,10 +96,10 @@ view model =
                     if user.id == loggedInUser.id then
                         "My Profile"
                     else
-                        user.name
+                        user.first_name
 
                 (_, Loaded user) ->
-                    user.name
+                    user.first_name
 
                 _ ->
                     "Loading"

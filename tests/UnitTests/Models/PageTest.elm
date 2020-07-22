@@ -59,7 +59,8 @@ testModelDecoder =
                         { total = 1
                         , data = [
                             { id = Just 21
-                            , name = "Steve"
+                            , first_name = "Steve"
+                            , last_name = ""
                             , email = "test@test.com"
                             , password = ""
                             , stripe_customer_key = Nothing
@@ -74,5 +75,5 @@ testModelDecoder =
                         }
                 in
                 Expect.equal (Ok model)
-                    <| JsonDecode.decodeString (Page.modelDecoder User.listDecoder) "{\"total\":1,\"data\":[{\"id\":21,\"name\":\"Steve\",\"email\":\"test@test.com\"}],\"current_page\":1,\"last_page\":1,\"per_page\":10}"
+                    <| JsonDecode.decodeString (Page.modelDecoder User.listDecoder) "{\"total\":1,\"data\":[{\"id\":21,\"first_name\":\"Steve\",\"email\":\"test@test.com\"}],\"current_page\":1,\"last_page\":1,\"per_page\":10}"
         ]

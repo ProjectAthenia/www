@@ -75,7 +75,7 @@ getIterationPreviewText : Iteration.Model -> String
 getIterationPreviewText iteration =
     case iteration.created_by of
         Just createdBy ->
-            "Iteration Created By " ++ createdBy.name ++ " at " ++ (Iteration.formatCreatedAt iteration) ++ " "
+            "Iteration Created By " ++ createdBy.first_name ++ " at " ++ (Iteration.formatCreatedAt iteration) ++ " "
         Nothing ->
             "Iteration Created By Unknown User at " ++ (Iteration.formatCreatedAt iteration) ++ " "
 

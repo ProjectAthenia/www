@@ -14,7 +14,8 @@ import Utilities.ModelHelpers exposing (BaseRecord, GenericModel, baseRecordDeco
 
 
 type alias Record =
-    { name: String
+    { first_name: String
+    , last_name: String
     , email: String
     , password: String
     , stripe_customer_key: Maybe String
@@ -31,10 +32,16 @@ type alias Page =
     Page.Model Model
 
 
+newModel: Model
+newModel =
+    loginModel "" ""
+
+
 loginModel : String -> String -> Model
 loginModel email password =
     { id = Nothing
-    , name = ""
+    , first_name = ""
+    , last_name = ""
     , email = email
     , password = password
     , stripe_customer_key = Nothing
@@ -101,8 +108,12 @@ toJson model =
                 [ ("password", Encode.string model.password) ]
             else
                 []
-            , if String.length model.name > 0 then
-                [ ("name", Encode.string model.name) ]
+            , if String.length model.first_name > 0 then
+                [ ("first_name", Encode.string model.first_name) ]
+            else
+                []
+            , if String.length model.last_name > 0 then
+                [ ("last_name", Encode.string model.last_name) ]
             else
                 []
             , if List.length model.roles > 0 then
@@ -122,7 +133,8 @@ cacheEncoder model =
             Nothing ->
                 []
 
-        , [ ("name", Encode.string model.name)
+        , [ ("first_name", Encode.string model.first_name)
+          , ("last_name", Encode.string model.last_name)
           , ("email", Encode.string model.email)
           ]
         , case model.stripe_customer_key of
@@ -139,7 +151,8 @@ cacheEncoder model =
 recordDecoder: Decoder Record
 recordDecoder =
     JsonDecode.succeed Record
-        |> required "name" string
+        |> required "first_name" string
+        |> optional "last_name" string ""
         |> required "email" string
         |> hardcoded ""
         |> optional "stripe_customer_key" (maybe string) Nothing
@@ -151,7 +164,8 @@ recordDecoder =
 mergeModels: BaseRecord -> Record -> Model
 mergeModels baseRecord record =
     { id = baseRecord.id
-    , name = record.name
+    , first_name = record.first_name
+    , last_name = record.last_name
     , email = record.email
     , password = record.password
     , stripe_customer_key = record.stripe_customer_key

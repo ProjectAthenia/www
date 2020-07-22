@@ -27,7 +27,8 @@ testModelDecoder =
                                 , created_by_id = 53
                                 , created_by = Just
                                     { id = Just 53
-                                    , name = "Barry Manilow"
+                                    , first_name = "Barry Manilow"
+                                    , last_name = ""
                                     , email = "butts@butts.com"
                                     , password  = ""
                                     , stripe_customer_key = Nothing
@@ -36,7 +37,7 @@ testModelDecoder =
                                     , subscriptions = []
                                     }
                                 })
-                    <| JsonDecode.decodeString Iteration.modelDecoder "{\"id\":342,\"content\":\"Some Content\",\"created_by_id\":53,\"created_at\":\"1970-01-01T00:00:01+00:00\",\"created_by\":{\"id\":53,\"name\":\"Barry Manilow\",\"email\":\"butts@butts.com\"}}"
+                    <| JsonDecode.decodeString Iteration.modelDecoder "{\"id\":342,\"content\":\"Some Content\",\"created_by_id\":53,\"created_at\":\"1970-01-01T00:00:01+00:00\",\"created_by\":{\"id\":53,\"first_name\":\"Barry Manilow\",\"email\":\"butts@butts.com\"}}"
         ]
 
 

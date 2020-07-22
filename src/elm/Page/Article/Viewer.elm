@@ -101,7 +101,7 @@ viewArticleMeta article =
                         [ p []
                             [ text "Created by "
                             , a [ Route.href (Route.Profile id) ]
-                                [ text user.name ]
+                                [ text user.first_name ]
                             ]
                         ]
                     Nothing ->

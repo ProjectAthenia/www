@@ -15,7 +15,8 @@ testToCreateJson =
             let
                 baseModel = Article.initCreateModel <|
                     { id = Just 123
-                    , name = ""
+                    , first_name = ""
+                    , last_name = ""
                     , email = ""
                     , password = ""
                     , stripe_customer_key = Nothing
@@ -55,7 +56,8 @@ testModelDecoder =
                                 , last_iteration_content = "Some Content"
                                 , created_by =
                                     Just { id = Just 53
-                                        , name = "Barry Manilow"
+                                        , first_name = "Barry Manilow"
+                                        , last_name = ""
                                         , email = "butts@butts.com"
                                         , password  = ""
                                         , stripe_customer_key = Nothing
@@ -72,5 +74,5 @@ testModelDecoder =
                                       }
                                     ]
                                 })
-                    <| JsonDecode.decodeString Article.modelDecoder "{\"id\":342,\"title\":\"A Title\",\"content\":\"Some Content\",\"last_iteration_content\":\"Some Content\",\"created_by\":{\"id\":53,\"name\":\"Barry Manilow\",\"email\":\"butts@butts.com\"},\"iterations\":[{\"id\":342,\"content\":\"Some Content\",\"created_by_id\":53,\"created_at\":\"1970-01-01T00:00:01+00:00\"}]}"
+                    <| JsonDecode.decodeString Article.modelDecoder "{\"id\":342,\"title\":\"A Title\",\"content\":\"Some Content\",\"last_iteration_content\":\"Some Content\",\"created_by\":{\"id\":53,\"first_name\":\"Barry Manilow\",\"email\":\"butts@butts.com\"},\"iterations\":[{\"id\":342,\"content\":\"Some Content\",\"created_by_id\":53,\"created_at\":\"1970-01-01T00:00:01+00:00\"}]}"
         ]

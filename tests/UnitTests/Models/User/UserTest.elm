@@ -12,7 +12,8 @@ import Time exposing (..)
 mockUser : String -> String -> String -> List Role.Model -> User.Model
 mockUser name email password roles =
     { id = Just 543
-    , name = name
+    , first_name = name
+    , last_name = ""
     , email = email
     , password = password
     , stripe_customer_key = Nothing
@@ -303,7 +304,7 @@ testToJson =
                 let
                     model = mockUser "Hello" "test@test.com" "secret" []
                 in
-                    Expect.equal "{\"email\":\"test@test.com\",\"password\":\"secret\",\"name\":\"Hello\"}"
+                    Expect.equal "{\"email\":\"test@test.com\",\"password\":\"secret\",\"first_name\":\"Hello\"}"
                         <| JsonEncode.encode 0
                             <| User.toJson model
         , test "Makes sure that we can encode a full user properly with roles" <|
@@ -311,7 +312,7 @@ testToJson =
                 let
                     model = mockUser "Hello" "test@test.com" "secret" [{id = 34, name = "Something"},{id = 25, name = "Something"}]
                 in
-                    Expect.equal "{\"email\":\"test@test.com\",\"password\":\"secret\",\"name\":\"Hello\",\"roles\":[34,25]}"
+                    Expect.equal "{\"email\":\"test@test.com\",\"password\":\"secret\",\"first_name\":\"Hello\",\"roles\":[34,25]}"
                         <| JsonEncode.encode 0
                             <| User.toJson model
         ]
@@ -370,7 +371,7 @@ testCacheEncoder =
             let
                 model = mockUser "Hello" "test@test.com" "secret" []
             in
-                Expect.equal "{\"id\":543,\"name\":\"Hello\",\"email\":\"test@test.com\",\"roles\":[]}"
+                Expect.equal "{\"id\":543,\"first_name\":\"Hello\",\"last_name\":\"\",\"email\":\"test@test.com\",\"roles\":[]}"
                     <| JsonEncode.encode 0
                         <| User.cacheEncoder model
 
@@ -381,7 +382,8 @@ testModelDecoder =
         [ test "Test minimal decode" <|
             \() ->
                 Expect.equal (Ok { id = Just 342
-                                , name = "Steve"
+                                , first_name = "Steve"
+                                , last_name = ""
                                 , email = "test@test.com"
                                 , password = ""
                                 , stripe_customer_key = Nothing
@@ -389,11 +391,12 @@ testModelDecoder =
                                 , payment_methods = []
                                 , subscriptions = []
                                 })
-                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\"}"
+                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"first_name\":\"Steve\",\"email\":\"test@test.com\"}"
         , test "Test decode with roles" <|
             \() ->
                 Expect.equal (Ok { id = Just 342
-                                , name = "Steve"
+                                , first_name = "Steve"
+                                , last_name = ""
                                 , email = "test@test.com"
                                 , password = ""
                                 , stripe_customer_key = Nothing
@@ -408,11 +411,12 @@ testModelDecoder =
                                 , payment_methods = []
                                 , subscriptions = []
                                 })
-                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"roles\":[{\"id\":2,\"name\":\"A Role\"},{\"id\":6,\"name\":\"A Different Role\"}]}"
+                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"first_name\":\"Steve\",\"email\":\"test@test.com\",\"roles\":[{\"id\":2,\"name\":\"A Role\"},{\"id\":6,\"name\":\"A Different Role\"}]}"
         , test "Test decode with payment methods" <|
             \() ->
                 Expect.equal (Ok { id = Just 342
-                                , name = "Steve"
+                                , first_name = "Steve"
+                                , last_name = ""
                                 , email = "test@test.com"
                                 , password = ""
                                 , stripe_customer_key = Just "test_key"
@@ -426,11 +430,12 @@ testModelDecoder =
                                   ]
                                 , subscriptions = []
                                 })
-                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"stripe_customer_key\":\"test_key\",\"payment_methods\":[{\"id\":4354,\"payment_method_key\":\"Hi\",\"payment_method_type\":\"bye\"}]}"
+                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"first_name\":\"Steve\",\"email\":\"test@test.com\",\"stripe_customer_key\":\"test_key\",\"payment_methods\":[{\"id\":4354,\"payment_method_key\":\"Hi\",\"payment_method_type\":\"bye\"}]}"
         , test "Test decode with subscriptions" <|
             \() ->
                 Expect.equal (Ok { id = Just 342
-                                , name = "Steve"
+                                , first_name = "Steve"
+                                , last_name = ""
                                 , email = "test@test.com"
                                 , password = ""
                                 , stripe_customer_key = Just "test_key"
@@ -448,5 +453,5 @@ testModelDecoder =
                                       }
                                     ]
                                 })
-                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"name\":\"Steve\",\"email\":\"test@test.com\",\"stripe_customer_key\":\"test_key\",\"subscriptions\":[{\"id\":6,\"membership_plan_rate_id\":1,\"payment_method_id\":3,\"user_id\":1,\"last_renewed_at\":\"1970-01-01T00:00:05+00:00\",\"subscribed_at\":\"1970-01-01T00:00:05+00:00\",\"expires_at\":\"1970-01-01T00:00:06+00:00\",\"canceled_at\":null,\"recurring\":true,\"created_at\":\"2019-04-12 06:42:58\",\"updated_at\":\"2019-04-12 06:42:58\"}]}"
+                    <| JsonDecode.decodeString User.modelDecoder "{\"id\":342,\"first_name\":\"Steve\",\"email\":\"test@test.com\",\"stripe_customer_key\":\"test_key\",\"subscriptions\":[{\"id\":6,\"membership_plan_rate_id\":1,\"payment_method_id\":3,\"user_id\":1,\"last_renewed_at\":\"1970-01-01T00:00:05+00:00\",\"subscribed_at\":\"1970-01-01T00:00:05+00:00\",\"expires_at\":\"1970-01-01T00:00:06+00:00\",\"canceled_at\":null,\"recurring\":true,\"created_at\":\"2019-04-12 06:42:58\",\"updated_at\":\"2019-04-12 06:42:58\"}]}"
         ]
