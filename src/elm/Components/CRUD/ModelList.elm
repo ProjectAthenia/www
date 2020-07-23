@@ -138,11 +138,11 @@ update token msg model =
                 updatedModel =
                     { model | columns = updateSearchField searchField value model.columns }
             in
-                ( { updatedModel
-                    | loading = True
-                }
-                , runQuery token updatedModel 1
-                )
+            ( { updatedModel
+                | loading = True
+            }
+            , runQuery token updatedModel 1
+            )
 
         OpenDeleteModal endpoint ->
             ( { model
@@ -206,16 +206,23 @@ update token msg model =
             )
 
 
+checkIfColumnIsForSearchField: SearchField.Model -> Column dataModel -> Bool
+checkIfColumnIsForSearchField searchField i =
+    i.searchField.name == searchField.name
+
+
+updateColumn: SearchField.Model -> String -> Column dataModel -> Column dataModel
+updateColumn searchField value i =
+    { i
+        | searchField = SearchField.setValue searchField value
+    }
+
 updateSearchField : SearchField.Model -> String -> List (Column dataModel) -> List (Column dataModel)
 updateSearchField searchField value columns =
-    ListExtra.updateIf
-        (\i -> i.searchField.name == searchField.name)
-        (\i -> { i | searchField = SearchField.setValue searchField value } )
-        columns
+    ListExtra.updateIf (checkIfColumnIsForSearchField searchField) (updateColumn searchField value) columns
+
 
 -- All view stuff starts here
-
-
 view : Model dataModel -> List (Html (Msg dataModel))
 view model =
     List.concat
@@ -258,7 +265,7 @@ builderHeader : Model dataModel -> List (Table.Cell (Msg dataModel))
 builderHeader model =
     List.concat
         [ [ Table.th [] [ text "#" ] ]
-        , List.map builderHeaderCell model.configuration.columns
+        , List.map builderHeaderCell model.columns
         , [ Table.th [] [] ]
         , if model.configuration.deleteEnabled then [Table.th [] []] else []
         ]
@@ -351,7 +358,7 @@ buildPagination page =
                     Nothing ->
                         span [ class "inactive" ] [ text "<" ]
                 ]
-                , createPageLinks 1 currentPage []
+                , createPageLinks currentPage
                 , [ case Page.nextPageNumber currentPage of
                     Just pageNumber ->
                         span [ onClick (LoadPage pageNumber) ] [ text ">" ]
@@ -364,21 +371,26 @@ buildPagination page =
             []
 
 
--- @todo This is likely left over from learning, and it should be turned into some List function magic
-createPageLinks : Int -> DataPage dataModel -> List (Html (Msg dataModel)) -> List (Html (Msg dataModel))
-createPageLinks current page currentLinks =
-    if current <= page.last_page then
-        createPageLinks (current + 1) page
-            <| List.concat
-                [ currentLinks
-                ,   [ if page.current_page == current then
-                        span [ class "inactive" ] [ text (String.fromInt current) ]
-                    else
-                        span [ onClick (LoadPage current) ] [ text (String.fromInt current) ]
-                    ]
-                ]
+createPageLinks : DataPage dataModel -> List (Html (Msg dataModel))
+createPageLinks page =
+    List.map (createPageLink page) (getPageRange page)
+
+
+getPageRange: DataPage dataModel -> List Int
+getPageRange page =
+    let
+        start = if page.current_page > 6 then page.current_page - 5 else 1
+        end = if start + 10 > page.last_page then page.last_page else start + 10
+    in
+    List.range start end
+
+
+createPageLink: DataPage dataModel -> Int -> Html (Msg dataModel)
+createPageLink currentPage i =
+    if currentPage.current_page == i then
+        span [ class "inactive" ] [ text (String.fromInt i) ]
     else
-        currentLinks
+        span [ onClick (LoadPage i) ] [ text (String.fromInt i) ]
 
 
 -- HTTP stuff starts below
@@ -403,7 +415,7 @@ createQuery model currentPage =
     model.sharedConfiguration.routeGroup.index
         <| List.concat
             [ Expands.toQueryParameters model.sharedConfiguration.expands
-            , List.filterMap (\field -> SearchField.buildSearchFieldQuery field.searchField) model.configuration.columns
+            , List.filterMap (\field -> SearchField.buildSearchFieldQuery field.searchField) model.columns
             , [ UrlBuilder.int "page" currentPage ]
             , Order.toQueryParameters model.configuration.orders
             ]
