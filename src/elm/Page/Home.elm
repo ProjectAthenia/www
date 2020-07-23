@@ -3,10 +3,9 @@ module Page.Home exposing (Model, Msg, init, subscriptions, toSession, update, v
 {-| The homepage. You can get here via either the / or /#/ routes.
 -}
 
-import Api as Api exposing (Token)
+import Api exposing (Token)
 import Components.LoadingIndicator as LoadingIndicator
 import Models.User.User as User
-import Route as Route
 import Session as Session exposing (Session)
 import Viewer as Viewer
 import Html exposing (..)

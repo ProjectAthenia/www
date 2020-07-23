@@ -7,6 +7,7 @@ import Api as Api exposing (Token)
 import Components.LoadingIndicator as LoadingIndicator
 import Models.Error as Error
 import Models.User.User as User
+import Page.Admin.Root as Admin
 import Route as Route exposing (Route)
 import Session as Session exposing (Session)
 import Viewer as Viewer exposing (Viewer)
@@ -190,7 +191,7 @@ update msg model =
 
         GotSession session ->
             ( { model | session = session }
-            , Route.replaceUrl (Session.navKey session) Route.Home
+            , Route.replaceUrl (Session.navKey session) (Route.Admin Admin.Dashboard)
             )
 
         RetrieveMe _ (Err error) ->
@@ -208,7 +209,7 @@ update msg model =
             }
             , Cmd.batch
                 [ Viewer.store viewer
-                , Route.replaceUrl (Session.navKey model.session) Route.Home
+                , Route.replaceUrl (Session.navKey model.session) (Route.Admin Admin.Dashboard)
                 ]
             )
 

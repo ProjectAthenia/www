@@ -5,8 +5,12 @@
   padding: 25px;
   flex-direction: column;
 
-  .card {
-    max-width: 250px;
-    margin: 0 10px 20px 0;
+  .dash-squares {
+    display: flex;
+    .card {
+      max-width: 250px;
+      margin: 0 10px 20px 0;
+    }
   }
+
 }
