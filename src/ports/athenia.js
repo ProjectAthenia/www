@@ -1,7 +1,5 @@
 // Athenia root ports
 export default function(app, storageKey) {
-    console.log(app, storageKey);
-
     if (app.ports.fileSelected) {
 
         app.ports.fileSelected.subscribe(initFileSelect);
@@ -47,8 +45,6 @@ export default function(app, storageKey) {
     }
 
     app.ports.storeCache.subscribe(function(val) {
-        console.log('storageKey', storageKey);
-        console.log('storeCache', val);
         if (val === null) {
             localStorage.removeItem(storageKey);
         } else {
