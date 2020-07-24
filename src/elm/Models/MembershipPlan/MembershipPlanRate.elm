@@ -3,6 +3,7 @@ module Models.MembershipPlan.MembershipPlanRate exposing (..)
 import Json.Decode as JsonDecode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Models.MembershipPlan.MembershipPlan as MembershipPlan
+import Models.Page as Page
 import Utilities.ModelHelpers exposing (..)
 
 
@@ -20,3 +21,8 @@ modelDecoder =
         |> required "id" int
         |> required "cost" stringFloatDecoder
         |> optional "membership_plan" (maybe MembershipPlan.modelDecoder) Nothing
+
+
+pageDecoder: Decoder (Page.Model Model)
+pageDecoder =
+    Page.modelDecoder <| list modelDecoder

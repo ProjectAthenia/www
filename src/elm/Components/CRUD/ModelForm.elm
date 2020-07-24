@@ -38,7 +38,7 @@ type alias ValidateModel dataModel childModel
 
 -- The init function format that must return our form model, and any needed commands
 type alias ChildInit childModel childMsg =
-    Token -> (childModel, Cmd childMsg)
+    String -> Token -> (childModel, Cmd childMsg)
 
 
 -- The update function format for any form update calls
@@ -143,7 +143,7 @@ initialState :  SharedConfiguration.Configuration dataModel -> Configuration dat
 initialState sharedConfiguration configuration navigationKey token maybeId =
     let
         (childModel, childCmd) =
-            configuration.childInit token
+            configuration.childInit sharedConfiguration.apiUrl token
     in
     ( { sharedConfiguration = sharedConfiguration
       , configuration = configuration

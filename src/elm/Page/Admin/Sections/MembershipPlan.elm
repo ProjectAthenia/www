@@ -9,6 +9,7 @@ import Components.CRUD.ModelForm as ModelForm
 import Components.CRUD.ModelList as ModelList
 import Components.CRUD.RootController as RootController
 import Components.CRUD.SharedConfiguration as SharedConfiguration
+import Components.MembershipPlan.RateHistory as RateHistory
 import Html exposing (..)
 import Models.MembershipPlan.MembershipPlan as MembershipPlan
 import Utilities.SearchField exposing (SearchFieldType(..))
@@ -24,20 +25,23 @@ type alias Msg =
 
 
 type alias FormModel =
-    { name: String
+    { apiUrl: String
+    , name: String
     , duration: String
     , current_cost: Float
+    , rateHistory: Maybe RateHistory.Model
     }
 
 type FormMsg
     = SetName String
     | SetDuration String
     | SetCurrentCost String
+    | RateHistoryMsg RateHistory.Msg
 
 
 sharedConfiguration: String -> SharedConfiguration.Configuration MembershipPlan.Model
 sharedConfiguration apiUrl =
-    SharedConfiguration.configure "Membership Plan" "membership-plans" (MembershipPlan.routeGroup apiUrl) MembershipPlan.modelDecoder []
+    SharedConfiguration.configure apiUrl "Membership Plan" "membership-plans" (MembershipPlan.routeGroup apiUrl) MembershipPlan.modelDecoder []
 
 
 nameColumn: ModelList.Column MembershipPlan.Model
@@ -94,11 +98,13 @@ validateForm model form =
            }
 
 
-initForm: Token -> (FormModel, Cmd FormMsg)
-initForm token =
-    ( { name = ""
+initForm: String -> Token -> (FormModel, Cmd FormMsg)
+initForm apiUrl token =
+    ( { apiUrl = apiUrl
+      , name = ""
       , duration = ""
       , current_cost = 0.0
+      , rateHistory = Nothing
     }
     , Cmd.none
     )
@@ -133,15 +139,42 @@ updateForm token dataModel msg model =
             , Cmd.none
             )
 
+        RateHistoryMsg subMsg ->
+            case model.rateHistory of
+                Just rateHistory ->
+                    Tuple.mapBoth (\updated -> {model | rateHistory = Just updated}) (Cmd.map RateHistoryMsg)
+                        <| RateHistory.update token subMsg rateHistory
+
+                Nothing ->
+                    (model, Cmd.none)
+
 
 setModel: Token -> GenericModel MembershipPlan.Model -> FormModel -> (FormModel, Cmd FormMsg)
 setModel token dataModel model =
+    let
+        (maybeRateHistory, rateHistoryCmd) =
+            case (dataModel.id, model.rateHistory) of
+                (Just id, Just rateHistory) ->
+                    if id == rateHistory.membershipPlanId then
+                        (Just rateHistory, Cmd.none)
+                    else
+                        Tuple.mapFirst Just
+                            <| RateHistory.initialModel token model.apiUrl id
+
+                (Just id, Nothing) ->
+                    Tuple.mapFirst Just
+                        <| RateHistory.initialModel token model.apiUrl id
+
+                (Nothing, _) ->
+                    (Nothing, Cmd.none)
+    in
     ( { model
       | name = dataModel.name
       , duration = dataModel.duration
       , current_cost = dataModel.current_cost
+      , rateHistory = maybeRateHistory
     }
-    , Cmd.none
+    , Cmd.map RateHistoryMsg rateHistoryCmd
     )
 
 
@@ -168,6 +201,17 @@ currentCostInput isLoading model =
     NumberField.view (Input.configure True "Current Cost" "current_cost") model.current_cost SetCurrentCost isLoading
 
 
+rateHistoryView: Bool -> FormModel -> Html FormMsg
+rateHistoryView _ model =
+    case model.rateHistory of
+        Just rateHistory ->
+            Html.map RateHistoryMsg
+                <| RateHistory.view rateHistory
+
+        Nothing ->
+            text ""
+
+
 formConfiguration: ModelForm.Configuration MembershipPlan.Model FormModel FormMsg
 formConfiguration =
     let
@@ -177,6 +221,7 @@ formConfiguration =
         [ nameInput
         , durationSelect
         , currentCostInput
+        , rateHistoryView
         ]
 
 

@@ -37,7 +37,7 @@ type FormMsg
 
 sharedConfiguration: String -> SharedConfiguration.Configuration User.Model
 sharedConfiguration apiUrl =
-    SharedConfiguration.configure "User" "users" (User.routeGroup apiUrl) User.modelDecoder []
+    SharedConfiguration.configure apiUrl "User" "users" (User.routeGroup apiUrl) User.modelDecoder []
 
 
 firstNameColumn: ModelList.Column User.Model
@@ -92,8 +92,8 @@ validateForm model form =
            }
 
 
-initForm: Token -> (FormModel, Cmd FormMsg)
-initForm token =
+initForm: String -> Token -> (FormModel, Cmd FormMsg)
+initForm _ _ =
     ( { first_name = ""
       , last_name = ""
       , email = ""

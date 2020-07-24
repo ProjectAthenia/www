@@ -4,7 +4,7 @@ module Api.Endpoint exposing
     , viewArticleIterations
     , login, signUp, refresh
     , roles
-    , membershipPlans
+    , membershipPlans, membershipPlanRates
     , user, userActivity, me
     , userPaymentMethods, userSubscriptions, userSubscription
     )
@@ -141,6 +141,13 @@ signUp apiUrl =
 membershipPlans : String -> Endpoint
 membershipPlans apiUrl =
     url apiUrl [ "membership-plans" ] []
+
+
+membershipPlanRates: String -> Int -> Int -> Endpoint
+membershipPlanRates apiUrl id page =
+    url apiUrl [ "membership-plans", String.fromInt id, "rates" ]
+        [ Builder.int "page" page
+        ]
 
 
 user : String -> Int -> Endpoint
