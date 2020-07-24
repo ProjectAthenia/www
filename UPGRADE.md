@@ -2,6 +2,59 @@
 
 To upgrade from previous version of Athenia please check each version number listed below step by step.
 
+## 0.6.0
+
+Huge update! The main crux of this update is a massive improvement fo the current CRUD setup. Most of the create and update logic that previously had to be reimplemented in every admin section is now taken care of by the core. This will cause a near rewrite of any existing sections. 
+
+This also updates the installation to be compatible with the version 0.40 of the API, and that update will be required before this can be implemented. There are also a lot of little updates that have been made.
+
+* .env.example - A new storage key variable has been added
+* .gitignore - .DS_Store has been added
+* src/elm/Api/Endpoint.elm - A roles endpoint has been added, url is now exposed, and the API version number has been removed from the url building.
+* src/elm/Api/Group.elm - New module
+* src/elm/Components/CRUD/ModelForm.elm - Almost completely redone
+* src/elm/Components/CRUD/ModelForm/Input.elm - initialState renamed to configure
+* src/elm/Components/CRUD/ModelForm/NumberField.elm - Class name added to div
+* src/elm/Components/CRUD/ModelForm/SelectField.elm - New module
+* src/elm/Components/CRUD/ModelForm/TextAreaField.elm - Class name added to div
+* src/elm/Components/CRUD/ModelForm/TextField.elm - View function cleaned up quite a bit
+* src/elm/Components/CRUD/ModelForm/ToggleField.elm - View function cleaned up quite a bit
+* src/elm/Components/CRUD/ModelList.elm - Almost completely redone
+* src/elm/Components/CRUD/RootController.elm - Almost completely redone
+* src/elm/Components/CRUD/SharedConfiguration.elm - New module
+* src/elm/Components/MembershipPlan/RateHistory.elm - New module
+* src/elm/Main.elm - Integrated admin, probably best to copy over and run a compare
+* src/elm/Modals/ArticleHistoryBrowser.elm - Updated for user name field change
+* src/elm/Models/Error.elm - Added some helper functions
+* src/elm/Models/MembershipPlan/MembershipPlan.elm - Almost rewrote, best to do a compare
+* src/elm/Models/MembershipPlan/MembershipPlanRate.elm - Made membership_plan optional
+* src/elm/Models/User/User.elm - Almost rewrote, best to do a compare
+* src/elm/Models/Wiki/Article.elm - Updated decoder for potential option user id
+* src/elm/Page.elm - Added admin
+* src/elm/Page/Admin/ - New group
+* src/elm/Page/Article/Viewer.elm - Updated for potential optional user id
+* src/elm/Page/Home.elm - Fixed potential login loop bug
+* src/elm/Page/Login.elm - Took user to admin home, and updated user model for structure changes
+* src/elm/Page/Profile.elm - Updated user name reference
+* src/elm/Page/Settings.elm - Updated for user model changes
+* src/elm/Route.elm - Added admin routes
+* src/elm/Utilities/ModelHelpers.elm - Add additional helpers for generic models
+* src/elm/Utilities/SearchField.elm - Added option for no search
+* src/elm/Viewer.elm - Minor cleanup to imports
+* src/ports/athenia.js - Fixed potential bug cause ports to stop execution
+* src/scss/colors.scss - More colors!
+* src/scss/components/crud/ - New section
+* src/scss/main.scss - Imported new sections
+* src/scss/pages/admin/ - New section
+* tests/UnitTests/MainTest.elm - Updated for admin 
+* tests/UnitTests/Models/MembershipPlan/MembershipPlanRateTest.elm - Updated for membership plan being optional
+* tests/UnitTests/Models/MembershipPlan/MembershipPlanTest.elm - Updated for id being optional
+* tests/UnitTests/Models/MembershipPlan/SubscriptionTest.elm - Updated for fields being optional
+* tests/UnitTests/Models/PageTest.elm - Updated for user name field changes
+* tests/UnitTests/Models/User/UserTest.elm - Updated for user field changes
+* tests/UnitTests/Models/Wiki/ArticleTest.elm - Updated for user field changes
+* tests/UnitTests/Models/Wiki/IterationTest.elm - Updated for user field changes
+
 ## 0.5.0
 
 This is a minor little update that simply adds some more helper functions that you can use within your apps. To complete this update update the following files.
