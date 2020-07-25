@@ -6,6 +6,7 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode as JsonEncode
 import Models.MembershipPlan.MembershipPlan as MembershipPlan
 import Models.MembershipPlan.MembershipPlanRate as MembershipPlanRate
+import Models.Page as Page
 import Models.Payment.PaymentMethod as PaymentMethod
 import Time exposing (..)
 
@@ -77,6 +78,11 @@ modelDecoder =
 listDecoder : JsonDecode.Decoder (List Model)
 listDecoder =
     JsonDecode.list modelDecoder
+
+
+pageDecoder: JsonDecode.Decoder (Page.Model Model)
+pageDecoder =
+    Page.modelDecoder listDecoder
 
 
 toCreateJson : CreateModel -> JsonEncode.Value

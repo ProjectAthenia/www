@@ -6,7 +6,7 @@ module Api.Endpoint exposing
     , roles
     , membershipPlans, membershipPlanRates
     , user, userActivity, me
-    , userPaymentMethods, userSubscriptions, userSubscription
+    , userPaymentMethods, entitySubscriptions, userSubscription
     )
 
 import Http
@@ -160,9 +160,11 @@ userPaymentMethods apiUrl userId =
     url apiUrl [ "users", String.fromInt userId, "payment-methods" ] []
 
 
-userSubscriptions : String -> Int -> Endpoint
-userSubscriptions apiUrl userId =
-    url apiUrl [ "users", String.fromInt userId, "subscriptions" ] []
+entitySubscriptions : String -> String -> Int -> Int -> Endpoint
+entitySubscriptions apiUrl entityType entityId page =
+    url apiUrl [ entityType, String.fromInt entityId, "subscriptions" ]
+        [ Builder.int "page" page
+        ]
 
 
 userSubscription : String -> Int -> Int -> Endpoint

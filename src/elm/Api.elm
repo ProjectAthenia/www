@@ -284,7 +284,7 @@ createUserPaymentMethod apiUrl token userId body toMsg =
 
 createUserSubscription : String -> Token -> Int -> Http.Body -> (Result Error Subscription.Model -> msg) -> Cmd msg
 createUserSubscription apiUrl token userId body toMsg =
-    post (Endpoint.userSubscriptions apiUrl userId) (Just token) body Subscription.modelDecoder toMsg
+    post (Endpoint.entitySubscriptions apiUrl "users" userId 1) (Just token) body Subscription.modelDecoder toMsg
 
 
 updateUserSubscription : String -> Token -> Int -> Int -> Http.Body -> (Result Error Subscription.Model -> msg) -> Cmd msg
