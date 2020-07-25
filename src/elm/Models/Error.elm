@@ -39,7 +39,7 @@ view model =
 
 readError : Model -> String
 readError model =
-    model.message ++ "\n" ++ readErrorLines model.errors
+    model.message ++ "\n " ++ readErrorLines model.errors
 
 
 readErrorLines : List (String, List String) -> String
@@ -50,9 +50,9 @@ readErrorLines errors =
 
 readErrorLine : (String, List String) -> String
 readErrorLine (errorKey, errors) =
-    errorKey ++ (String.join " - " errors)
+    errorKey ++ " - " ++ (String.join " - " errors)
 
 
 viewErrorLine : (String, List String) -> Html msg
 viewErrorLine (errorKey, errors) =
-    p [] [ text (errorKey ++ (String.join " - " errors)) ]
+    p [] [ text (errorKey ++ " - " ++ (String.join " - " errors)) ]

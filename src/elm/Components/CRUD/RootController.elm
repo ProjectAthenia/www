@@ -5,7 +5,6 @@ import Browser.Navigation as Navigation
 import Components.CRUD.ModelForm as ModelForm
 import Components.CRUD.ModelList as ModelList
 import Components.CRUD.SharedConfiguration as SharedConfiguration
-import Components.Toast as Toast
 import Html exposing (..)
 import Url.Parser as Parser exposing ((</>), Parser)
 
@@ -54,7 +53,6 @@ type alias Model dataModel formModel formMsg =
     , currentRoute: Route
     , currentState: State dataModel formModel formMsg
     , indexModel: Maybe (ModelList.Model dataModel)
-    , toasts : List Toast.Model
     }
 
 
@@ -100,7 +98,6 @@ initialState config  =
     , currentRoute = Index
     , currentState = Inactive
     , indexModel = Nothing
-    , toasts = []
     }
 
 
@@ -147,7 +144,7 @@ changePage navKey token route model =
 
                 Nothing ->
                     ModelList.initialState modelWithRoute.config.sharedConfiguration modelWithRoute.config.indexConfiguration navKey token
-                        |> Tuple.mapFirst (replaceIndexModel model)
+                        |> Tuple.mapFirst (replaceIndexModel modelWithRoute)
                         |> Tuple.mapSecond (Cmd.map IndexMsg)
 
         Update id ->

@@ -379,13 +379,13 @@ createErrorText title error =
             title ++ "\n" ++ "Status Code - " ++ String.fromInt status ++ "\n" ++ Error.readError model
 
         Timeout ->
-            title ++ "\nThe requested timed out, please try again."
+            title ++ "\n The requested timed out, please try again."
 
         BadUrl _ ->
-            title ++ "\nBad URL."
+            title ++ "\n Bad URL."
 
         NetworkError ->
-            title ++ "\nNetwork Error. Please check your WiFi connection."
+            title ++ "\n Network Error. Please check your WiFi connection."
 
         BadBody message ->
-            title ++ "\n" ++ message
+            title ++ "\n - " ++ message

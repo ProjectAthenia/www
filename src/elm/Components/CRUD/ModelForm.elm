@@ -211,7 +211,7 @@ update token msg model =
 
         ModelCreatedResponse (Err error) ->
             Toast.appendToast
-                (Toast.createToast Toast.Error RemoveToast <| Api.createErrorText "Error Creating Radical" error)
+                (Toast.createToast Toast.Error RemoveToast <| Api.createErrorText "Error Creating" error)
                 { model | loading = False }
 
         ModelUpdatedResponse (Ok dataModel) ->
@@ -236,7 +236,7 @@ update token msg model =
 
         ModelUpdatedResponse (Err error) ->
             Toast.appendToast
-                (Toast.createToast Toast.Error RemoveToast <| Api.createErrorText "Error Updating Radical" error)
+                (Toast.createToast Toast.Error RemoveToast <| Api.createErrorText "Error Updating" error)
                 { model | loading = False }
 
         ModelLoadedResponse (Ok dataModel) ->
@@ -244,7 +244,7 @@ update token msg model =
 
         ModelLoadedResponse (Err error) ->
             Toast.appendToast
-                (Toast.createToast Toast.Error RemoveToast <| Api.createErrorText "Error Loading Radical" error)
+                (Toast.createToast Toast.Error RemoveToast <| Api.createErrorText "Error Loading" error)
                 { model | loading = False }
 
         ChildMsg childMsg ->
@@ -300,6 +300,7 @@ view actionName model =
                 , [submitButton model.loading]
                 ]
     , LoadingIndicator.view model.loading
+    , Toast.view model.toasts
     ]
 
 

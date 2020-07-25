@@ -31,9 +31,14 @@ view model value msg isDisabled =
                 [ Select.onChange msg
                 , Select.disabled isDisabled
                 ]
-                (List.map (viewOption value) model.options)
+                ( [ defaultOption (String.length value == 0) ] ++ List.map (viewOption value) model.options)
             ]
         ]
+
+
+defaultOption: Bool -> Select.Item msg
+defaultOption selected =
+    Select.item [ Attributes.disabled True, Attributes.selected selected ] [ text "Select An Option" ]
 
 
 viewOption: String -> (String, String) -> Select.Item msg
