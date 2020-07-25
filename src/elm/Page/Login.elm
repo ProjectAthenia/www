@@ -209,7 +209,6 @@ update msg model =
             }
             , Cmd.batch
                 [ Viewer.store viewer
-                , Route.replaceUrl (Session.navKey model.session) (Route.Admin Admin.Dashboard)
                 ]
             )
 
