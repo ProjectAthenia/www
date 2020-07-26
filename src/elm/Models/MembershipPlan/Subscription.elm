@@ -54,6 +54,16 @@ isActive now model =
             (posixToMillis expiresAt) > (posixToMillis now)
 
 
+getActiveSubscriptions : Posix -> List Model -> List Model
+getActiveSubscriptions now subscriptions =
+    List.filter (isActive now) subscriptions
+
+
+getCurrentSubscription : Posix -> List Model -> Maybe Model
+getCurrentSubscription now subscriptions =
+    List.head
+        <| List.sortWith compareExpiration (getActiveSubscriptions now subscriptions)
+
 createModel : Bool -> MembershipPlan.Model -> PaymentMethod.Model -> CreateModel
 createModel recurring membershipPlan paymentMethod =
     { recurring = recurring

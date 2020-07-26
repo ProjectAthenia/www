@@ -4,6 +4,8 @@ import Api exposing (Token)
 import Api.Endpoint as Endpoint exposing (Endpoint)
 import Models.MembershipPlan.Subscription as Subscription
 import Models.Page as Page
+import Task
+import Time exposing (Posix)
 
 
 type alias Model =
@@ -12,11 +14,13 @@ type alias Model =
     , entityId: Int
     , subscriptionHistory: List Subscription.Model
     , currentSubscription: Maybe Subscription.Model
+    , now: Maybe Posix
     }
 
 
-type Msg =
-    SubscriptionHistoryLoadedResponse (Result Api.Error (Page.Model Subscription.Model))
+type Msg
+    = SubscriptionHistoryLoadedResponse (Result Api.Error (Page.Model Subscription.Model))
+    | GotTime Posix
 
 
 initialModel: Token -> String -> String -> Int -> (Model, Cmd Msg)
@@ -26,19 +30,39 @@ initialModel token apiUrl entityType entityId =
       , entityId = entityId
       , subscriptionHistory = []
       , currentSubscription = Nothing
+      , now = Nothing
       }
-    , getSubscriptionHistory token
-        <| Endpoint.entitySubscriptions apiUrl entityType entityId 1
+    , Cmd.batch
+        [ getSubscriptionHistory token
+            <| Endpoint.entitySubscriptions apiUrl entityType entityId 1
+        , Task.perform GotTime Time.now
+        ]
     )
+
+
+determineCurrentSubscription: Model -> Model
+determineCurrentSubscription model =
+    case model.now of
+        Just now ->
+            { model
+                | currentSubscription = Subscription.getCurrentSubscription now model.subscriptionHistory
+            }
+
+        Nothing ->
+            model
 
 
 update: Token -> Msg -> Model -> (Model, Cmd Msg)
 update token msg model =
     case msg of
         SubscriptionHistoryLoadedResponse (Ok page) ->
-            ( { model
-                | subscriptionHistory = model.subscriptionHistory ++ page.data
-            }
+            let
+                updated =
+                    { model
+                        | subscriptionHistory = model.subscriptionHistory ++ page.data
+                    }
+            in
+            ( determineCurrentSubscription updated
             , case Page.nextPageNumber page of
                 Just nextPage ->
                     getSubscriptionHistory token
@@ -50,6 +74,17 @@ update token msg model =
 
         SubscriptionHistoryLoadedResponse (Err _) ->
             (model, Cmd.none)
+
+        GotTime now ->
+            let
+                updated =
+                    { model
+                        | now = Just now
+                    }
+            in
+            ( determineCurrentSubscription updated
+            , Cmd.none
+            )
 
 
 getSubscriptionHistory : Token -> Endpoint -> Cmd Msg

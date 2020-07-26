@@ -87,13 +87,12 @@ removeRole user role =
 -- Subscription Helpers
 getActiveSubscriptions : Posix -> Model -> List Subscription.Model
 getActiveSubscriptions now model =
-    List.filter (Subscription.isActive now) model.subscriptions
+    Subscription.getActiveSubscriptions now model.subscriptions
 
 
 getCurrentSubscription : Posix -> Model -> Maybe Subscription.Model
 getCurrentSubscription now model =
-    List.head
-        <| List.sortWith Subscription.compareExpiration (getActiveSubscriptions now model)
+    Subscription.getCurrentSubscription now model.subscriptions
 
 
 -- Converts a user model into a JSON string
