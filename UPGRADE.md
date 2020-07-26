@@ -2,6 +2,24 @@
 
 To upgrade from previous version of Athenia please check each version number listed below step by step.
 
+## 0.7.0
+
+Quality of life update! This is an accumulative update with a number of improvements added.
+
+* src/elm/Api.elm - Improved some error messages
+* src/elm/Api/Endpoint.elm - Added a `membershipPlanRates` endpoint
+* src/elm/Components/CRUD/ModelForm.elm - Passed in the api url to the child init function, fixed some error text, and started displaying toasts.
+* src/elm/Components/CRUD/ModelForm/SelectField.elm - Added a default option
+* src/elm/Components/CRUD/RootController.elm - Removed toasts, and fixed a bug with the model list updating.
+* src/elm/Components/CRUD/SharedConfiguration.elm - Added apiUrl to shared config
+* src/elm/Components/MembershipPlan/RateHistory.elm - Completed the module
+* src/elm/Models/Error.elm - Fixed some error messages
+* src/elm/Models/MembershipPlan/MembershipPlan.elm - Improved current cost decoder
+* src/elm/Models/MembershipPlan/MembershipPlanRate.elm - Added page decoder
+* src/elm/Page/Admin/Sections/MembershipPlan.elm - Integrated the rate history throughout
+* src/elm/Page/Admin/Sections/User.elm - Updated init function for new parameter
+* src/elm/Page/Login.elm - Fixed redirect bug
+
 ## 0.6.0
 
 Huge update! The main crux of this update is a massive improvement fo the current CRUD setup. Most of the create and update logic that previously had to be reimplemented in every admin section is now taken care of by the core. This will cause a near rewrite of any existing sections. 
