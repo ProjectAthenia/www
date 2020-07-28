@@ -1,6 +1,18 @@
 module Utilities.DateHelpers exposing (..)
 
+import DateFormat
 import Time exposing (..)
+
+
+format: Zone -> Posix -> String
+format =
+    DateFormat.format
+        [ DateFormat.monthNameFull
+        , DateFormat.text " "
+        , DateFormat.dayOfMonthSuffix
+        , DateFormat.text ", "
+        , DateFormat.yearNumber
+        ]
 
 
 getMonthName : Month -> String

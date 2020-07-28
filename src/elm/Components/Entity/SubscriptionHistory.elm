@@ -2,10 +2,13 @@ module Components.Entity.SubscriptionHistory exposing (..)
 
 import Api exposing (Token)
 import Api.Endpoint as Endpoint exposing (Endpoint)
+import Bootstrap.Grid as Table
+import Html exposing (Html, text)
 import Models.MembershipPlan.Subscription as Subscription
 import Models.Page as Page
 import Task
-import Time exposing (Posix)
+import Time exposing (Posix, Zone)
+import Utilities.DateHelpers as DateHelpers
 
 
 type alias Model =
@@ -85,6 +88,22 @@ update token msg model =
             ( determineCurrentSubscription updated
             , Cmd.none
             )
+
+
+viewSubscription: Zone -> Subscription.Model -> Html Msg
+viewSubscription timeZone subscription =
+    Table.row []
+        [ Table.col []
+            [ text <| DateHelpers.format timeZone subscription.subscribed_at ]
+        ,  Table.col []
+            [ text
+                <| case subscription.expires_at of
+                    Just expiresAt ->
+                        DateHelpers.format timeZone expiresAt
+                    Nothing ->
+                        "Does not Expire"
+            ]
+        ]
 
 
 getSubscriptionHistory : Token -> Endpoint -> Cmd Msg
