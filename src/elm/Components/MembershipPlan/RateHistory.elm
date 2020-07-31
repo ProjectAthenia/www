@@ -6,27 +6,36 @@ import Bootstrap.Table as Table
 import Html exposing (..)
 import Models.MembershipPlan.MembershipPlanRate as MembershipPlanRate
 import Models.Page as Page
+import Task
+import Time exposing (Zone)
+import Utilities.DateHelpers as DateHelpers
 
 
 type alias Model =
     { membershipPlanId: Int
     , apiUrl: String
     , loadedRates: List MembershipPlanRate.Model
+    , timeZone: Maybe Zone
     }
 
 
-type Msg =
-    MembershipPlanRatesLoadedResponse (Result Api.Error (Page.Model MembershipPlanRate.Model))
+type Msg
+    = MembershipPlanRatesLoadedResponse (Result Api.Error (Page.Model MembershipPlanRate.Model))
+    | TimeZoneReceived Zone
 
 
-initialModel: Token -> String -> Int -> (Model, Cmd Msg)
-initialModel token apiUrl membershipPlanId =
+initialModel: String -> Token -> Int -> (Model, Cmd Msg)
+initialModel apiUrl token membershipPlanId =
     ( { membershipPlanId = membershipPlanId
       , apiUrl = apiUrl
       , loadedRates = []
+      , timeZone = Nothing
     }
-    , getMembershipPlanRates token
-        <| Endpoint.membershipPlanRates apiUrl membershipPlanId 1
+    , Cmd.batch
+        [ getMembershipPlanRates token
+            <| Endpoint.membershipPlanRates apiUrl membershipPlanId 1
+        , Task.perform TimeZoneReceived Time.here
+        ]
     )
 
 
@@ -49,6 +58,13 @@ update token msg model =
         MembershipPlanRatesLoadedResponse (Err _) ->
             (model, Cmd.none)
 
+        TimeZoneReceived timeZone ->
+            ( { model
+                | timeZone = Just timeZone
+            }
+            , Cmd.none
+            )
+
 
 view: Model -> Html Msg
 view model =
@@ -60,14 +76,31 @@ view model =
                 ]
             ]
         , tbody = Table.tbody []
-            <| List.map buildRow model.loadedRates
+            <| case model.timeZone of
+                Just timeZone ->
+                    List.map (buildRow timeZone) model.loadedRates
+                Nothing ->
+                    []
         }
 
 
-buildRow : MembershipPlanRate.Model -> Table.Row Msg
-buildRow model =
+buildRow : Zone -> MembershipPlanRate.Model -> Table.Row Msg
+buildRow timeZone model =
     Table.tr []
-        [ Table.td [] [ text <| "$" ++ String.fromFloat model.cost ]
+        [ Table.td [] [ text <| buildRateText timeZone model]
+        ]
+
+
+buildRateText : Zone -> MembershipPlanRate.Model -> String
+buildRateText timeZone model =
+    String.concat
+        [ "$" ++ String.fromFloat model.cost
+        , " "
+        , case model.created_at of
+            Just createdAt ->
+                "Created " ++ DateHelpers.format timeZone createdAt
+            Nothing ->
+                "Unknown creation date"
         ]
 
 

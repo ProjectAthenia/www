@@ -159,11 +159,11 @@ setModel token dataModel model =
                         (Just rateHistory, Cmd.none)
                     else
                         Tuple.mapFirst Just
-                            <| RateHistory.initialModel token model.apiUrl id
+                            <| RateHistory.initialModel model.apiUrl token id
 
                 (Just id, Nothing) ->
                     Tuple.mapFirst Just
-                        <| RateHistory.initialModel token model.apiUrl id
+                        <| RateHistory.initialModel model.apiUrl token id
 
                 (Nothing, _) ->
                     (Nothing, Cmd.none)
