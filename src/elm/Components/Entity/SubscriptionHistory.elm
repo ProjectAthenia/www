@@ -2,7 +2,6 @@ module Components.Entity.SubscriptionHistory exposing (..)
 
 import Api exposing (Token)
 import Api.Endpoint as Endpoint exposing (Endpoint)
-import Bootstrap.Grid as Table
 import Bootstrap.Table as Table
 import Components.CRUD.ModelForm.Input as Input
 import Components.CRUD.ModelForm.ToggleField as ToggleField
@@ -188,14 +187,14 @@ viewSubscriptionHistory model =
             }
         ]
 
-buildRow: Zone -> Subscription.Model -> Html Msg
+buildRow: Zone -> Subscription.Model -> Table.Row Msg
 buildRow timeZone subscription =
-    Table.row []
-        [ Table.col []
+    Table.tr []
+        [ Table.td []
             [ text <| Subscription.subscriptionName subscription ]
-        , Table.col []
+        , Table.td []
             [ text <| DateHelpers.format timeZone subscription.subscribed_at ]
-        ,  Table.col []
+        ,  Table.td []
             [ text
                 <| case subscription.expires_at of
                     Just expiresAt ->

@@ -7,6 +7,7 @@ import Components.CRUD.ModelForm as ModelForm
 import Components.CRUD.ModelList as ModelList
 import Components.CRUD.RootController as RootController
 import Components.CRUD.SharedConfiguration as SharedConfiguration
+import Components.Entity.SubscriptionHistory as SubscriptionHistory
 import Html exposing (..)
 import Models.User.User as User
 import Utilities.SearchField exposing (SearchFieldType(..))
@@ -22,10 +23,12 @@ type alias Msg =
 
 
 type alias FormModel =
-    { first_name: String
+    { apiUrl: String
+    , first_name: String
     , last_name: String
     , email: String
     , password: String
+    , subscriptionHistory: Maybe SubscriptionHistory.Model
     }
 
 type FormMsg
@@ -33,6 +36,7 @@ type FormMsg
     | SetLastName String
     | SetEmail String
     | SetPassword String
+    | SubscriptionHistoryMsg SubscriptionHistory.Msg
 
 
 sharedConfiguration: String -> SharedConfiguration.Configuration User.Model
@@ -93,11 +97,13 @@ validateForm model form =
 
 
 initForm: String -> Token -> (FormModel, Cmd FormMsg)
-initForm _ _ =
-    ( { first_name = ""
+initForm apiUrl _ =
+    ( { apiUrl = apiUrl
+      , first_name = ""
       , last_name = ""
       , email = ""
       , password = ""
+      , subscriptionHistory = Nothing
     }
     , Cmd.none
     )
@@ -134,15 +140,43 @@ updateForm token dataModel msg model =
             , Cmd.none
             )
 
+        SubscriptionHistoryMsg subMsg ->
+            case model.subscriptionHistory of
+                Just subscriptionHistory ->
+                    let
+                        (updatedSubscriptionHistory, subscriptionHistoryCmd) =
+                            SubscriptionHistory.update token subMsg subscriptionHistory
+                    in
+                    ( { model
+                        | subscriptionHistory = Just updatedSubscriptionHistory
+                    }
+                    , Cmd.map SubscriptionHistoryMsg subscriptionHistoryCmd
+                    )
+
+                Nothing ->
+                    (model, Cmd.none)
+
 
 setModel: Token -> GenericModel User.Model -> FormModel -> (FormModel, Cmd FormMsg)
 setModel token dataModel model =
+    let
+        (subscriptionHistory, subscriptionCmd) =
+            case dataModel.id of
+                Just id ->
+                    Tuple.mapFirst Just
+                        <| SubscriptionHistory.initialModel token model.apiUrl "users" id
+
+                Nothing ->
+                    (Nothing, Cmd.none)
+
+    in
     ( { model
       | first_name = dataModel.first_name
       , last_name = dataModel.last_name
       , email = dataModel.email
+      , subscriptionHistory = subscriptionHistory
     }
-    , Cmd.none
+    , Cmd.map SubscriptionHistoryMsg subscriptionCmd
     )
 
 
@@ -166,6 +200,16 @@ passwordInput isLoading model =
     TextField.view (Input.configure True "Password (leave blank to keep current password)" "password") model.password SetPassword isLoading
 
 
+subscriptionHistoryView: Bool -> FormModel -> Html FormMsg
+subscriptionHistoryView _ model =
+    case model.subscriptionHistory of
+        Just subscriptionHistory ->
+            Html.map SubscriptionHistoryMsg
+                <| SubscriptionHistory.view subscriptionHistory
+
+        Nothing ->
+            text ""
+
 
 baseFormConfig: ModelForm.Configuration User.Model FormModel FormMsg
 baseFormConfig =
@@ -179,6 +223,7 @@ formConfiguration =
         , lastNameInput
         , emailInput
         , passwordInput
+        , subscriptionHistoryView
         ]
 
 
