@@ -571,6 +571,7 @@ update msg model =
                         , membership_plan_rate = Just
                             { id = membershipPlan.current_rate_id
                             , cost = membershipPlan.current_cost
+                            , created_at = Nothing
                             , membership_plan = Just membershipPlan
                             }
                     }
