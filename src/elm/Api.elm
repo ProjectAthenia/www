@@ -287,9 +287,9 @@ createUserSubscription apiUrl token userId body toMsg =
     post (Endpoint.entitySubscriptions apiUrl "users" userId 1) (Just token) body Subscription.modelDecoder toMsg
 
 
-updateUserSubscription : String -> Token -> Int -> Int -> Http.Body -> (Result Error Subscription.Model -> msg) -> Cmd msg
-updateUserSubscription apiUrl token userId subscriptionId body toMsg =
-    put (Endpoint.userSubscription apiUrl userId subscriptionId) token body Subscription.modelDecoder toMsg
+updateUserSubscription : String -> String -> Token -> Int -> Int -> Http.Body -> (Result Error Subscription.Model -> msg) -> Cmd msg
+updateUserSubscription apiUrl entityType token userId subscriptionId body toMsg =
+    put (Endpoint.entitySubscription apiUrl entityType userId subscriptionId) token body Subscription.modelDecoder toMsg
 
 
 createArticle : String -> Token -> Article.CreateModel -> (Result Error Article.Model -> msg) -> Cmd msg

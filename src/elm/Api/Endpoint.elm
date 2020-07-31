@@ -6,11 +6,12 @@ module Api.Endpoint exposing
     , roles
     , membershipPlans, membershipPlanRates
     , user, userActivity, me
-    , userPaymentMethods, entitySubscriptions, userSubscription
+    , userPaymentMethods, entitySubscriptions, entitySubscription
     )
 
 import Http
 import Url.Builder as Builder exposing (QueryParameter)
+import Utilities.Expands as Expands
 
 
 {-| Http.request, except it takes an Endpoint instead of a Url.
@@ -163,13 +164,18 @@ userPaymentMethods apiUrl userId =
 entitySubscriptions : String -> String -> Int -> Int -> Endpoint
 entitySubscriptions apiUrl entityType entityId page =
     url apiUrl [ entityType, String.fromInt entityId, "subscriptions" ]
-        [ Builder.int "page" page
-        ]
+        <| List.concat
+            [ [ Builder.int "page" page ]
+            , Expands.toQueryParameters
+                [ Expands.expand "membershipPlanRate"
+                , Expands.expand "membershipPlanRate.membershipPlan"
+                ]
+            ]
 
 
-userSubscription : String -> Int -> Int -> Endpoint
-userSubscription apiUrl userId subscriptionId =
-    url apiUrl [ "users", String.fromInt userId, "subscriptions", String.fromInt subscriptionId ] []
+entitySubscription : String -> String -> Int -> Int -> Endpoint
+entitySubscription apiUrl entityType userId subscriptionId =
+    url apiUrl [ entityType, String.fromInt userId, "subscriptions", String.fromInt subscriptionId ] []
 
 
 userActivity : String -> Int -> Endpoint

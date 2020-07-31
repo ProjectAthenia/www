@@ -851,6 +851,6 @@ updateSubscription : String -> Token -> User.Model -> Subscription.Model -> Enco
 updateSubscription apiUrl token user subscription body =
     case user.id of
         Just id ->
-            Api.updateUserSubscription apiUrl token id subscription.id (Http.jsonBody body) (UpdatedSubscription subscription)
+            Api.updateUserSubscription apiUrl "users" token id subscription.id (Http.jsonBody body) (UpdatedSubscription subscription)
         Nothing ->
             Cmd.none
