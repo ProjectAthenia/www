@@ -21,7 +21,7 @@ type alias Model =
 
 type Msg
     = MembershipPlanRatesLoadedResponse (Result Api.Error (Page.Model MembershipPlanRate.Model))
-    | TimeZoneReceived Zone
+    | GotTimeZone Zone
 
 
 initialModel: String -> Token -> Int -> (Model, Cmd Msg)
@@ -34,7 +34,7 @@ initialModel apiUrl token membershipPlanId =
     , Cmd.batch
         [ getMembershipPlanRates token
             <| Endpoint.membershipPlanRates apiUrl membershipPlanId 1
-        , Task.perform TimeZoneReceived Time.here
+        , Task.perform GotTimeZone Time.here
         ]
     )
 
@@ -58,7 +58,7 @@ update token msg model =
         MembershipPlanRatesLoadedResponse (Err _) ->
             (model, Cmd.none)
 
-        TimeZoneReceived timeZone ->
+        GotTimeZone timeZone ->
             ( { model
                 | timeZone = Just timeZone
             }

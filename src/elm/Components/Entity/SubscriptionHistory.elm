@@ -3,7 +3,8 @@ module Components.Entity.SubscriptionHistory exposing (..)
 import Api exposing (Token)
 import Api.Endpoint as Endpoint exposing (Endpoint)
 import Bootstrap.Grid as Table
-import Html exposing (Html, text)
+import Bootstrap.Table as Table
+import Html exposing (Html, div, h2, text)
 import Models.MembershipPlan.Subscription as Subscription
 import Models.Page as Page
 import Task
@@ -18,12 +19,14 @@ type alias Model =
     , subscriptionHistory: List Subscription.Model
     , currentSubscription: Maybe Subscription.Model
     , now: Maybe Posix
+    , timeZone: Maybe Zone
     }
 
 
 type Msg
     = SubscriptionHistoryLoadedResponse (Result Api.Error (Page.Model Subscription.Model))
     | GotTime Posix
+    | GotTimeZone Zone
 
 
 initialModel: Token -> String -> String -> Int -> (Model, Cmd Msg)
@@ -34,11 +37,13 @@ initialModel token apiUrl entityType entityId =
       , subscriptionHistory = []
       , currentSubscription = Nothing
       , now = Nothing
+      , timeZone = Nothing
       }
     , Cmd.batch
         [ getSubscriptionHistory token
             <| Endpoint.entitySubscriptions apiUrl entityType entityId 1
         , Task.perform GotTime Time.now
+        , Task.perform GotTimeZone Time.here
         ]
     )
 
@@ -89,11 +94,42 @@ update token msg model =
             , Cmd.none
             )
 
+        GotTimeZone timeZone ->
+            ( { model
+                | timeZone = Just timeZone
+            }
+            , Cmd.none
+            )
 
-viewSubscription: Zone -> Subscription.Model -> Html Msg
-viewSubscription timeZone subscription =
+
+viewSubscriptionHistory: Model -> Html Msg
+viewSubscriptionHistory model =
+    div []
+        [ h2 [] [ text "Subscription History" ]
+        , Table.table
+            { options = [ Table.bordered, Table.striped ]
+            , thead = Table.thead []
+                [ Table.tr []
+                    [ Table.th [] [ text "Subscription Name" ]
+                    , Table.th [] [ text "Original Subscription Date" ]
+                    , Table.th [] [ text "Expiration Date" ]
+                    ]
+                ]
+            , tbody = Table.tbody []
+                <| case model.timeZone of
+                    Just timeZone ->
+                        List.map (buildRow timeZone) model.subscriptionHistory
+                    Nothing ->
+                        []
+            }
+        ]
+
+buildRow: Zone -> Subscription.Model -> Html Msg
+buildRow timeZone subscription =
     Table.row []
         [ Table.col []
+            [ text <| Subscription.subscriptionName subscription ]
+        , Table.col []
             [ text <| DateHelpers.format timeZone subscription.subscribed_at ]
         ,  Table.col []
             [ text

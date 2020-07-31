@@ -44,6 +44,19 @@ compareExpiration subscriptionA subscriptionB =
                 GT
 
 
+subscriptionName : Model -> String
+subscriptionName model =
+    case model.membership_plan_rate of
+        Just membershipPlanRate ->
+            case membershipPlanRate.membership_plan of
+                Just membershipPlan ->
+                    membershipPlan.name
+                Nothing ->
+                    "Unknown Membership Plan"
+
+        Nothing ->
+            "Unknown Membership Plan"
+
 
 isActive : Posix -> Model -> Bool
 isActive now model =
