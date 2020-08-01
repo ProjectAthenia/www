@@ -8,6 +8,7 @@ import Components.CRUD.ModelList as ModelList
 import Components.CRUD.RootController as RootController
 import Components.CRUD.SharedConfiguration as SharedConfiguration
 import Components.Entity.SubscriptionHistory as SubscriptionHistory
+import Components.User.ResetPasswordButton as ResetPasswordButton
 import Html exposing (..)
 import Models.User.User as User
 import Utilities.SearchField exposing (SearchFieldType(..))
@@ -28,6 +29,7 @@ type alias FormModel =
     , last_name: String
     , email: String
     , password: String
+    , resetPasswordButton: Maybe ResetPasswordButton.Model
     , subscriptionHistory: Maybe SubscriptionHistory.Model
     }
 
@@ -36,6 +38,7 @@ type FormMsg
     | SetLastName String
     | SetEmail String
     | SetPassword String
+    | ResetPasswordButtonMsg ResetPasswordButton.Msg
     | SubscriptionHistoryMsg SubscriptionHistory.Msg
 
 
@@ -103,6 +106,7 @@ initForm apiUrl _ =
       , last_name = ""
       , email = ""
       , password = ""
+      , resetPasswordButton = Nothing
       , subscriptionHistory = Nothing
     }
     , Cmd.none
@@ -140,6 +144,22 @@ updateForm token dataModel msg model =
             , Cmd.none
             )
 
+        ResetPasswordButtonMsg subMsg ->
+            case model.resetPasswordButton of
+                Just resetPasswordButton ->
+                    let
+                        (updatedResetPasswordButton, resetPasswordButtonCmd) =
+                            ResetPasswordButton.update token subMsg resetPasswordButton
+                    in
+                    ( { model
+                        | resetPasswordButton = Just updatedResetPasswordButton
+                    }
+                    , Cmd.map ResetPasswordButtonMsg resetPasswordButtonCmd
+                    )
+
+                Nothing ->
+                    (model, Cmd.none)
+
         SubscriptionHistoryMsg subMsg ->
             case model.subscriptionHistory of
                 Just subscriptionHistory ->
@@ -174,6 +194,7 @@ setModel token dataModel model =
       | first_name = dataModel.first_name
       , last_name = dataModel.last_name
       , email = dataModel.email
+      , resetPasswordButton = Just <| ResetPasswordButton.initialModel model.apiUrl dataModel.email
       , subscriptionHistory = subscriptionHistory
     }
     , Cmd.map SubscriptionHistoryMsg subscriptionCmd
@@ -200,6 +221,17 @@ passwordInput isLoading model =
     TextField.view (Input.configure True "Password (leave blank to keep current password)" "password") model.password SetPassword isLoading
 
 
+resetPasswordButtonView: Bool -> FormModel -> Html FormMsg
+resetPasswordButtonView _ model =
+    case model.resetPasswordButton of
+        Just resetPasswordButton ->
+            Html.map ResetPasswordButtonMsg
+                <| ResetPasswordButton.view resetPasswordButton
+
+        Nothing ->
+            text ""
+
+
 subscriptionHistoryView: Bool -> FormModel -> Html FormMsg
 subscriptionHistoryView _ model =
     case model.subscriptionHistory of
@@ -223,6 +255,7 @@ formConfiguration =
         , lastNameInput
         , emailInput
         , passwordInput
+        , resetPasswordButtonView
         , subscriptionHistoryView
         ]
 

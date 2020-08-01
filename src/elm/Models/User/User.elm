@@ -147,6 +147,13 @@ cacheEncoder model =
         ]
 
 
+forgotPasswordJson : String -> Encode.Value
+forgotPasswordJson email =
+    Encode.object
+        [ ("email", Encode.string email)
+        ]
+
+
 -- Decodes a user model retrieved through the API
 recordDecoder: Decoder Record
 recordDecoder =

@@ -3,6 +3,7 @@ module Api.Endpoint exposing
     , baseArticle, viewArticle, viewArticles
     , viewArticleIterations
     , login, signUp, refresh
+    , forgotPassword
     , roles
     , membershipPlans, membershipPlanRates
     , user, userActivity, me
@@ -137,6 +138,11 @@ logout apiUrl =
 signUp : String -> Endpoint
 signUp apiUrl =
     url apiUrl [ "auth", "sign-up" ] []
+
+
+forgotPassword : String -> Endpoint
+forgotPassword apiUrl =
+    url apiUrl [ "forgot-password" ] []
 
 
 membershipPlans : String -> Endpoint
