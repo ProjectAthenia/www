@@ -13,7 +13,7 @@ import Time exposing (..)
 
 type alias Model =
     { id : Int
-    , last_renewed_at : Posix
+    , last_renewed_at : Maybe Posix
     , subscribed_at : Posix
     , expires_at : Maybe Posix
     , canceled_at : Maybe Posix
@@ -89,7 +89,7 @@ modelDecoder : JsonDecode.Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
         |> required "id" JsonDecode.int
-        |> required "last_renewed_at" Iso8601.decoder
+        |> required "last_renewed_at" (JsonDecode.maybe Iso8601.decoder)
         |> required "subscribed_at" Iso8601.decoder
         |> required "expires_at" (JsonDecode.maybe Iso8601.decoder)
         |> required "canceled_at" (JsonDecode.maybe Iso8601.decoder)
