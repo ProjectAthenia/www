@@ -65,3 +65,11 @@ stringFloatDecoder =
               Just f -> JsonDecode.succeed f
               _ -> JsonDecode.fail "Error transforming string encoded float to float"
           )
+
+
+floatDecoder : Decoder Float
+floatDecoder =
+    JsonDecode.oneOf
+        [ JsonDecode.float
+        , stringFloatDecoder
+        ]

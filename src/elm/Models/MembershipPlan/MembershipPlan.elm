@@ -37,7 +37,7 @@ recordDecoder =
     JsonDecode.succeed Record
         |> required "name" string
         |> required "duration" string
-        |> required "current_cost" (JsonDecode.oneOf [JsonDecode.float, stringFloatDecoder])
+        |> required "current_cost" floatDecoder
         |> required "current_rate_id" int
 
 

@@ -22,7 +22,7 @@ modelDecoder : Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
         |> required "id" int
-        |> required "cost" (JsonDecode.oneOf [JsonDecode.float, stringFloatDecoder])
+        |> required "cost" floatDecoder
         |> optional "created_at" (maybe Iso8601.decoder) Nothing
         |> optional "membership_plan" (maybe MembershipPlan.modelDecoder) Nothing
 
