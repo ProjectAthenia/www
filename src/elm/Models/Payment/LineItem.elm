@@ -1,6 +1,6 @@
 module Models.Payment.LineItem exposing (..)
 
-import Json.Decode as JsonDecode exposing (Decoder, int, string)
+import Json.Decode as JsonDecode exposing (Decoder, int, list, string)
 import Json.Decode.Pipeline exposing (required)
 import Utilities.ModelHelpers exposing (floatDecoder)
 
@@ -20,3 +20,8 @@ modelDecoder =
         |> required "item_id" int
         |> required "item_type" string
         |> required "amount" floatDecoder
+
+
+listDecoder: Decoder (List Model)
+listDecoder =
+    list modelDecoder
