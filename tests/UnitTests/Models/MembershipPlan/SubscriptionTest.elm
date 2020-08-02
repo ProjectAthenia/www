@@ -13,7 +13,7 @@ testCompareExpiration =
     let
         lifetime =
             { id = 342
-            , last_renewed_at = millisToPosix 1000
+            , last_renewed_at = Just <| millisToPosix 1000
             , subscribed_at = millisToPosix 2000
             , expires_at = Nothing
             , canceled_at = Nothing
@@ -38,7 +38,7 @@ testCompareExpiration =
             }
         later =
             { id = 342
-            , last_renewed_at = millisToPosix 1000
+            , last_renewed_at = Just <| millisToPosix 1000
             , subscribed_at = millisToPosix 2000
             , expires_at = Just (millisToPosix 5000)
             , canceled_at = Nothing
@@ -63,7 +63,7 @@ testCompareExpiration =
             }
         early =
             { id = 342
-            , last_renewed_at = millisToPosix 1000
+            , last_renewed_at = Just <| millisToPosix 1000
             , subscribed_at = millisToPosix 2000
             , expires_at = Just (millisToPosix 1000)
             , canceled_at = Nothing
@@ -115,7 +115,7 @@ testIsActive =
                 Expect.true ""
                     <| Subscription.isActive (millisToPosix 2000)
                         { id = 342
-                        , last_renewed_at = millisToPosix 1000
+                        , last_renewed_at = Just <| millisToPosix 1000
                         , subscribed_at = millisToPosix 2000
                         , expires_at = Nothing
                         , canceled_at = Nothing
@@ -143,7 +143,7 @@ testIsActive =
                 Expect.true ""
                     <| Subscription.isActive (millisToPosix 2000)
                         { id = 342
-                        , last_renewed_at = millisToPosix 1000
+                        , last_renewed_at = Just <| millisToPosix 1000
                         , subscribed_at = millisToPosix 2000
                         , expires_at = Just (millisToPosix 5000)
                         , canceled_at = Nothing
@@ -172,7 +172,7 @@ testIsActive =
                 Expect.false ""
                     <| Subscription.isActive (millisToPosix 2000)
                         { id = 342
-                        , last_renewed_at = millisToPosix 1000
+                        , last_renewed_at = Just <| millisToPosix 1000
                         , subscribed_at = millisToPosix 2000
                         , expires_at = Just (millisToPosix 1000)
                         , canceled_at = Nothing
@@ -204,7 +204,7 @@ testModelDecoder =
         [ test "Test base decode" <|
             \() ->
                 Expect.equal (Ok { id = 342
-                                , last_renewed_at = millisToPosix 1000
+                                , last_renewed_at = Just <| millisToPosix 1000
                                 , subscribed_at = millisToPosix 2000
                                 , expires_at = Just (millisToPosix 4000)
                                 , canceled_at = Nothing
@@ -231,7 +231,7 @@ testModelDecoder =
         , test "Test complete decode" <|
             \() ->
                 Expect.equal (Ok { id = 342
-                                , last_renewed_at = millisToPosix 1000
+                                , last_renewed_at = Just <| millisToPosix 1000
                                 , subscribed_at = millisToPosix 2000
                                 , expires_at = Just (millisToPosix 4000)
                                 , canceled_at = Just (millisToPosix 5000)
