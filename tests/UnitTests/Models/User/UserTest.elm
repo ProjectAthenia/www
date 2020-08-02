@@ -33,7 +33,7 @@ testGetActiveSubscriptions =
                     { model
                         | subscriptions =
                             [ { id = 342
-                              , last_renewed_at = millisToPosix 1000
+                              , last_renewed_at = Just <| millisToPosix 1000
                               , subscribed_at = millisToPosix 2000
                               , expires_at = Nothing
                               , canceled_at = Nothing
@@ -57,7 +57,7 @@ testGetActiveSubscriptions =
                                                  }
                               }
                             , { id = 435
-                              , last_renewed_at = millisToPosix 1000
+                              , last_renewed_at = Just <| millisToPosix 1000
                               , subscribed_at = millisToPosix 2000
                               , expires_at = Just (millisToPosix 5000)
                               , canceled_at = Nothing
@@ -81,7 +81,7 @@ testGetActiveSubscriptions =
                                                  }
                               }
                             , { id = 6342
-                              , last_renewed_at = millisToPosix 1000
+                              , last_renewed_at = Just <| millisToPosix 1000
                               , subscribed_at = millisToPosix 2000
                               , expires_at = Just (millisToPosix 1000)
                               , canceled_at = Nothing
@@ -109,7 +109,7 @@ testGetActiveSubscriptions =
             in
             Expect.equal
                 [ { id = 342
-                  , last_renewed_at = millisToPosix 1000
+                  , last_renewed_at = Just <| millisToPosix 1000
                   , subscribed_at = millisToPosix 2000
                   , expires_at = Nothing
                   , canceled_at = Nothing
@@ -133,7 +133,7 @@ testGetActiveSubscriptions =
                                      }
                   }
                 , { id = 435
-                  , last_renewed_at = millisToPosix 1000
+                  , last_renewed_at = Just <| millisToPosix 1000
                   , subscribed_at = millisToPosix 2000
                   , expires_at = Just (millisToPosix 5000)
                   , canceled_at = Nothing
@@ -166,7 +166,7 @@ testGetCurrentSubscription =
         model = mockUser "" "" "" []
         lifetime =
             { id = 342
-            , last_renewed_at = millisToPosix 1000
+            , last_renewed_at = Just <| millisToPosix 1000
             , subscribed_at = millisToPosix 2000
             , expires_at = Nothing
             , canceled_at = Nothing
@@ -191,7 +191,7 @@ testGetCurrentSubscription =
             }
         early =
             { id = 342
-            , last_renewed_at = millisToPosix 1000
+            , last_renewed_at = Just <| millisToPosix 1000
             , subscribed_at = millisToPosix 2000
             , expires_at = Just (millisToPosix 3000)
             , canceled_at = Nothing
@@ -216,7 +216,7 @@ testGetCurrentSubscription =
             }
         later =
             { id = 342
-            , last_renewed_at = millisToPosix 1000
+            , last_renewed_at = Just <| millisToPosix 1000
             , subscribed_at = millisToPosix 2000
             , expires_at = Just (millisToPosix 5000)
             , canceled_at = Nothing
@@ -453,7 +453,7 @@ testModelDecoder =
                                     [ { id = 6
                                       , canceled_at = Nothing
                                       , expires_at = Just (millisToPosix 6000)
-                                      , last_renewed_at = millisToPosix 5000
+                                      , last_renewed_at = Just <| millisToPosix 5000
                                       , subscribed_at = millisToPosix 5000
                                       , recurring = True
                                       , membership_plan_rate = Nothing
