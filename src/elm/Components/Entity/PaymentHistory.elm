@@ -3,34 +3,37 @@ module Components.Entity.Payment exposing (..)
 import Api exposing (Token)
 import Api.Endpoint as Endpoint exposing (Endpoint)
 import Bootstrap.Table as Table
-import Components.CRUD.ModelForm.Input as Input
-import Components.CRUD.ModelForm.ToggleField as ToggleField
+import Components.LoadingIndicator as LoadingIndicator
+import Components.Toast as Toast
 import Html exposing (Html, div, h2, h3, text)
 import Http
-import Models.MembershipPlan.Subscription as Subscription
+import List.Extra as ListExtra
+import Modals.Confirmation as Confirmation
+import Models.Payment.Payment as Payment
 import Models.Page as Page
 import Task
 import Time exposing (Posix, Zone)
-import Utilities.DateHelpers as DateHelpers
 
 
 type alias Model =
     { apiUrl: String
     , entityType: String
     , entityId: Int
-    , subscriptionHistory: List Subscription.Model
-    , currentSubscription: Maybe Subscription.Model
-    , now: Maybe Posix
+    , paymentHistory: List Payment.Model
     , timeZone: Maybe Zone
+    , toasts: List Toast.Model
+    , refundModal: Maybe (Confirmation.Model Msg)
+    , isLoading: False
     }
 
 
 type Msg
-    = SubscriptionHistoryLoadedResponse (Result Api.Error (Page.Model Subscription.Model))
-    | GotTime Posix
+    = PaymentHistoryLoadedResponse (Result Api.Error (Page.Model Payment.Model))
+    | OpenRefundModel Payment.Model
+    | CloseRefundModal
+    | RefundPayment Payment.Model
+    | PaymentRefundedResponse (Result Api.Error Payment.Model)
     | GotTimeZone Zone
-    | ToggleActiveSubscriptionRenewal Subscription.Model Bool
-    | CurrentSubscriptionUpdated (Result Api.Error Subscription.Model)
 
 
 initialModel: Token -> String -> String -> Int -> (Model, Cmd Msg)
@@ -38,75 +41,57 @@ initialModel token apiUrl entityType entityId =
     ( { apiUrl = apiUrl
       , entityType = entityType
       , entityId = entityId
-      , subscriptionHistory = []
-      , currentSubscription = Nothing
-      , now = Nothing
+      , paymentHistory = []
       , timeZone = Nothing
+      , toasts = []
+      , refundModal = Nothing
+      , isLoading = False
       }
     , Cmd.batch
-        [ getSubscriptionHistory token
-            <| Endpoint.entitySubscriptions apiUrl entityType entityId 1
-        , Task.perform GotTime Time.now
+        [ getPaymentHistory token
+            <| Endpoint.entityPayments apiUrl entityType entityId 1
         , Task.perform GotTimeZone Time.here
         ]
     )
 
 
-determineCurrentSubscription: Model -> Model
-determineCurrentSubscription model =
-    case model.now of
-        Just now ->
-            { model
-                | currentSubscription = Subscription.getCurrentSubscription now model.subscriptionHistory
-            }
-
-        Nothing ->
-            model
-
-
 update: Token -> Msg -> Model -> (Model, Cmd Msg)
 update token msg model =
     case msg of
-        SubscriptionHistoryLoadedResponse (Ok page) ->
-            let
-                updated =
-                    { model
-                        | subscriptionHistory = model.subscriptionHistory ++ page.data
-                    }
-            in
-            ( determineCurrentSubscription updated
+        PaymentHistoryLoadedResponse (Ok page) ->
+            ( { model
+                | paymentHistory = model.paymentHistory ++ page.data
+            }
             , case Page.nextPageNumber page of
                 Just nextPage ->
-                    getSubscriptionHistory token
-                        <| Endpoint.entitySubscriptions model.apiUrl model.entityType model.entityId nextPage
+                    getPaymentHistory token
+                        <| Endpoint.entityPayments model.apiUrl model.entityType model.entityId nextPage
 
                 Nothing ->
                     Cmd.none
             )
 
-        SubscriptionHistoryLoadedResponse (Err _) ->
+        PaymentHistoryLoadedResponse (Err _) ->
+            -- TODO add toast
             ( model
             , Cmd.none
             )
 
-        CurrentSubscriptionUpdated (Ok subscription) ->
+        PaymentRefundedResponse (Ok payment) ->
+            -- TODO add success response
             ( { model
-                | currentSubscription = Just subscription
+                | paymentHistory =
+                    ListExtra.setIf (\i -> payment.id == i.id) payment model.paymentHistory
+                , isLoading = True
             }
             , Cmd.none
             )
 
-        CurrentSubscriptionUpdated (Err _) ->
-            (model, Cmd.none)
-
-        GotTime now ->
-            let
-                updated =
-                    { model
-                        | now = Just now
-                    }
-            in
-            ( determineCurrentSubscription updated
+        PaymentRefundedResponse (Err _) ->
+            -- TODO Add toast
+            ( { model
+                | isLoading = False
+            }
             , Cmd.none
             )
 
@@ -117,109 +102,83 @@ update token msg model =
             , Cmd.none
             )
 
-        ToggleActiveSubscriptionRenewal subscription recurring ->
-            ( model
-            , updateSubscriptionRecurringStatus token model subscription recurring
+        OpenRefundModel payment ->
+            ( { model
+                | refundModal = Just
+                    <| Confirmation.initialState "Refund Payment" "Are you sure you want to refund this payment? This cannot be undone." (RefundPayment payment) CloseRefundModal
+            }
+            , Cmd.none
+            )
+
+        CloseRefundModal ->
+            ( { model
+                | refundModal = Nothing
+            }
+            , Cmd.none
+            )
+
+        RefundPayment payment ->
+            ( { model
+                | isLoading = True
+            }
+            , refundPayment token model payment
             )
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ viewActiveSubscriptionInformation model
-        , viewSubscriptionHistory model
+        [ viewPaymentHistory model
+        , case model.refundModal of
+            Just modal ->
+                Confirmation.view modal
+            Nothing ->
+                text ""
+        , Toast.view model.toasts
+        , LoadingIndicator.view model.isLoading
         ]
 
 
-viewActiveSubscriptionInformation : Model -> Html Msg
-viewActiveSubscriptionInformation model =
-    case model.currentSubscription of
-        Just subscription ->
-            div []
-                [ h2 [] [ text "Current Subscription" ]
-                , h3 [] [ text <| Subscription.subscriptionName subscription ]
-                , case (model.timeZone, subscription.expires_at) of
-                    (Just timeZone, Just expiresAt) ->
-                        div []
-                            [ h3 [] [ text <| "The subscription expires" ++ DateHelpers.format timeZone expiresAt ]
-                            , ToggleField.view (getActiveSubscriptionRenewalToggle subscription) subscription.recurring (ToggleActiveSubscriptionRenewal subscription) False
-                            ]
-
-                    _ ->
-                        text ""
-                ]
-        Nothing ->
-            text ""
-
-
-getActiveSubscriptionRenewalToggle : Subscription.Model -> Input.Model
-getActiveSubscriptionRenewalToggle subscription =
-    Input.configure False (getSubscriptionRenewalToggleLabel subscription.recurring) "renewal"
-
-
-getSubscriptionRenewalToggleLabel : Bool -> String
-getSubscriptionRenewalToggleLabel currentlyRecurring =
-    if currentlyRecurring then
-        "Auto-renewal is currently turned on"
-    else
-        "Auto-renewal has been disabled"
-
-
-viewSubscriptionHistory : Model -> Html Msg
-viewSubscriptionHistory model =
+viewPaymentHistory : Model -> Html Msg
+viewPaymentHistory model =
     div []
-        [ h2 [] [ text "Subscription History" ]
+        [ h2 [] [ text "Payment History" ]
         , Table.table
             { options = [ Table.bordered, Table.striped ]
             , thead = Table.thead []
                 [ Table.tr []
-                    [ Table.th [] [ text "Subscription Name" ]
-                    , Table.th [] [ text "Original Subscription Date" ]
-                    , Table.th [] [ text "Expiration Date" ]
-                    ]
+                    [ ]
                 ]
             , tbody = Table.tbody []
                 <| case model.timeZone of
                     Just timeZone ->
-                        List.map (buildRow timeZone) model.subscriptionHistory
+                        List.map (buildRow timeZone) model.paymentHistory
                     Nothing ->
                         []
             }
         ]
 
-buildRow: Zone -> Subscription.Model -> Table.Row Msg
-buildRow timeZone subscription =
+buildRow: Zone -> Payment.Model -> Table.Row Msg
+buildRow timeZone payment =
     Table.tr []
-        [ Table.td []
-            [ text <| Subscription.subscriptionName subscription ]
-        , Table.td []
-            [ text <| DateHelpers.format timeZone subscription.subscribed_at ]
-        ,  Table.td []
-            [ text
-                <| case subscription.expires_at of
-                    Just expiresAt ->
-                        DateHelpers.format timeZone expiresAt
-                    Nothing ->
-                        "Does not Expire"
-            ]
-        ]
+        [ ]
 
 
-getSubscriptionHistory : Token -> Endpoint -> Cmd Msg
-getSubscriptionHistory token endpoint =
-    Api.get endpoint (Just token) (Subscription.pageDecoder) SubscriptionHistoryLoadedResponse
+getPaymentHistory : Token -> Endpoint -> Cmd Msg
+getPaymentHistory token endpoint =
+    Api.get endpoint (Just token) (Payment.pageDecoder) PaymentHistoryLoadedResponse
 
 
-updateEndpoint : Model -> Subscription.Model -> Endpoint
-updateEndpoint model subscription =
-    Endpoint.entitySubscription model.apiUrl model.entityType model.entityId subscription.id
+updateEndpoint : Model -> Payment.Model -> Endpoint
+updateEndpoint model payment =
+    Endpoint.entityPayment model.apiUrl model.entityType model.entityId payment.id
 
 
-recurringUpdateBody : Bool -> Http.Body
-recurringUpdateBody recurring =
-    Http.jsonBody <| Subscription.recurringJson recurring
+refundUpdateBody : Http.Body
+refundUpdateBody =
+    Http.jsonBody <| Payment.refundJson
 
 
-updateSubscriptionRecurringStatus : Token -> Model -> Subscription.Model -> Bool -> Cmd Msg
-updateSubscriptionRecurringStatus token model subscription recurring =
-    Api.put (updateEndpoint model subscription) token (recurringUpdateBody recurring) Subscription.modelDecoder CurrentSubscriptionUpdated
+refundPayment : Token -> Model -> Payment.Model -> Cmd Msg
+refundPayment token model payment =
+    Api.put (updateEndpoint model payment) token refundUpdateBody Payment.modelDecoder PaymentRefundedResponse
