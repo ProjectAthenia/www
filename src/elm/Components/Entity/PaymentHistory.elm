@@ -5,7 +5,7 @@ import Api.Endpoint as Endpoint exposing (Endpoint)
 import Bootstrap.Table as Table
 import Components.LoadingIndicator as LoadingIndicator
 import Components.Toast as Toast
-import Html exposing (Html, div, h2, h3, text)
+import Html exposing (Html, div, h2, text)
 import Http
 import List.Extra as ListExtra
 import Modals.Confirmation as Confirmation
@@ -157,6 +157,7 @@ viewPaymentHistory model =
                         []
             }
         ]
+
 
 buildRow: Zone -> Payment.Model -> Table.Row Msg
 buildRow timeZone payment =

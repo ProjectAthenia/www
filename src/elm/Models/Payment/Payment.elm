@@ -3,6 +3,7 @@ module Models.Payment.Payment exposing (..)
 import Iso8601
 import Json.Decode as JsonDecode exposing (Decoder, int, list, maybe)
 import Json.Decode.Pipeline exposing (optional, required)
+import Json.Encode as JsonEncode
 import Models.Page as Page
 import Models.Payment.LineItem as LineItem
 import Models.Payment.PaymentMethod as PaymentMethod
@@ -32,3 +33,10 @@ modelDecoder =
 pageDecoder: Decoder (Page.Model Model)
 pageDecoder =
     Page.modelDecoder <| list modelDecoder
+
+
+refundJson : JsonEncode.Value
+refundJson =
+    JsonEncode.object
+        [ ("refund", JsonEncode.bool True)
+        ]
