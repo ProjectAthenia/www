@@ -1,8 +1,9 @@
-module Components.Entity.Payment exposing (..)
+module Components.Entity.PaymentHistory exposing (..)
 
 import Api exposing (Token)
 import Api.Endpoint as Endpoint exposing (Endpoint)
 import Bootstrap.Table as Table
+import Bootstrap.Button as Button
 import Components.LoadingIndicator as LoadingIndicator
 import Components.Toast as Toast
 import Html exposing (Html, div, h2, text)
@@ -13,6 +14,7 @@ import Models.Payment.Payment as Payment
 import Models.Page as Page
 import Task
 import Time exposing (Posix, Zone)
+import Utilities.DateHelpers as DateHelpers
 
 
 type alias Model =
@@ -147,7 +149,10 @@ viewPaymentHistory model =
             { options = [ Table.bordered, Table.striped ]
             , thead = Table.thead []
                 [ Table.tr []
-                    [ ]
+                    [ Table.th [] [ text "Amount" ]
+                    , Table.th [] [ text "Created At" ]
+                    , Table.th [] [ text "Refund" ]
+                    ]
                 ]
             , tbody = Table.tbody []
                 <| case model.timeZone of
@@ -162,7 +167,17 @@ viewPaymentHistory model =
 buildRow: Zone -> Payment.Model -> Table.Row Msg
 buildRow timeZone payment =
     Table.tr []
-        [ ]
+        [ Table.td [] [ text <| "$" ++ String.fromFloat payment.amount ]
+        , Table.td [] [ text <| DateHelpers.format timeZone payment.created_at ]
+        , Table.td []
+            case payment.refunded_at of
+                Just refundedAt ->
+                    [ text <| "Refunded on " ++ DateHelpers.format timeZone refundedAt ]
+                Nothing ->
+                    [ Button.button [ Button.danger, Button.onClick <| OpenRefundModel payment ]
+                        [ text "Refund Payment" ]
+                    ]
+        ]
 
 
 getPaymentHistory : Token -> Endpoint -> Cmd Msg

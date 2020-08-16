@@ -13,6 +13,7 @@ import Utilities.ModelHelpers exposing (floatDecoder)
 
 type alias Model =
     { id: Int
+    , created_at: Posix
     , amount: Float
     , refunded_at: Maybe Posix
     , payment_method: Maybe PaymentMethod.Model
@@ -24,6 +25,7 @@ modelDecoder: Decoder Model
 modelDecoder =
     JsonDecode.succeed Model
         |> required "id" int
+        |> required "created_at" Iso8601.decoder
         |> required "amount" floatDecoder
         |> optional "refunded_at" (maybe Iso8601.decoder) Nothing
         |> optional "payment_method" (maybe PaymentMethod.modelDecoder) Nothing
