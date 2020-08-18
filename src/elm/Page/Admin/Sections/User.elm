@@ -7,6 +7,7 @@ import Components.CRUD.ModelForm as ModelForm
 import Components.CRUD.ModelList as ModelList
 import Components.CRUD.RootController as RootController
 import Components.CRUD.SharedConfiguration as SharedConfiguration
+import Components.Entity.PaymentHistory as PaymentHistory
 import Components.Entity.SubscriptionHistory as SubscriptionHistory
 import Components.User.ResetPasswordButton as ResetPasswordButton
 import Html exposing (..)
@@ -31,6 +32,7 @@ type alias FormModel =
     , password: String
     , resetPasswordButton: Maybe ResetPasswordButton.Model
     , subscriptionHistory: Maybe SubscriptionHistory.Model
+    , paymentHistory: Maybe PaymentHistory.Model
     }
 
 type FormMsg
@@ -40,6 +42,7 @@ type FormMsg
     | SetPassword String
     | ResetPasswordButtonMsg ResetPasswordButton.Msg
     | SubscriptionHistoryMsg SubscriptionHistory.Msg
+    | PaymentHistoryMsg PaymentHistory.Msg
 
 
 sharedConfiguration: String -> SharedConfiguration.Configuration User.Model
@@ -108,6 +111,7 @@ initForm apiUrl _ =
       , password = ""
       , resetPasswordButton = Nothing
       , subscriptionHistory = Nothing
+      , paymentHistory = Nothing
     }
     , Cmd.none
     )
@@ -176,6 +180,22 @@ updateForm token dataModel msg model =
                 Nothing ->
                     (model, Cmd.none)
 
+        PaymentHistoryMsg subMsg ->
+            case model.paymentHistory of
+                Just paymentHistory ->
+                    let
+                        (updatedPaymentHistory, paymentHistoryCmd) =
+                            PaymentHistory.update token subMsg paymentHistory
+                    in
+                    ( { model
+                        | paymentHistory = Just updatedPaymentHistory
+                    }
+                    , Cmd.map PaymentHistoryMsg paymentHistoryCmd
+                    )
+
+                Nothing->
+                    (model, Cmd.none)
+
 
 setModel: Token -> GenericModel User.Model -> FormModel -> (FormModel, Cmd FormMsg)
 setModel token dataModel model =
@@ -188,6 +208,14 @@ setModel token dataModel model =
 
                 Nothing ->
                     (Nothing, Cmd.none)
+        (paymentHistory, paymentCmd) =
+            case dataModel.id of
+                Just id ->
+                    Tuple.mapFirst Just
+                        <| PaymentHistory.initialModel token model.apiUrl "users" id
+
+                Nothing ->
+                    (Nothing, Cmd.none)
 
     in
     ( { model
@@ -196,8 +224,12 @@ setModel token dataModel model =
       , email = dataModel.email
       , resetPasswordButton = Just <| ResetPasswordButton.initialModel model.apiUrl dataModel.email
       , subscriptionHistory = subscriptionHistory
+      , paymentHistory = paymentHistory
     }
-    , Cmd.map SubscriptionHistoryMsg subscriptionCmd
+    , Cmd.batch
+      [ Cmd.map SubscriptionHistoryMsg subscriptionCmd
+      , Cmd.map PaymentHistoryMsg paymentCmd
+      ]
     )
 
 
@@ -243,6 +275,17 @@ subscriptionHistoryView _ model =
             text ""
 
 
+paymentHistoryView: Bool -> FormModel -> Html FormMsg
+paymentHistoryView _ model =
+    case model.paymentHistory of
+        Just paymentHistory ->
+            Html.map PaymentHistoryMsg
+                <| PaymentHistory.view paymentHistory
+
+        Nothing ->
+            text ""
+
+
 baseFormConfig: ModelForm.Configuration User.Model FormModel FormMsg
 baseFormConfig =
     ModelForm.configure User.toJson User.toJson User.newModel validateForm initForm updateForm
@@ -256,6 +299,7 @@ formConfiguration =
         , emailInput
         , passwordInput
         , resetPasswordButtonView
+        , paymentHistoryView
         , subscriptionHistoryView
         ]
 

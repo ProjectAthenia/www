@@ -170,13 +170,7 @@ userPaymentMethods apiUrl userId =
 entityPayments : String -> String -> Int -> Int -> Endpoint
 entityPayments apiUrl entityType entityId page =
     url apiUrl [ entityType, String.fromInt entityId, "payments" ]
-        <| List.concat
-            [ [ Builder.int "page" page ]
-            , Expands.toQueryParameters
-                [ Expands.expand "paymentMethod"
-                , Expands.expand "lineItems"
-                ]
-            ]
+        <| [ Builder.int "page" page ]
 
 
 entityPayment : String -> String -> Int -> Int -> Endpoint

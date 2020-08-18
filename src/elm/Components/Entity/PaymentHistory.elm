@@ -25,7 +25,7 @@ type alias Model =
     , timeZone: Maybe Zone
     , toasts: List Toast.Model
     , refundModal: Maybe (Confirmation.Model Msg)
-    , isLoading: False
+    , isLoading: Bool
     }
 
 
@@ -170,7 +170,7 @@ buildRow timeZone payment =
         [ Table.td [] [ text <| "$" ++ String.fromFloat payment.amount ]
         , Table.td [] [ text <| DateHelpers.format timeZone payment.created_at ]
         , Table.td []
-            case payment.refunded_at of
+            <| case payment.refunded_at of
                 Just refundedAt ->
                     [ text <| "Refunded on " ++ DateHelpers.format timeZone refundedAt ]
                 Nothing ->
