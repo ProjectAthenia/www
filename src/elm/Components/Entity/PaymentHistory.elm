@@ -105,9 +105,12 @@ update token msg model =
             )
 
         OpenRefundModel payment ->
+            let
+                modal = Confirmation.initialState "Refund Payment" "Are you sure you want to refund this payment? This cannot be undone." (RefundPayment payment) CloseRefundModal
+            in
             ( { model
                 | refundModal = Just
-                    <| Confirmation.initialState "Refund Payment" "Are you sure you want to refund this payment? This cannot be undone." (RefundPayment payment) CloseRefundModal
+                    <| Confirmation.showModal modal
             }
             , Cmd.none
             )
@@ -122,6 +125,7 @@ update token msg model =
         RefundPayment payment ->
             ( { model
                 | isLoading = True
+                , refundModal = Nothing
             }
             , refundPayment token model payment
             )
