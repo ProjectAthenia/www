@@ -2,6 +2,32 @@
 
 To upgrade from previous version of Athenia please check each version number listed below step by step.
 
+## 0.8.0
+
+* elm.json
+* src/elm/Api.elm
+* src/elm/Api/Endpoint.elm
+* src/elm/Components/Entity/PaymentHistory.elm
+* src/elm/Components/Entity/SubscriptionHistory.elm 
+* src/elm/Components/MembershipPlan/RateHistory.elm 
+* src/elm/Components/User/ResetPasswordButton.elm
+* src/elm/Models/MembershipPlan/MembershipPlan.elm
+* src/elm/Models/MembershipPlan/MembershipPlanRate.elm
+* src/elm/Models/MembershipPlan/Subscription.elm
+* src/elm/Models/Payment/LineItem.elm
+* src/elm/Models/Payment/Payment.elm
+* src/elm/Models/User/User.elm
+* src/elm/Page/Admin/Sections/MembershipPlan.elm
+* src/elm/Page/Admin/Sections/User.elm
+* src/elm/Page/Settings.elm
+* src/elm/Utilities/DateHelpers.elm
+* src/elm/Utilities/ModelHelpers.elm
+* tests/UnitTests/Models/MembershipPlan/MembershipPlanRateTest.elm
+* tests/UnitTests/Models/MembershipPlan/SubscriptionTest.elm
+* tests/UnitTests/Models/Payment/LineItemTest.elm
+* tests/UnitTests/Models/Payment/PaymentTest.elm
+* tests/UnitTests/Models/User/UserTest.elm
+
 ## 0.7.0
 
 Quality of life update! This is an accumulative update with a number of improvements added.
