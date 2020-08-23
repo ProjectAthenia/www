@@ -4,29 +4,31 @@ To upgrade from previous version of Athenia please check each version number lis
 
 ## 0.8.0
 
-* elm.json
-* src/elm/Api.elm
-* src/elm/Api/Endpoint.elm
-* src/elm/Components/Entity/PaymentHistory.elm
-* src/elm/Components/Entity/SubscriptionHistory.elm 
-* src/elm/Components/MembershipPlan/RateHistory.elm 
-* src/elm/Components/User/ResetPasswordButton.elm
-* src/elm/Models/MembershipPlan/MembershipPlan.elm
-* src/elm/Models/MembershipPlan/MembershipPlanRate.elm
-* src/elm/Models/MembershipPlan/Subscription.elm
-* src/elm/Models/Payment/LineItem.elm
-* src/elm/Models/Payment/Payment.elm
-* src/elm/Models/User/User.elm
-* src/elm/Page/Admin/Sections/MembershipPlan.elm
-* src/elm/Page/Admin/Sections/User.elm
-* src/elm/Page/Settings.elm
-* src/elm/Utilities/DateHelpers.elm
-* src/elm/Utilities/ModelHelpers.elm
-* tests/UnitTests/Models/MembershipPlan/MembershipPlanRateTest.elm
-* tests/UnitTests/Models/MembershipPlan/SubscriptionTest.elm
-* tests/UnitTests/Models/Payment/LineItemTest.elm
-* tests/UnitTests/Models/Payment/PaymentTest.elm
-* tests/UnitTests/Models/User/UserTest.elm
+Another nice sized update! This one adds a new entity payment history and subscription history component. It also adds some reset password functionality for the user CRUD section. It also includes additional improvements to the recent CRUD setup and entity integrations.
+
+* elm.json - Make sure to install the `ryannhg/date-format` elm package
+* src/elm/Api.elm - The endpoints related to the user subscription have been updated to use the entity structures
+* src/elm/Api/Endpoint.elm - New entity sub endpoints have been added
+* src/elm/Components/Entity/PaymentHistory.elm - New Module!
+* src/elm/Components/Entity/SubscriptionHistory.elm - New Module!
+* src/elm/Components/MembershipPlan/RateHistory.elm - Added proper view for individual rates
+* src/elm/Components/User/ResetPasswordButton.elm - New Module!
+* src/elm/Models/MembershipPlan/MembershipPlan.elm - Improved decoder
+* src/elm/Models/MembershipPlan/MembershipPlanRate.elm - Added the created at timestamp and improved the cost decoder
+* src/elm/Models/MembershipPlan/Subscription.elm - Added a number of helper functions, and changed a model field from maybe posix to posix
+* src/elm/Models/Payment/LineItem.elm - New Model!
+* src/elm/Models/Payment/Payment.elm - New Model!
+* src/elm/Models/User/User.elm - Improved subscription functions, and added another encoder.
+* src/elm/Page/Admin/Sections/MembershipPlan.elm - Updated initiation of Rate history to pass through the current auth token
+* src/elm/Page/Admin/Sections/User.elm - Integrated all three new components
+* src/elm/Page/Settings.elm - Added created at field to membership plan rate model creation, and updated API calls for entity changes
+* src/elm/Utilities/DateHelpers.elm - Added a format helper function
+* src/elm/Utilities/ModelHelpers.elm - Added an improved float decoder
+* tests/UnitTests/Models/MembershipPlan/MembershipPlanRateTest.elm - Updated for created_at field being added
+* tests/UnitTests/Models/MembershipPlan/SubscriptionTest.elm - Updated for model changes
+* tests/UnitTests/Models/Payment/LineItemTest.elm - New test!
+* tests/UnitTests/Models/Payment/PaymentTest.elm - New test!
+* tests/UnitTests/Models/User/UserTest.elm - Updated for model changes
 
 ## 0.7.0
 
