@@ -2,6 +2,10 @@
 
 To upgrade from previous version of Athenia please check each version number listed below step by step.
 
+## 0.9.0
+
+A nice small one! This update adds the ability to save a child model after each child update as well as fixes a bug in the model form. To complete this update simply copy over `src/elm/Components/CRUD/ModelForm.elm`.
+
 ## 0.8.0
 
 Another nice sized update! This one adds a new entity payment history and subscription history component. It also adds some reset password functionality for the user CRUD section. It also includes additional improvements to the recent CRUD setup and entity integrations.

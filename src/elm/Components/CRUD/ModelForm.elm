@@ -55,6 +55,12 @@ type alias ChildAction dataModel childModel childMsg =
     Token -> GenericModel dataModel -> childModel -> (childModel, Cmd childMsg)
 
 
+-- An alias to an optional callback that can be set,
+-- which will be called after every child update to check to see if a save should be run
+type alias ShouldRunSave dataModel childModel =
+    GenericModel dataModel -> childModel -> Maybe (GenericModel dataModel)
+
+
 -- This configuration model is everything that needs to be specifically configured for the form
 type alias Configuration dataModel childModel childMsg =
     { createEncoder: ModelEncoder dataModel
@@ -66,6 +72,7 @@ type alias Configuration dataModel childModel childMsg =
     , setModel: ChildAction dataModel childModel childMsg
     , modelCreated: ChildAction dataModel childModel childMsg
     , modelUpdated: ChildAction dataModel childModel childMsg
+    , shouldRunSave: ShouldRunSave dataModel childModel
     , fields: List (Field childModel childMsg)
     }
 
@@ -98,6 +105,7 @@ configure createEncoder updateEncoder newModel validateModel childInit childUpda
     , setModel = noAction
     , modelCreated = noAction
     , modelUpdated = noAction
+    , shouldRunSave = \_ _ -> Nothing
     , fields = []
     }
 
@@ -118,11 +126,19 @@ configureModelCreatedAction modelCreated configuration =
     }
 
 
-configureModelUpdatedAction: Configuration dataModel childModel childMsg -> ChildAction dataModel childModel childMsg
+configureModelUpdatedAction: ChildAction dataModel childModel childMsg -> Configuration dataModel childModel childMsg
     -> Configuration dataModel childModel childMsg
-configureModelUpdatedAction configuration modelUpdated =
+configureModelUpdatedAction modelUpdated configuration =
     { configuration
         | modelUpdated = modelUpdated
+    }
+
+
+configureShouldRunSave: ShouldRunSave dataModel childModel -> Configuration dataModel childModel childMsg
+    -> Configuration dataModel childModel childMsg
+configureShouldRunSave shouldRunSave configuration =
+    { configuration
+        | shouldRunSave = shouldRunSave
     }
 
 
@@ -248,8 +264,20 @@ update token msg model =
                 { model | loading = False }
 
         ChildMsg childMsg ->
-            Tuple.mapBoth (setChildModel model) (Cmd.map ChildMsg)
-                <| model.configuration.childUpdate token model.dataModel childMsg model.childModel
+            let
+                (updatedModel, childCmd) =
+                    Tuple.mapBoth (setChildModel model) (Cmd.map ChildMsg)
+                        <| model.configuration.childUpdate token model.dataModel childMsg model.childModel
+            in
+            case model.configuration.shouldRunSave model.dataModel model.childModel of
+                Just dataModel ->
+                    Tuple.mapSecond (\saveCmd -> Cmd.batch [childCmd, saveCmd] )
+                        <| save token updatedModel dataModel
+
+                Nothing ->
+                    ( updatedModel
+                    , childCmd
+                    )
 
         RemoveToast toast ->
             ( { model
@@ -266,16 +294,21 @@ update token msg model =
                         model
 
                 Ok dataModel ->
-                    ( { model
-                        | loading = True
-                        , dataModel = dataModel
-                    }
-                    , case dataModel.id of
-                        Just id ->
-                            updateModel token model.sharedConfiguration.routeGroup.existing id model.sharedConfiguration.decoder model.configuration.updateEncoder dataModel
-                        Nothing ->
-                            createModel token model.sharedConfiguration.routeGroup.new model.sharedConfiguration.decoder model.configuration.createEncoder dataModel
-                    )
+                    save token model dataModel
+
+
+save: Token -> Model dataModel childModel childMsg -> GenericModel dataModel ->  (Model dataModel childModel childMsg, Cmd (Msg dataModel childMsg))
+save token model dataModel =
+    ( { model
+        | loading = True
+        , dataModel = dataModel
+    }
+    , case dataModel.id of
+        Just id ->
+            updateModel token model.sharedConfiguration.routeGroup.existing id model.sharedConfiguration.decoder model.configuration.updateEncoder dataModel
+        Nothing ->
+            createModel token model.sharedConfiguration.routeGroup.new model.sharedConfiguration.decoder model.configuration.createEncoder dataModel
+    )
 
 
 noAction: ChildAction dataModel childModel childMsg
