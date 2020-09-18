@@ -4,7 +4,7 @@ To upgrade from previous version of Athenia please check each version number lis
 
 ## 0.9.0
 
-A nice small one! This update adds the ability to save a child model after each child update as well as fixes a bug in the model form. To complete this update simply copy over `src/elm/Components/CRUD/ModelForm.elm`.
+A nice small one! This update adds the ability to save a child model after each child update, adds some sub map functions, and fixes a bug in the model form. To complete this update simply copy over `src/elm/Components/CRUD/ModelForm.elm` and `src/elm/Components/CRUD/RootController.elm`.
 
 ## 0.8.0
 

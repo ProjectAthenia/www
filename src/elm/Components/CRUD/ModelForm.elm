@@ -360,3 +360,8 @@ updateModel token existingEndpoint id decoder updateEncoder model =
 getModel : Token -> ExistingEndpoint -> List Expands.Expand -> Int -> Decoder (GenericModel dataModel) -> Cmd (Msg dataModel childMsg)
 getModel token existingEndpoint expands id decoder =
     Api.get (existingEndpoint (Expands.toQueryParameters expands) id) (Just token) decoder ModelLoadedResponse
+
+
+mapSubscription: Sub childMsg -> Sub (Msg dataModel childMsg)
+mapSubscription sub =
+    Sub.map ChildMsg sub

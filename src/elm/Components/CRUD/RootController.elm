@@ -198,3 +198,9 @@ view model =
             [ Html.h1 [] [text "Inactive State"]
             , Html.p [] [text "Tell Bryce, and try refreshing the page"]
             ]
+
+
+mapSubscription: Sub formMsg -> Sub (Msg dataModel formMsg)
+mapSubscription modelSub =
+    Sub.map FormMsg
+        <| ModelForm.mapSubscription modelSub
