@@ -54,7 +54,7 @@ checkIfKeyValuePairMatchesID id (key, value) =
 baseRecordDecoder: Decoder BaseRecord
 baseRecordDecoder =
     JsonDecode.succeed BaseRecord
-        |> required "id" (maybe int)
+        |> optional "id" (maybe int) Nothing
 
 
 stringFloatDecoder : Decoder Float
