@@ -4,13 +4,21 @@
         <format property="buildtimestamp" pattern="yyyyMMddHHmmss"/>
     </tstamp>
     <target name="full-build"
-            depends="reinstall,build,test"
+            depends="reinstall,test,build"
             description="Performs the build/install"/>
+
+    <target name="deploy"
+            depends="reinstall,build,link-new-build"
+            description="Performs the production deployment"/>
     
     <target name="reinstall">
         <exec executable="/usr/bin/npm" failonerror="true" dir="${basedir}">
             <arg value='run-script' />
-            <arg value='reinstall' />
+            <arg value='prebuild' />
+        </exec>
+        <exec executable="/usr/bin/npm" failonerror="true" dir="${basedir}">
+            <arg value='run-script' />
+            <arg value='setup' />
         </exec>
     </target>
 
@@ -22,13 +30,24 @@
     </target>
 
     <target name="test">
-        <exec executable="/usr/bin/elm" failonerror="true" dir="${basedir}/tests">
-            <arg value="package" />
-            <arg value="install" />
-            <arg value="-y" />
+        <exec executable="./node_modules/elm-test/bin/elm-test" failonerror="true" dir="${basedir}">
         </exec>
-        <exec executable="/usr/bin/elm" failonerror="true" dir="${basedir}/tests">
-            <arg value='test' />
-        </exec>
+    </target>
+
+    <target name="link-new-build">
+        <move file="${basedir}/dist/current" toFile="${basedir}/dist/${buildtimestamp}" />
+        <symlink link="${basedir}/public" resource="${basedir}/dist/${buildtimestamp}" overwrite="true"/>
+
+        <!-- just a note - this will fail if there is not at least 2 directories but that's ok for now -->
+        <delete verbose="true">
+            <allbutlast count="2">
+                <sort>
+                    <date/>
+                    <resources>
+                        <dirset dir="${basedir}/dist" includes="*" />
+                    </resources>
+                </sort>
+            </allbutlast>
+        </delete>
     </target>
 </project>
