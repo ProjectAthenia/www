@@ -36,7 +36,12 @@ setValue instance value =
 
 buildSearchFieldQueryKey : Model -> String
 buildSearchFieldQueryKey instance =
-    "search[" ++ instance.name ++ "]"
+    case instance.type_ of
+        Select _ ->
+            "filter[" ++ instance.name ++ "]"
+
+        _ ->
+            "search[" ++ instance.name ++ "]"
 
 
 buildSearchFieldQueryValue : Model -> String

@@ -2,6 +2,10 @@
 
 To upgrade from previous version of Athenia please check each version number listed below step by step.
 
+## 0.9.2
+
+Another little one! This simply fixed a bug in the index searching. To update to this version simply copy over the file `src/elm/Utilities/SearchField.elm`.
+
 ## 0.9.1
 
 Simple one! Simply copy over `src/elm/Utilities/ModelHelpers.elm` in order to fix a bug with some model decoders
